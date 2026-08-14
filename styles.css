@@ -5065,3 +5065,69 @@
   @media print{
     .cal-mark, .bench-pips, .qb-bar i{ box-shadow:none!important; }
   }
+
+  /* ---------- LIVE BARCODE SCANNER (29-scanner.js) ---------- */
+  .scan-stage{
+    position:relative; width:100%; aspect-ratio:4/3;
+    background:#000; border:1px solid var(--line);
+    border-radius:6px; overflow:hidden;
+  }
+  .scan-stage video{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+  /* Cut-out framing guide: a bright rectangle with the rest dimmed behind it. */
+  .scan-reticle{
+    position:absolute; left:8%; right:8%; top:28%; bottom:28%;
+    border:2px solid var(--green); border-radius:4px;
+    box-shadow:0 0 0 9999px rgba(0,0,0,.42);
+    pointer-events:none;
+  }
+  .scan-stage.scan-hit .scan-reticle{ border-color:var(--cyan); }
+
+  /* ---------- COOK TIMERS (30-timers.js) ---------- */
+  .timer-strip{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    padding:8px 10px calc(8px + var(--safe-bottom));
+    background:linear-gradient(180deg, rgba(10,14,20,.92), rgba(10,14,20,.99));
+    border-top:1px solid var(--line);
+    backdrop-filter:blur(6px);
+    display:flex; flex-direction:column; gap:6px;
+  }
+  /* The tab bar is sticky-to-TOP, not a bottom nav, so the strip simply pins to
+     the bottom. Room for it is reserved by syncStripSpace() in 30-timers.js,
+     which measures the real height rather than hard-coding one. */
+
+  .timer-row{
+    position:relative; overflow:hidden;
+    display:flex; align-items:center; gap:8px;
+    padding:8px 10px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+  }
+  /* Progress is a background wash rather than a separate bar, so the row stays
+     one line tall on a phone. */
+  .timer-fill{
+    position:absolute; left:0; top:0; bottom:0;
+    background:var(--accent-soft); pointer-events:none;
+    transition:width .9s linear;
+  }
+  .timer-label{
+    position:relative; flex:1 1 auto; min-width:0;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:var(--fs-12);
+  }
+  .timer-clock{
+    position:relative; font-variant-numeric:tabular-nums;
+    font-size:var(--fs-13); color:var(--green); min-width:56px; text-align:right;
+  }
+  .timer-btn{
+    position:relative; flex:0 0 auto;
+    background:transparent; border:1px solid var(--line); color:var(--muted);
+    border-radius:4px; padding:4px 8px; font-size:var(--fs-10); cursor:pointer;
+  }
+  .timer-btn:hover{ color:var(--text); border-color:var(--accent-line); }
+
+  .timer-row.timer-done{ border-color:var(--green); }
+  .timer-row.timer-done .timer-clock{ color:var(--green); font-weight:700; }
+  .timer-row.timer-done .timer-fill{ background:rgba(57,255,136,.14); }
+
+  .mini-btn.timer-start{ margin-top:8px; }

@@ -16,9 +16,11 @@
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M50 8 L88 24 V52 C88 74 72 88 50 96 C28 88 12 74 12 52 V24 Z' fill='none' stroke='%2300fff2' stroke-width='4'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=Cinzel:wght@600;700&family=EB+Garamond:wght@400;500&family=Rajdhani:wght@600;700&family=Barlow+Condensed:wght@400;500;600&family=IM+Fell+English+SC&family=Orbitron:wght@600;800&family=Chakra+Petch:wght@400;600&family=Special+Elite&family=Courier+Prime&family=Fredoka:wght@500;600&family=Nunito:wght@400;600&family=Silkscreen:wght@400;700&family=VT323&family=Roboto+Slab:wght@500;700&family=Lato:wght@400;700&family=Metamorphous&family=Crimson+Text:wght@400;600&family=Racing+Sans+One&family=Titillium+Web:wght@400;600&display=swap">
+<!-- Fonts are served from this repo, not from Google. Self-hosting keeps every
+     user IP address off Google's servers (a GDPR concern with hotlinked fonts)
+     and lets the app render fully offline. Licensed under the SIL Open Font
+     License / Apache 2.0, both of which permit redistribution. -->
+<link rel="stylesheet" href="fonts.css">
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -166,6 +168,9 @@
       <button class="btn-ghost" id="sysRecreate"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Recreate character — change goal, weight or activity</button>
       <button class="btn-ghost" id="sysReprep"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> Redo the meal prep loadout</button>
 
+      <label class="field-label" style="margin-top:20px;">ABOUT</label>
+      <button class="btn-ghost" id="sysLegal"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> Legal, credits &amp; privacy</button>
+
       <label class="field-label" style="margin-top:20px;">DANGER ZONE</label>
       <button class="btn-ghost" id="sysReset" style="border-color:var(--red); color:var(--red);"><svg class="px" aria-hidden="true"><use href="#i-power"></use></svg> Start over — wipes everything saved</button>
       <p class="subtitle" style="font-size:11px; margin:12px 0 0;">
@@ -194,6 +199,117 @@
     <div class="modal-body" id="fullStatsBody"></div>
   </div>
 </div>
+
+<!-- Live camera scanner. Not in ALL_MODALS: closing it must also stop the camera
+     tracks, so 29-scanner.js owns its open/close instead of the generic helper. -->
+<div class="modal-wrap" id="modalScan" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalScanTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalScanTitle">SCAN BARCODE</span>
+      <button class="modal-x" id="scanClose" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="scan-stage">
+        <!-- playsinline is required or iOS Safari takes the video fullscreen -->
+        <video id="scanVideo" playsinline muted autoplay></video>
+        <div class="scan-reticle" aria-hidden="true"></div>
+      </div>
+      <div class="off-status" id="scanStatus" aria-live="polite">Starting the camera&hellip;</div>
+      <p class="subtitle" style="font-size:11px; margin:8px 0 0; line-height:1.6;">
+        Hold the barcode inside the frame. Good light and a steady hand help.
+        Nothing is recorded or uploaded &mdash; the picture is read on this device.
+      </p>
+      <button class="btn-ghost" id="scanCancel" style="margin-top:12px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Legal, credits and attribution. Open Food Facts is ODbL-licensed and REQUIRES
+     visible attribution; ZXing and the typefaces carry their own notices. Keep
+     this modal reachable from the System menu. -->
+<div class="modal-wrap" id="modalLegal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalLegalTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalLegalTitle">LEGAL &amp; CREDITS</span>
+      <button class="modal-x" data-close="modalLegal" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+
+      <label class="field-label">HEALTH DISCLAIMER</label>
+      <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
+        Loadout gives general fitness estimates for information only. It is <strong>not medical,
+        clinical or professional dietary advice</strong> and is not a medical device. Calorie and
+        macro figures are approximations from standard formulas. Consult a qualified healthcare
+        professional before changing your diet &mdash; particularly if you are pregnant, under 18,
+        or have any medical condition or eating disorder.
+      </p>
+
+      <label class="field-label" style="margin-top:20px;">YOUR DATA</label>
+      <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
+        Everything you enter is stored on this device only. There are no accounts, no analytics
+        and no tracking, and nothing is ever uploaded. Barcode photos are decoded on this device
+        and are never transmitted or saved.
+      </p>
+      <button class="btn-ghost" id="legalPrivacy" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> Read the full privacy policy</button>
+
+      <label class="field-label" style="margin-top:20px;">NUTRITION DATA</label>
+      <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
+        Product and nutrition information comes from <strong>Open Food Facts</strong>, a
+        volunteer-built open database, used under the Open Database License (ODbL). Entries are
+        contributed by the public and are often incomplete or wrong &mdash; check the packet
+        before relying on them.
+      </p>
+      <button class="btn-ghost" id="legalOff" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-compass"></use></svg> openfoodfacts.org</button>
+
+      <label class="field-label" style="margin-top:20px;">OPEN SOURCE</label>
+      <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
+        <strong>ZXing-js</strong> (@zxing/library) &mdash; barcode decoding, used under the MIT
+        License, Copyright &copy; ZXing-js authors. Loaded on demand from the jsDelivr CDN.<br><br>
+        <strong>Typefaces</strong> &mdash; supplied by Google Fonts under the SIL Open Font
+        License or the Apache License 2.0.
+      </p>
+
+      <label class="field-label" style="margin-top:20px;">TRADEMARKS</label>
+      <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
+        Product names and brands appearing in nutrition results belong to their respective
+        owners. Loadout is not affiliated with, endorsed by or sponsored by any of them.
+      </p>
+
+    </div>
+  </div>
+</div>
+
+<!-- First-run health notice. Deliberately NOT in ALL_MODALS: Escape and backdrop
+     taps must not dismiss it, so acknowledgement is a real action. -->
+<div class="modal-wrap" id="modalDisclaimer" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalDisclaimerTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalDisclaimerTitle">BEFORE YOU START</span>
+    </div>
+    <div class="modal-body">
+      <p class="subtitle" style="font-size:12px; margin:0;">
+        Loadout gives <strong>general fitness estimates for information only</strong>. It is not
+        medical, clinical or professional dietary advice, and it is not a medical device.
+      </p>
+      <p class="subtitle" style="font-size:12px; margin:12px 0 0;">
+        Calorie and macro numbers are approximations. Nutrition data is contributed by
+        volunteers and is often incomplete or wrong &mdash; always check the packet.
+      </p>
+      <p class="subtitle" style="font-size:12px; margin:12px 0 0;">
+        Talk to a qualified healthcare professional before changing your diet, especially if you
+        are pregnant, under 18, or have any medical condition or eating disorder.
+      </p>
+      <p class="subtitle" style="font-size:12px; margin:12px 0 0;">
+        Everything you enter stays on this device. Nothing is uploaded.
+      </p>
+      <button class="btn-primary" id="disclaimerOk" style="margin-top:18px;">I UNDERSTAND</button>
+    </div>
+  </div>
+</div>
+
+<!-- Running cook timers. Lives outside the Cook Plan modal so a timer stays
+     visible wherever you are in the app. Rendered by js/30-timers.js. -->
+<div id="timerStrip" class="timer-strip" hidden aria-live="polite" aria-label="Running timers"></div>
 
 <nav id="tabBar" class="tab-bar" hidden aria-label="Sections">
   <button class="tab" data-tab="sheet"   aria-label="Character sheet"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Sheet</span></button>
@@ -710,6 +826,9 @@
                inputmode="numeric" autocomplete="off">
         <button class="fav-clear" id="offClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
+      <button class="photo-btn" id="btnScanCam" type="button" hidden>
+        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
+      </button>
       <label class="photo-btn" for="barcodePhoto">
         <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Have a picture of a barcode? Upload it here
       </label>
@@ -774,5 +893,8 @@
 <script src="js/25-persistence.js"></script>
 <script src="js/26-shopping-pantry.js"></script>
 <script src="js/27-init.js"></script>
+<script src="js/28-legal.js"></script>
+<script src="js/29-scanner.js"></script>
+<script src="js/30-timers.js"></script>
 </body>
 </html>

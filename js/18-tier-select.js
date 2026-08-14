@@ -444,9 +444,11 @@
   document.querySelectorAll('[data-close]').forEach(b=>
     b.addEventListener('click', ()=> closeModal(b.getAttribute('data-close'))));
   // tapping the dimmed area closes too
+  /* modalDisclaimer is deliberately absent: the first-run health notice must not
+     be dismissable by Escape or a backdrop tap. */
   const ALL_MODALS = ['modalHow','modalStats','modalSystem','modalRecipePlace','modalFoodPick',
                       'modalPrepDay','modalPortion','modalJournalFood','modalPantry',
-                      'modalCookPlan'];
+                      'modalCookPlan','modalLegal'];
   ALL_MODALS.forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', e=>{ if (e.target === el) closeModal(id); });

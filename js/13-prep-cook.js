@@ -266,6 +266,8 @@
               <strong class="n-green">${mins(j.active)} hands-on</strong>
               ${j.total > j.active ? ` · ${mins(j.total - j.active)} unattended · done by ${clockAt(j.end)}` : ''}</div>
             <div class="cook-bar"><span style="width:${activePct}%; background:${col};"></span></div>
+            <button class="mini-btn timer-start" data-timer-mins="${j.total}"
+                    data-timer-label="${escapeHtml(j.name)}"><svg class="px" aria-hidden="true"><use href="#i-timer"></use></svg> START ${escapeHtml(mins(j.total))} TIMER</button>
           </div>
         </div>`;
       }).join('')}

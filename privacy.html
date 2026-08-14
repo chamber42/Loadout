@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Loadout — Privacy Policy</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
+
+<!-- Deliberately uses system fonts rather than Google Fonts. A page that
+     discloses third-party font loading should not itself perform any. -->
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111a27; --line:#1e2c3d;
+    --cyan:#00fff2; --green:#39ff88; --amber:#ffb000;
+    --text:#dff3ff; --muted:#8296ad;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; padding:32px 20px 80px;
+    background:var(--bg); color:var(--text);
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+    font-size:15px; line-height:1.7;
+  }
+  .wrap{ max-width:760px; margin:0 auto; }
+  a{ color:var(--cyan); }
+  a:hover{ color:var(--green); }
+  h1{ font-size:24px; letter-spacing:1px; margin:0 0 4px; color:var(--green); }
+  h2{ font-size:15px; letter-spacing:1.5px; text-transform:uppercase;
+      margin:36px 0 10px; padding-bottom:6px;
+      border-bottom:1px solid var(--line); color:var(--cyan); }
+  .meta{ color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .card{ background:var(--panel); border:1px solid var(--line);
+         border-radius:8px; padding:16px 18px; margin:16px 0; }
+  .card.key{ border-color:var(--green); }
+  table{ width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; }
+  th,td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--line);
+         vertical-align:top; }
+  th{ color:var(--amber); text-transform:uppercase; letter-spacing:1px; font-size:12px; }
+  ul{ padding-left:20px; }
+  li{ margin:7px 0; }
+  code{ background:#0d1420; border:1px solid var(--line);
+        padding:1px 5px; border-radius:3px; font-size:13px; }
+  .tag{ display:inline-block; background:#0d1420; border:1px solid var(--green);
+        color:var(--green); font-size:11px; letter-spacing:1px; padding:2px 8px;
+        border-radius:3px; text-transform:uppercase; }
+  .fill{ color:var(--amber); }
+  footer{ margin-top:44px; padding-top:16px; border-top:1px solid var(--line);
+          color:var(--muted); font-size:13px; }
+  .scroll{ overflow-x:auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Loadout — Privacy Policy</h1>
+  <p class="meta">Last updated: 14 August 2026</p>
+
+  <div class="card key">
+    <span class="tag">In short</span>
+    <p style="margin:10px 0 0;">Loadout has no accounts, no analytics, no advertising and no
+    tracking of any kind. Everything you enter stays on your own device. We operate no server
+    and receive no data from you whatsoever &mdash; not your meals, not your body stats, not
+    your photos.</p>
+  </div>
+
+  <h2>What Loadout stores, and where</h2>
+  <p>All of your information is kept in your browser's local storage, on the device you are
+  using. It is never uploaded anywhere. This includes:</p>
+  <ul>
+    <li>Character details you enter: age, sex, height, bodyweight, activity level and goal</li>
+    <li>Your calorie and macronutrient targets</li>
+    <li>Meal plans, prep schedules, pantry contents and shopping lists</li>
+    <li>Journal entries recording what you ate</li>
+    <li>App preferences such as your chosen theme</li>
+  </ul>
+  <p>Because this data lives only on your device, we cannot see it, retrieve it or restore it.
+  If you clear your browser data or use the app's <strong>Start over</strong> command, it is
+  permanently gone.</p>
+
+  <h2>Barcode photographs</h2>
+  <div class="card">
+    <p style="margin:0;">When you photograph a barcode, the image is decoded
+    <strong>entirely on your device</strong>. It is drawn to an in-memory canvas, read for a
+    barcode number, and discarded. <strong>The photograph is never uploaded, never
+    transmitted and never stored.</strong> Only the resulting barcode number &mdash; a short
+    string of digits &mdash; is used, and only to look up that product.</p>
+  </div>
+  <p>Loadout requests no camera permission and captures no live video. It only reads an image
+  file that you explicitly choose.</p>
+
+  <h2>Third-party services</h2>
+  <p>Loadout does not send your personal data to anyone. However, like any web page, loading it
+  makes network requests, and the operators of those services will see your IP address. These
+  are the only external connections the app makes:</p>
+
+  <div class="scroll">
+  <table>
+    <tr><th>Service</th><th>When</th><th>What it receives</th></tr>
+    <tr>
+      <td><a href="https://world.openfoodfacts.org/" rel="noopener">Open Food Facts</a></td>
+      <td>Only when you scan a barcode or search for a food</td>
+      <td>The barcode number or search term, plus your IP address</td>
+    </tr>
+    <tr>
+      <td><a href="https://www.jsdelivr.com/" rel="noopener">jsDelivr</a></td>
+      <td>Only when a barcode decoder is needed (always on iPhone)</td>
+      <td>Your IP address, to deliver the decoder file</td>
+    </tr>
+  </table>
+  </div>
+
+  <p>These services are operated independently of Loadout and handle your IP address under
+  their own privacy policies. No identifying information about you is attached to any of
+  these requests by Loadout.</p>
+
+  <div class="card">
+    <p style="margin:0;"><strong>Typefaces are served by Loadout itself.</strong> Many web
+    apps load their fonts from Google, which discloses every visitor's IP address to Google
+    on every page load. Loadout does not: the fonts are included with the app, so no request
+    is made to Google and nothing about you reaches them. If you never scan a barcode, the
+    app makes <strong>no external network requests at all</strong>.</p>
+  </div>
+
+  <h2>What we do not do</h2>
+  <ul>
+    <li>We do not collect, receive, store or process any personal data</li>
+    <li>We do not use cookies or any similar tracking technology</li>
+    <li>We do not use analytics or crash-reporting services</li>
+    <li>We do not show advertising</li>
+    <li>We do not sell or share personal information &mdash; we have none to sell</li>
+    <li>We do not create accounts or profiles</li>
+    <li>We do not request your location</li>
+  </ul>
+
+  <h2>Your rights</h2>
+  <p>Privacy laws including the GDPR and the CCPA give you rights to access, correct, export or
+  delete personal data that a company holds about you. Loadout holds none, so there is nothing
+  for us to disclose or erase. You retain complete and direct control of your own copy: it is
+  on your device, and <strong>Start over</strong> in the System menu erases all of it
+  immediately.</p>
+
+  <h2>Children</h2>
+  <p>Loadout is a general-audience fitness tool and is not directed at children under 13. It
+  collects no data from anyone, children included.</p>
+
+  <h2>Health disclaimer</h2>
+  <div class="card">
+    <p style="margin:0;">Loadout provides general fitness estimates for informational purposes
+    only. It is <strong>not medical, clinical, or professional dietary advice</strong>, and it
+    is not a medical device. Calorie and macronutrient figures are approximations produced by
+    standard formulas, and nutrition data supplied by Open Food Facts is contributed by
+    volunteers and is frequently incomplete or inaccurate &mdash; always check the packaging.
+    Consult a qualified healthcare professional before changing your diet, particularly if you
+    are pregnant, under 18, or have any medical condition or eating disorder.</p>
+  </div>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy changes, the date at the top of this page will be updated. Because the app
+  collects no data, any change will concern how the app itself behaves rather than how
+  information about you is handled.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy can be sent to:
+  <span class="fill">[ADD YOUR CONTACT EMAIL HERE]</span></p>
+
+  <footer>
+    Loadout stores your data on your device and nowhere else.<br>
+    <a href="index.html">&larr; Back to the app</a>
+  </footer>
+
+</div>
+</body>
+</html>

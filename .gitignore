@@ -1,0 +1,8 @@
+# The 1.2MB single-file original, kept locally as a fallback. Deliberately not
+# published: a stale copy of the whole app sitting next to the live one is a
+# trap, both for visitors and for future edits.
+index.original.html
+
+# Transient test harnesses are written into this folder and deleted again.
+# Ignored so a crashed run can never commit one by accident.
+__*.html
