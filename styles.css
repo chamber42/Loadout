@@ -96,7 +96,13 @@
   .modal-wrap{ position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end;
                justify-content:center; background:rgba(0,0,0,.72); padding:0; }
   .modal-wrap[hidden]{ display:none; }
-  .modal-card{ width:100%; max-width:640px; max-height:86vh; display:flex; flex-direction:column;
+  .modal-card{ width:100%; max-width:640px; display:flex; flex-direction:column;
+               /* vh on a phone means the viewport with the browser toolbars HIDDEN,
+                  so a sheet sized in vh hangs below the screen whenever the toolbar
+                  is showing. dvh tracks the visible area; vh stays as the fallback
+                  for browsers that lack it. */
+               max-height:86vh;
+               max-height:86dvh;
                background:var(--panel); border:1px solid var(--line);
                border-radius:16px 16px 0 0; box-shadow:0 -6px 30px rgba(0,0,0,.5);
                animation:sheetUp .22s ease both; }
@@ -111,7 +117,13 @@
   .modal-x{ background:transparent; border:1px solid var(--line); border-radius:8px;
             color:var(--muted); width:38px; height:38px; cursor:pointer; font-size:15px; flex:0 0 auto; }
   .modal-x:active{ color:var(--red); border-color:var(--red); }
-  .modal-body{ padding:16px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  /* min-height:0 is required: a flex child defaults to min-height:auto, which
+     refuses to shrink below its content, so the body overflows the card instead
+     of scrolling and the last controls end up unreachable.
+     The bottom padding clears the iPhone home indicator, which otherwise sits
+     on top of whatever button is last in the sheet. */
+  .modal-body{ padding:16px; padding-bottom:calc(16px + var(--safe-bottom));
+               min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
 
   /* ---------- Amount editing ---------- */
   .amt-tap{ display:inline-flex; align-items:center; gap:4px; background:var(--accent-soft);
@@ -697,7 +709,7 @@
                padding:0 0 env(safe-area-inset-bottom); }
   .modal-back[hidden]{ display:none; }
   @media (min-width:640px){ .modal-back{ align-items:center; padding:24px; } }
-  .modal{ width:100%; max-width:560px; max-height:86vh; overflow-y:auto;
+  .modal{ width:100%; max-width:560px; max-height:86vh; max-height:86dvh; overflow-y:auto;
           background:var(--panel); border:1px solid var(--line);
           border-radius:16px 16px 0 0; padding:18px 16px calc(22px + var(--safe-bottom));
           box-shadow:0 -8px 30px rgba(0,0,0,.5); }
@@ -5086,7 +5098,10 @@
 
   /* ---------- COOK TIMERS (30-timers.js) ---------- */
   .timer-strip{
-    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    /* Below modals (60) and the HUD (50), above the tab bar (40). At 60 it tied
+       with .modal-wrap and, being later in the DOM, painted over modal buttons
+       whenever a timer was running. */
+    position:fixed; left:0; right:0; bottom:0; z-index:45;
     padding:8px 10px calc(8px + var(--safe-bottom));
     background:linear-gradient(180deg, rgba(10,14,20,.92), rgba(10,14,20,.99));
     border-top:1px solid var(--line);
