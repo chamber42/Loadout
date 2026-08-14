@@ -132,7 +132,26 @@
       <button class="modal-x" data-close="modalJournalFood" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
     </div>
     <div class="modal-body">
-      <div class="fav-search-wrap">
+      <!-- Barcode entry for the journal. A packaged item can be logged straight
+           here without detouring through the loadout tab, which matters most for
+           someone who already has a prep built and is just recording what they ate. -->
+      <button class="photo-btn" id="jfScanCam" type="button" hidden>
+        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
+      </button>
+      <label class="photo-btn" for="jfBarcodePhoto">
+        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Use a picture of a barcode
+      </label>
+      <input type="file" id="jfBarcodePhoto" accept="image/*"
+             style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
+             aria-label="Upload a picture of a barcode">
+      <div class="fav-search-wrap" style="margin-top:8px;">
+        <input type="text" id="jfBarcode" class="fav-search" placeholder="…or type a barcode"
+               inputmode="numeric" autocomplete="off" aria-label="Barcode number">
+        <button class="fav-clear" id="jfBarcodeClear" aria-label="Clear barcode" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="jfScanResults"></div>
+
+      <div class="fav-search-wrap" style="margin-top:14px;">
         <input type="text" id="jfoodSearch" class="fav-search" placeholder="Search the food library"
                autocomplete="off" aria-label="Search the food library">
         <button class="fav-clear" id="jfoodClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
@@ -896,5 +915,6 @@
 <script src="js/28-legal.js"></script>
 <script src="js/29-scanner.js"></script>
 <script src="js/30-timers.js"></script>
+<script src="js/31-journal-scan.js"></script>
 </body>
 </html>

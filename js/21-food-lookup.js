@@ -248,7 +248,15 @@
     }catch(e){ return ''; }
   }
 
+  /* Where a decoded barcode should land. The same scanner and the same photo
+     decoder serve the loadout tab and the journal, so the caller says which
+     one it is rather than each growing its own copy of the pipeline.
+     Set by whichever control started the scan; journalScanLookup() lives in
+     31-journal-scan.js and is resolved at call time, after every file loads. */
+  let scanTarget = 'eaten';
+
   function useScannedCode(code){
+    if (scanTarget === 'journal'){ journalScanLookup(code); return; }
     const input = document.getElementById('offSearch');
     input.value = code;
     document.getElementById('offClear').style.display = '';
@@ -391,6 +399,7 @@
   });
   document.getElementById('barcodePhoto').addEventListener('change', (e)=>{
     const file = e.target.files && e.target.files[0];
+    scanTarget = 'eaten';           // this control belongs to the loadout tab
     if (file) decodeBarcodePhoto(file);
     e.target.value = '';   // so the same photo can be retried
   });

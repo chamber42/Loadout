@@ -263,7 +263,10 @@
   const btnScanCam = document.getElementById('btnScanCam');
   if (btnScanCam && cameraSupported()){
     btnScanCam.hidden = false;             // only offered where it can actually work
-    btnScanCam.addEventListener('click', startScan);
+    btnScanCam.addEventListener('click', function(){
+      scanTarget = 'eaten';                // this button belongs to the loadout tab
+      startScan();
+    });
   }
 
   const scanCloseBtn  = document.getElementById('scanClose');
