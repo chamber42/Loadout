@@ -4465,9 +4465,9 @@
 
   /* The stock carries stain and vignette, so the background under a caption
      is darker than the swatch these were chosen against. */
-  body[data-theme="fantasy"]{  --pp-soft:#563f20; }
-  body[data-theme="horror"]{   --pp-soft:#3d3636; }
-  body[data-theme="survival"]{ --pp-soft:#454036; }
+  body[data-theme="fantasy"]{  --pp-soft:#4d381c; }
+  body[data-theme="horror"]{   --pp-soft:#242020; }
+  body[data-theme="survival"]{ --pp-soft:#3d3830; }
 
 
   /* ---- pass 14: recessed plates on paper ---------------------------------
@@ -5131,3 +5131,24 @@
   .timer-row.timer-done .timer-fill{ background:rgba(57,255,136,.14); }
 
   .mini-btn.timer-start{ margin-top:8px; }
+
+  /* ---- contrast pass: measured against the stock, not the swatch -----------
+     --pp-soft and the seal red were both below WCAG AA once the stain and
+     vignette darken the sheet under a caption. Measured on the rendered page:
+     horror captions were 4.04:1 and the rank line 3.44:1, both under the 4.5
+     floor for body text. These are the same hues, drafted darker.
+     .hero-rank is the one place the seal is used as TEXT rather than as a
+     stamp, so it gets the text-safe draft; stamps and rules keep --pp-seal.
+     ---------------------------------------------------------------------- */
+  body[data-theme="fantasy"]{  --pp-seal-text:#79241c; }
+  body[data-theme="horror"]{   --pp-seal-text:#4e1313; }
+  body[data-theme="survival"]{ --pp-seal-text:#712517; }
+
+  /* Only where the panel is ACTUALLY parchment. Salvage panels are parchment on
+     the quest log but dark everywhere else, so darkening the rank line there put
+     dark red on a dark green plate -- worse than the lime it replaced. */
+  body[data-material="paper"]   .screen:not(#screen-quest) .panel .hero-rank,
+  body[data-material="paper"]   #screen-quest .panel .hero-rank,
+  body[data-material="salvage"] #screen-quest .panel .hero-rank{
+    color:var(--pp-seal-text);
+  }
