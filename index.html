@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Loadout</title>
+
+<!-- ===== VIEWPORT: kill rubber-band + double-tap zoom on iOS/Android ===== -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e14">
+<meta name="color-scheme" content="dark">
+
+<!-- ===== APPLE PWA CONFIG ===== -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LOADOUT">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M50 8 L88 24 V52 C88 74 72 88 50 96 C28 88 12 74 12 52 V24 Z' fill='none' stroke='%2300fff2' stroke-width='4'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Share+Tech+Mono&family=Cinzel:wght@600;700&family=EB+Garamond:wght@400;500&family=Rajdhani:wght@600;700&family=Barlow+Condensed:wght@400;500;600&family=IM+Fell+English+SC&family=Orbitron:wght@600;800&family=Chakra+Petch:wght@400;600&family=Special+Elite&family=Courier+Prime&family=Fredoka:wght@500;600&family=Nunito:wght@400;600&family=Silkscreen:wght@400;700&family=VT323&family=Roboto+Slab:wght@500;700&family=Lato:wght@400;700&family=Metamorphous&family=Crimson+Text:wght@400;600&family=Racing+Sans+One&family=Titillium+Web:wght@400;600&display=swap">
+
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ==========================================================================
+     PIXEL ICON SET  —  every symbol in the app is drawn here, not an emoji.
+
+     Each icon is a 12x12 grid:   '#' solid   '+' mid tone   '-' shadow   '.' empty
+     Icons are painted with the surrounding text colour, so they retheme for free.
+
+     To redraw an icon, edit its grid below — nothing else has to change.
+     To add one, add a key here and call  ic('yourkey')  wherever you want it.
+     ========================================================================== -->
+<script src="icons.js"></script>
+
+<div id="hud" aria-live="polite">
+  <div class="hud-top">
+    <span class="lvbadge" id="hudTierBadge">LV.1</span>
+    <span id="hudTierName">—</span>
+    <span class="kcal-readout" id="hudKcalReadout">0 / 0 kcal</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">KCAL</span>
+    <div class="bar-track" role="img" aria-label="Calories consumed"><div class="bar-fill kcal" id="barKcal" style="width:0%"></div><span class="bar-num" id="numKcal">0 / 0</span></div>
+    <span class="bar-val" id="valKcal">0 left</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">PROT</span>
+    <div class="bar-track"><div class="bar-fill protein" id="barProtein" style="width:0%"></div><span class="bar-num" id="numProtein">0 / 0</span></div>
+    <span class="bar-val" id="valProtein">0g left</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">CARB</span>
+    <div class="bar-track"><div class="bar-fill carbs" id="barCarbs" style="width:0%"></div><span class="bar-num" id="numCarbs">0 / 0</span></div>
+    <span class="bar-val" id="valCarbs">0g left</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-label">FAT</span>
+    <div class="bar-track"><div class="bar-fill fat" id="barFat" style="width:0%"></div><span class="bar-num" id="numFat">0 / 0</span></div>
+    <span class="bar-val" id="valFat">0g left</span>
+  </div>
+  <div class="micro-row">
+    <span id="hudFibre">FIBER 0 / 0g</span>
+    <span id="hudSodium">SODIUM 0mg</span>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalFoodPick" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="foodPickTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="foodPickTitle">CHOOSE</span>
+      <button class="modal-x" data-close="modalFoodPick" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fav-search-wrap">
+        <input type="text" id="foodPickSearch" class="fav-search" placeholder="Type to search" autocomplete="off" aria-label="Search foods">
+        <button class="fav-clear" id="foodPickClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="foodPickList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalPrepDay" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="prepDayTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="prepDayTitle">DAY 1</span>
+      <button class="modal-x" data-close="modalPrepDay" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="prepDayBody"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalCookPlan" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cookPlanTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="cookPlanTitle">COOK PLAN</span>
+      <button class="modal-x" data-close="modalCookPlan" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="cookPlanBody"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalPantry" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="pantryTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="pantryTitle">ALREADY HAVE SOME</span>
+      <button class="modal-x" data-close="modalPantry" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="pantryBody"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalPortion" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="portionTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="portionTitle">AMOUNT</span>
+      <button class="modal-x" data-close="modalPortion" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="portionBody"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalJournalFood" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="jfoodTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="jfoodTitle">ADD FOOD</span>
+      <button class="modal-x" data-close="modalJournalFood" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="fav-search-wrap">
+        <input type="text" id="jfoodSearch" class="fav-search" placeholder="Search the food library"
+               autocomplete="off" aria-label="Search the food library">
+        <button class="fav-clear" id="jfoodClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="jfoodPanel"></div>
+      <div id="jfoodList"></div>
+      <button class="mini-btn add" id="jfoodManual" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Not in the library — enter it by hand</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalRecipePlace" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="recipePlaceTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="recipePlaceTitle">PLACE RECIPE</span>
+      <button class="modal-x" data-close="modalRecipePlace" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="recipePlaceBody"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalSystem" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalSystemTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalSystemTitle">SYSTEM</span>
+      <button class="modal-x" data-close="modalSystem" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label">SWITCH GAME</label>
+      <div class="theme-grid" id="sysThemeGrid"></div>
+
+      <label class="field-label" style="margin-top:20px;">CHARACTER</label>
+      <button class="btn-ghost" id="sysRecreate"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Recreate character — change goal, weight or activity</button>
+      <button class="btn-ghost" id="sysReprep"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> Redo the meal prep loadout</button>
+
+      <label class="field-label" style="margin-top:20px;">DANGER ZONE</label>
+      <button class="btn-ghost" id="sysReset" style="border-color:var(--red); color:var(--red);"><svg class="px" aria-hidden="true"><use href="#i-power"></use></svg> Start over — wipes everything saved</button>
+      <p class="subtitle" style="font-size:11px; margin:12px 0 0;">
+        Everything is stored on this device only. Starting over can't be undone.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalHow" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalHowTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalHowTitle">HOW THIS WAS WORKED OUT</span>
+      <button class="modal-x" data-close="modalHow" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="sheetBreakdown"></div>
+  </div>
+</div>
+
+<div class="modal-wrap" id="modalStats" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalStatsTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalStatsTitle">FULL NUTRITION</span>
+      <button class="modal-x" data-close="modalStats" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="fullStatsBody"></div>
+  </div>
+</div>
+
+<nav id="tabBar" class="tab-bar" hidden aria-label="Sections">
+  <button class="tab" data-tab="sheet"   aria-label="Character sheet"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Sheet</span></button>
+  <button class="tab" data-tab="roadmap" aria-label="Meal prep loadout"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-map"></use></svg></span><span class="lbl" id="tabLoadoutLbl">Loadout</span></button>
+  <button class="tab" data-tab="prep"    aria-label="Prepped days"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-bento"></use></svg></span><span class="lbl">Prep Days</span></button>
+  <button class="tab" data-tab="journal" aria-label="Meal journal"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg></span><span class="lbl">Journal</span></button>
+  <button class="tab" data-tab="quest"   aria-label="Quest log calendar"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg></span><span class="lbl" id="tabQuestLbl">Quest Log</span></button>
+  <button class="tab" data-tab="recipes" aria-label="Recipe book"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg></span><span class="lbl">Recipes</span></button>
+</nav>
+
+<div id="app">
+
+  <!-- SCREEN 0: ATTRACT -->
+  <section class="screen active" id="screen-attract">
+    <div class="attract">
+      <div class="cabinet">
+        <div class="cab-crown" aria-hidden="true"></div>
+        <div class="cab-header">
+          <div class="cab-plate">
+            <span class="attract-logo">LOADOUT</span>
+            <span class="attract-sub">MEAL PREP CALCULATOR</span>
+          </div>
+        </div>
+        <div class="cab-grille" aria-hidden="true"><i></i></div>
+        <div class="cab-bezel">
+          <div class="cab-glass">
+            <div class="cab-screen">
+              <div class="attract-blink">PRESS START<br>TO PLAY</div>
+            </div>
+          </div>
+        </div>
+        <div class="cab-deck">
+          <span class="cab-stick" aria-hidden="true"></span>
+          <span class="cab-btns">
+            <button class="arcade-btn ab-start" id="btnStart" aria-label="Press start">START</button>
+            <button class="arcade-btn ab-select" id="btnSelect" aria-label="Select game">SELECT</button>
+          </span>
+        </div>
+        <div class="cab-lip" aria-hidden="true"></div>
+        <div class="cab-body">
+          <div class="cab-coin" aria-hidden="true"></div>
+          <div class="attract-credit">INSERT PROTEIN &mdash; 1 CREDIT</div>
+        </div>
+        <div class="cab-base" aria-hidden="true"></div>
+      </div>
+      <button class="btn-ghost" id="attractContinue" style="display:none; max-width:260px; margin-top:22px;">CONTINUE SAVED GAME</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 0.5: GAME LIBRARY -->
+  <section class="screen" id="screen-library">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-attract">BACK</button>
+    </div>
+    <div class="eyebrow">SELECT GAME</div>
+    <h1 class="title">Game Library</h1>
+    <p class="subtitle">Pick a world. It sets the look, the language and what your class is called &mdash; the food and the maths stay the same.</p>
+    <div id="libraryGrid" class="library-grid"></div>
+  </section>
+
+  <section class="screen" id="screen-onboard">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-library">GAME LIBRARY</button>
+    </div>
+    <div class="eyebrow" data-word="charCreate">CHARACTER CREATION</div>
+    <h1 class="title">Set Your Daily Target</h1>
+    <p class="subtitle">Already tracking in MyFitnessPal or another app? Paste that number in — it will always beat a formula. Otherwise the calculator below will estimate it.</p>
+
+
+
+    <div class="panel">
+      <label class="field-label">SET CALORIES BY</label>
+      <div class="choice-grid" id="modeGrid" style="grid-template-columns:1fr 1fr;">
+        <button class="choice-btn selected" data-mode="direct"><span><strong>My number</strong><span class="desc">From MyFitnessPal or a coach</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg></span></button>
+        <button class="choice-btn" data-mode="calc"><span><strong>Calculate</strong><span class="desc">Estimate from my stats</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-calc"></use></svg></span></button>
+      </div>
+    </div>
+
+    <!-- DIRECT ENTRY -->
+    <div class="panel" id="directPanel">
+      <label class="field-label">DAILY CALORIE TARGET</label>
+      <input type="number" id="directKcalInput" placeholder="e.g. 3010" inputmode="numeric" min="800" max="6000">
+
+      <label class="field-label" style="margin-top:16px;">MACROS — LEAVE BLANK TO AUTO-FILL</label>
+      <div style="display:flex; gap:8px;">
+        <input type="number" id="directPInput" placeholder="Protein g" inputmode="numeric" min="0" max="500">
+        <input type="number" id="directCInput" placeholder="Carbs g" inputmode="numeric" min="0" max="900">
+        <input type="number" id="directFInput" placeholder="Fat g" inputmode="numeric" min="0" max="300">
+      </div>
+      <p class="subtitle" style="font-size:10px; margin:10px 0 0;">Copy these straight from your MyFitnessPal goal screen and the two apps will agree exactly.</p>
+
+      <label class="field-label" style="margin-top:16px;">BODYWEIGHT (LBS) — OPTIONAL</label>
+      <input type="number" id="directBwInput" placeholder="e.g. 213" inputmode="numeric" min="70" max="500">
+      <p class="subtitle" style="font-size:10px; margin:8px 0 0;">Only used to set protein if you left the macro fields blank.</p>
+
+      <button class="btn-primary" id="btnUseDirect" disabled>USE THIS TARGET</button>
+    </div>
+
+    <!-- CALCULATOR -->
+    <div class="panel" id="calcPanel" style="display:none;">
+      <label class="field-label">GOAL</label>
+      <div class="choice-grid" id="goalGrid">
+        <button class="choice-btn" data-goal="extreme_loss"><span><strong>Cut Hard</strong><span class="desc">−1000 kcal/day (~2 lb/wk)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-fire"></use></svg></span></button>
+        <button class="choice-btn" data-goal="loss"><span><strong>Fat Loss</strong><span class="desc">−500 kcal/day (~1 lb/wk)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-sword"></use></svg></span></button>
+        <button class="choice-btn" data-goal="maintain"><span><strong>Maintain</strong><span class="desc">Hold current weight</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-shield"></use></svg></span></button>
+        <button class="choice-btn" data-goal="gain"><span><strong>Bulk</strong><span class="desc">+300 kcal/day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-muscle"></use></svg></span></button>
+      </div>
+
+      <label class="field-label" style="margin-top:18px;">DAILY LIFE — NOT YOUR WORKOUTS</label>
+      <div class="choice-grid" id="activityGrid">
+        <button class="choice-btn" data-activity="1.25"><span><strong>Desk Job</strong><span class="desc">Sitting most of the day, desk job</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-chair"></use></svg></span></button>
+        <button class="choice-btn" data-activity="1.4"><span><strong>Lightly Active</strong><span class="desc">On your feet a fair amount</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-walk"></use></svg></span></button>
+        <button class="choice-btn" data-activity="1.6"><span><strong>Active</strong><span class="desc">Walking/moving most of the day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-run"></use></svg></span></button>
+        <button class="choice-btn" data-activity="1.8"><span><strong>Very Active</strong><span class="desc">Physical labor all day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-build"></use></svg></span></button>
+      </div>
+      <p class="subtitle" style="font-size:10px; margin:10px 0 0;">Like MyFitnessPal, this describes your job and daily movement only. Log training below.</p>
+
+      <label class="field-label" style="margin-top:16px;">A TYPICAL TRAINING SESSION</label>
+      <div id="exerciseOptions" style="margin-top:2px;">
+        <div class="choice-grid" id="exerciseGrid" style="grid-template-columns:repeat(3,1fr);"></div>
+        <input type="number" id="exerciseInput" placeholder="Calories burned" inputmode="numeric" min="0" max="3000" style="display:none; margin-top:10px;">
+      </div>
+      <p class="subtitle" id="exerciseNote" style="font-size:10px; margin:10px 0 0;"></p>
+      <p class="subtitle" style="font-size:10px; margin:8px 0 0;">
+        This is one session's burn, the same figure you'd eat back in MyFitnessPal — not how often you train.
+        You'll get <strong>two targets</strong>: a rest-day number and a training-day number. How many of each
+        you're cooking for is decided later, when you build the prep.
+      </p>
+      <div id="targetPairPreview"></div>
+
+      <label class="field-label" style="margin-top:18px;">BIOLOGICAL SEX</label>
+      <div class="choice-grid" id="sexGrid" style="grid-template-columns:1fr 1fr;">
+        <button class="choice-btn" data-sex="male"><span><strong>Male</strong></span></button>
+        <button class="choice-btn" data-sex="female"><span><strong>Female</strong></span></button>
+      </div>
+
+      <label class="field-label" style="margin-top:18px;">CURRENT BODYWEIGHT (LBS)</label>
+      <input type="number" id="bodyweightInput" placeholder="e.g. 213" inputmode="numeric" min="70" max="500">
+
+      <label class="field-label" style="margin-top:14px;">HEIGHT</label>
+      <div style="display:flex; gap:10px;">
+        <input type="number" id="heightFtInput" placeholder="ft" inputmode="numeric" min="3" max="8">
+        <input type="number" id="heightInInput" placeholder="in" inputmode="numeric" min="0" max="11">
+      </div>
+
+      <label class="field-label" style="margin-top:14px;">AGE</label>
+      <input type="number" id="ageInput" placeholder="e.g. 28" inputmode="numeric" min="14" max="99">
+
+      <p class="subtitle" id="calcPreview" style="font-size:10px; margin:14px 0 0;"></p>
+      <button class="btn-primary" id="btnRecommend" disabled>USE THIS TARGET</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2: TIER SELECT -->
+  <!-- SCREEN 2: CHARACTER SHEET -->
+  <!-- CHARACTER SHEET -->
+  <section class="screen" id="screen-tiers">
+    <div class="eyebrow" id="sheetEyebrow">CHARACTER SHEET</div>
+    <h1 class="title" id="sheetTitle">Your Character</h1>
+
+    <!-- class banner: portrait, identity plate, and the calorie band the
+         class is drawn from. Laid out as a game character card rather than
+         a row of text. -->
+    <div class="panel sheet-hero cs-hero">
+      <div class="cs-hero-grid">
+        <div class="hero-left">
+          <div class="portrait" id="sheetPortrait">
+            <img id="portraitImg" alt="" hidden>
+            <span class="portrait-fallback" id="sheetEmblem"><svg class="px" aria-hidden="true"><use href="#i-gamepad"></use></svg></span>
+            <span class="cs-scan" aria-hidden="true"></span>
+          </div>
+          <div class="hero-rank" id="sheetRank">TIER 3</div>
+          <div class="cs-pips" id="sheetPips" aria-hidden="true"></div>
+        </div>
+        <div class="hero-right">
+          <div class="sheet-class" id="sheetClass">—</div>
+          <div class="sheet-goal" id="sheetGoal"></div>
+          <div class="hero-kcal" id="sheetKcalWrap"><span id="sheetKcal">0</span><small>kcal / day</small></div>
+        </div>
+      </div>
+      <div class="cs-band" id="sheetBand"></div>
+    </div>
+
+    <!-- vitals: the things that drive everything else -->
+    <div class="panel cs-mod">
+      <label class="field-label mod-head"><span class="mod-no">01</span>VITALS</label>
+      <div class="vitals-grid" id="sheetVitals"></div>
+      <p class="subtitle" style="font-size:11px; margin:12px 0 0;">
+        Tap any of these to change it — everything below updates as you type.
+      </p>
+    </div>
+
+    <div class="panel cs-mod">
+      <label class="field-label mod-head"><span class="mod-no">02</span>ATTRIBUTES</label>
+      <div class="seg" id="sheetDaySeg" hidden></div>
+      <div class="cs-attr-split">
+        <div class="cs-radar" id="sheetRadar"></div>
+        <div id="sheetMacros"></div>
+      </div>
+      <p class="subtitle" id="sheetMacroNote" style="font-size:11px; margin:12px 0 0;"></p>
+    </div>
+
+    <div class="panel cs-mod">
+      <label class="field-label mod-head"><span class="mod-no">03</span>RESISTANCES</label>
+      <div id="sheetMicros"></div>
+      <button class="btn-ghost" id="btnFullStats" style="margin-top:14px;"><svg class="px" aria-hidden="true"><use href="#i-chart"></use></svg> VIEW FULL STATS</button>
+    </div>
+
+    <button class="btn-primary" id="btnConfirmTier">CONTINUE TO LOADOUT</button>
+    <button class="btn-ghost" id="btnSystem"><svg class="px" aria-hidden="true"><use href="#i-gear"></use></svg> SYSTEM</button>
+    <button class="text-link" id="btnHowWorked">How was this worked out?</button>
+  </section>
+
+  <!-- QUEST LOG -->
+  <!-- PREP DAYS: the prep laid out day by day -->
+  <section class="screen" id="screen-prep">
+    <div class="eyebrow">MEAL PREP</div>
+    <h1 class="title">Your Prepped Days</h1>
+    <p class="subtitle" id="prepDaysIntro"></p>
+    <div id="prepDayList"></div>
+    <div id="prepDishSummary"></div>
+    <button class="btn-ghost" id="btnPrepReshuffle"><svg class="px" aria-hidden="true"><use href="#i-dice"></use></svg> RESHUFFLE THE WHOLE PREP</button>
+    <button class="btn-ghost" id="btnCookPlan"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> COOK PLAN — WHAT ORDER TO COOK IN</button>
+    <button class="btn-ghost" id="btnPrepShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> SHOPPING LIST FOR THIS PREP</button>
+  </section>
+
+  <section class="screen" id="screen-quest">
+    <div class="eyebrow">QUEST LOG</div>
+    <h1 class="title">Your Calendar</h1>
+    <div class="panel cal-panel">
+      <div class="cal-head">
+        <button class="mini-btn" id="calPrev" aria-label="Previous">‹</button>
+        <span class="cal-title" id="calTitle"></span>
+        <button class="mini-btn" id="calNext" aria-label="Next">›</button>
+      </div>
+      <div class="covers-row" style="margin-top:12px;">
+        <span class="covers-label">VIEW</span>
+        <select id="calMode" aria-label="Calendar view">
+          <option value="month">Month</option>
+          <option value="week">Week (Mon–Sun)</option>
+        </select>
+      </div>
+      <div id="calGrid" class="cal-grid"></div>
+      <p class="subtitle" id="calNote" style="font-size:var(--fs-body); margin:14px 0 0;"></p>
+      <div class="paper-fx" aria-hidden="true"></div><div class="paper-edge" aria-hidden="true"></div>
+    </div>
+    <div id="calDayPanel"></div>
+  </section>
+
+  <!-- JOURNAL -->
+  <section class="screen" id="screen-journal">
+    <div class="eyebrow">JOURNAL</div>
+    <h1 class="title">Log Today</h1>
+    <p class="subtitle" id="journalDateLbl"></p>
+    <div id="journalSetup" class="panel" hidden>
+      <label class="field-label">HOW MANY TIMES WILL YOU EAT TODAY?</label>
+      <div class="choice-grid" id="journalCountGrid" style="grid-template-columns:repeat(3,1fr);"></div>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">
+        You haven't built a prep plan yet, so pick how the day breaks down and the journal will match it.
+      </p>
+    </div>
+    <div id="journalBody"></div>
+  </section>
+
+  <!-- RECIPES -->
+  <section class="screen" id="screen-recipes">
+    <div class="eyebrow">RECIPE BOOK</div>
+    <h1 class="title">Recipes</h1>
+    <div class="panel">
+      <div class="fav-search-wrap">
+        <input type="text" id="recipeSearch" class="fav-search" placeholder="Search recipes or an ingredient" autocomplete="off" aria-label="Search recipes">
+        <button class="fav-clear" id="recipeClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <details class="rfold" id="recipeFold">
+        <summary><span class="rfold-lbl">Filters</span><span class="rfold-hint">goal &amp; dish type</span></summary>
+        <div class="rgoal-label">WHAT ARE YOU EATING FOR?</div>
+        <div class="choice-grid" id="recipeGoals" style="grid-template-columns:repeat(2,1fr); margin-top:6px;"></div>
+        <div class="rgoal-label">NARROW IT DOWN</div>
+        <div class="choice-grid" id="recipeFilters" style="grid-template-columns:repeat(2,1fr); margin-top:6px;"></div>
+      </details>
+      <p class="subtitle" id="recipeCount" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+    </div>
+    <div id="recipeList"></div>
+    <div id="sauceList"></div>
+  </section>
+
+  <section class="screen" id="screen-prefs">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-tiers">CHARACTER SHEET</button>
+    </div>
+    <div class="eyebrow" data-word="inventory">INVENTORY FILTERS</div>
+    <h1 class="title">Food Preferences</h1>
+    <p class="subtitle">Select anything that applies. Only matching foods will be offered — leave blank for the full inventory.</p>
+
+    <div class="panel">
+      <label class="field-label">EATING STYLE</label>
+      <div class="choice-grid" id="prefEating"></div>
+      <label class="field-label" style="margin-top:18px;">ALLERGIES &amp; INTOLERANCES</label>
+      <div class="choice-grid" id="prefAllergy"></div>
+      <label class="field-label" style="margin-top:18px;">PROTEINS TO EXCLUDE</label>
+      <div class="choice-grid" id="prefExclude"></div>
+      <p class="subtitle" id="prefSummary" style="font-size:var(--fs-body); margin:14px 0 0;"></p>
+      <button class="btn-primary" id="btnConfirmPrefs">CONTINUE</button>
+      <button class="btn-ghost" id="btnSkipPrefs">SKIP — SHOW FULL INVENTORY</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2.6: CRAVINGS / DISCOVERY -->
+  <section class="screen" id="screen-cravings">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-prefs">PREFERENCES</button>
+    </div>
+    <div class="eyebrow">FLAVOR PROFILE</div>
+    <h1 class="title">Cravings &amp; Kitchen</h1>
+    <p class="subtitle">What you already have, what you love, what you can't stand — and how adventurous today should be.</p>
+
+    <div class="panel mustuse-panel">
+      <label class="field-label"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> INGREDIENTS ON HAND YOU ARE PREPARED TO USE</label>
+      <div class="fav-search-wrap">
+        <input type="text" id="mustSearch" class="fav-search" aria-label="Search ingredients you have on hand" placeholder="Search what you already have — e.g. chicken thigh, rice" autocomplete="off">
+        <button class="fav-clear" id="mustClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="mustChosen" class="fav-chosen mustuse-chosen"></div>
+      <div id="mustResults"></div>
+      <p class="subtitle" id="mustWarn" style="font-size:var(--fs-body); margin:12px 0 0; display:none;"></p>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">
+        These get worked into the plan wherever they fit. Use it for food you need to get through before it turns. Enter how much you have and the planner keeps within it.
+      </p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">HOW SHOULD WE BUILD YOUR MEALS?</label>
+      <div class="choice-grid" id="discoveryGrid" style="grid-template-columns:1fr;">
+        <button class="choice-btn selected" data-discovery="favorites"><span><strong>Stick To My Favorites</strong><span class="desc">Build every meal from the foods you picked below</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-star"></use></svg></span></button>
+        <button class="choice-btn" data-discovery="new"><span><strong>Try Something New</strong><span class="desc">Foods similar to your favorites — but ones you didn't pick</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-compass"></use></svg></span></button>
+      </div>
+      <p class="subtitle" id="discoveryNote" style="font-size:var(--fs-body); margin:10px 0 0;"></p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">YOUR FAVORITES — UP TO 6 PER CATEGORY</label>
+      <div class="fav-search-wrap">
+        <input type="text" id="favSearch" class="fav-search" aria-label="Search foods to add as favorites" placeholder="Search foods — e.g. salmon, oats, sriracha" autocomplete="off">
+        <button class="fav-clear" id="favClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="favChosen" class="fav-chosen"></div>
+      <div id="favPicker"></div>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">Leave a category empty and the whole inventory stays in play for it.</p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label"><svg class="px" aria-hidden="true"><use href="#i-ban"></use></svg> FOODS YOU CAN'T STAND</label>
+      <div class="fav-search-wrap">
+        <input type="text" id="dislikeSearch" class="fav-search" aria-label="Search foods to block" placeholder="Search to block — e.g. mayo, blue cheese, olives" autocomplete="off">
+        <button class="fav-clear" id="dislikeClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="dislikeChosen" class="fav-chosen dislike-chosen"></div>
+      <div id="dislikeResults"></div>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">Blocked foods never appear in a suggestion. If a dish depends on one, a sensible stand-in is used instead — mayo becomes 0% Greek yogurt, sour cream becomes tzatziki.</p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">MEAL-TIME RULES</label>
+      <div class="choice-grid" id="mealRuleGrid" style="grid-template-columns:1fr 1fr;">
+        <button class="choice-btn" data-rule="skipBreakfast"><span><strong>Skip Breakfast</strong><span class="desc">Start the day at lunch</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-skip"></use></svg></span></button>
+        <button class="choice-btn" data-rule="breakfastForDinner"><span><strong>Breakfast Anytime</strong><span class="desc">Eggs for dinner, curry at 7am — no rules</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg></span></button>
+        <button class="choice-btn" data-rule="breakfastAllDay"><span><strong>Breakfast All Day</strong><span class="desc">Every meal is breakfast food</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-pancake"></use></svg></span></button>
+      </div>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 18px;">
+        By default breakfast sticks to breakfast food, and cereal or pancakes won't turn up at dinner.
+      </p>
+
+      <label class="field-label">TODAY'S CRAVINGS (OPTIONAL, SELECT ANY)</label>
+      <div class="choice-grid" id="craveGrid"></div>
+      <p class="subtitle" id="craveSummary" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+      <button class="btn-primary" id="btnConfirmCravings">NEXT — PLAN YOUR PREP</button>
+      <button class="btn-ghost" id="btnSkipCravings">SKIP — NO PREFERENCES TODAY</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2.7: PREP PLAN -->
+  <section class="screen" id="screen-style">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-cravings">CRAVINGS</button>
+    </div>
+    <div class="eyebrow" data-word="playstyle">PLAYSTYLE</div>
+    <h1 class="title">Plan Your Prep</h1>
+    <p class="subtitle">How much cooking are you willing to do? Repetition is the point of meal prep — decide how much variety is worth the extra pans.</p>
+
+    <div class="panel">
+      <label class="field-label">HOW MANY DAYS ARE YOU PREPPING?</label>
+      <div class="choice-grid" id="prepDaysGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+      <p class="subtitle" id="prepDaysNote" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+    </div>
+
+    <!-- The rest/training split lives here rather than in character creation,
+         because a prep can hold both kinds of day at once. -->
+    <div class="panel" id="dayMixPanel" hidden>
+      <label class="field-label">HOW MANY OF THOSE ARE TRAINING DAYS?</label>
+      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">
+        You eat more on the days you train. Say how many, and the prep gets built for both kinds of day.
+      </p>
+      <div class="choice-grid" id="trainDaysGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+      <p class="subtitle" id="dayMixNote" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">HOW DOES YOUR DAY BREAK DOWN?</label>
+      <div class="choice-grid" id="mealPlanGrid" style="grid-template-columns:1fr 1fr;"></div>
+      <p class="subtitle" id="mealCountNote" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">HOW BIG SHOULD EACH MEAL FEEL?</label>
+      <div id="weightRows"></div>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">
+        Light mornings and a big dinner? Say so — your calories shift to match and the daily total stays the same.
+      </p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">HOW MANY DIFFERENT MEALS DO YOU WANT TO COOK?</label>
+      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">
+        Counted across the whole prep, not per day — breakfast, lunch and dinner only.
+      </p>
+      <div class="choice-grid" id="uniqueGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+      <p class="subtitle" id="uniqueNote" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+    </div>
+
+    <div class="panel" id="snackUniquePanel" hidden>
+      <label class="field-label">HOW MANY DIFFERENT SNACKS?</label>
+      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">
+        Snacks are kept apart from your meal count — they have their own rotation.
+      </p>
+      <div class="choice-grid" id="snackUniqueGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+      <p class="subtitle" id="snackUniqueNote" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
+    </div>
+
+    <div class="panel">
+      <label class="field-label">HOW MANY DIFFERENT INGREDIENTS PER CATEGORY?</label>
+      <div id="varietyRows"></div>
+      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">
+        Fewer means bigger packs, less chopping and less waste. More means the week stays interesting.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="eaten-head">
+        <span class="eaten-title" id="styleVerdictName">YOUR PLAYSTYLE</span>
+        <span class="eaten-total" id="styleVerdictTag"></span>
+      </div>
+      <p class="subtitle" id="styleVerdict" style="font-size:var(--fs-body); margin:0;"></p>
+      <button class="btn-primary" id="btnConfirmStyle">SHOW ME MEALS</button>
+    </div>
+  </section>
+
+  <!-- SCREEN 2.8: SUGGESTED LOADOUT -->
+  <section class="screen" id="screen-suggest">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-style">CHANGE STYLE</button>
+    </div>
+    <div class="eyebrow" data-word="loadout">RECOMMENDED LOADOUT</div>
+    <h1 class="title">Today's Suggested Meals</h1>
+    <p class="subtitle" id="suggestIntro"></p>
+
+    <div id="onHandReview" class="panel" style="display:none;"></div>
+    <div id="suggestList"></div>
+
+    <button class="btn-primary" id="btnUseSuggestion">USE THIS LOADOUT</button>
+    <button class="btn-ghost" id="btnShuffle"><svg class="px" aria-hidden="true"><use href="#i-dice"></use></svg> SHUFFLE — SUGGEST SOMETHING ELSE</button>
+    <button class="btn-ghost" id="btnBuildOwn">BUILD MY OWN INSTEAD</button>
+  </section>
+
+  <!-- SCREEN 4: SHOPPING LIST -->
+  <section class="screen" id="screen-shop">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-loadout">MEALS</button>
+    </div>
+    <div class="eyebrow">SUPPLY RUN</div>
+    <h1 class="title">Shopping List</h1>
+    <p class="subtitle">Every ingredient totalled across the day, so you buy once. Weights are raw or dry.</p>
+
+    <div class="panel">
+      <div class="eaten-head"><span class="eaten-title"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg> PREPPING FOR</span>
+      <span class="eaten-total" id="prepNote"></span></div>
+      <div class="choice-grid" id="prepGrid" style="grid-template-columns:repeat(4,1fr);"></div>
+    </div>
+
+    <div id="pantryPanel"></div>
+    <div id="shopList"></div>
+
+    <button class="btn-primary" id="btnCopyList"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg> COPY LIST</button>
+    <button class="btn-ghost" id="btnPrintList"><svg class="px" aria-hidden="true"><use href="#i-print"></use></svg> PRINT / SAVE AS PDF</button>
+  </section>
+
+  <!-- SCREEN 3: DAILY LOADOUT -->
+  <section class="screen" id="screen-loadout">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-suggest">SUGGESTIONS</button>
+    </div>
+    <div class="eyebrow" data-word="loadout">DAILY LOADOUT SETUP</div>
+    <h1 class="title" data-word="meals">Assemble Your Meals</h1>
+    <p class="subtitle">Each slot auto-calculates gram weights from your Tier's macro targets. Fill your Health/Mana bar above by completing your loadout.</p>
+    <p class="subtitle" id="produceNote" style="margin-top:-14px; color:var(--green);"></p>
+
+    <div class="panel eaten-panel">
+      <div class="eaten-head">
+        <span class="eaten-title"><svg class="px" aria-hidden="true"><use href="#i-burger"></use></svg> ALREADY EATEN TODAY</span>
+        <span class="eaten-total" id="eatenTotal">0 kcal</span>
+      </div>
+      <div class="fav-search-wrap">
+        <input type="text" id="offSearch" class="fav-search" aria-label="Search packaged foods"
+               placeholder="Type or paste a barcode — e.g. 3017624010701"
+               inputmode="numeric" autocomplete="off">
+        <button class="fav-clear" id="offClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <label class="photo-btn" for="barcodePhoto">
+        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Have a picture of a barcode? Upload it here
+      </label>
+      <input type="file" id="barcodePhoto" accept="image/*"
+             style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
+             aria-label="Upload a picture of a barcode">
+      <canvas id="barcodeCanvas" hidden></canvas>
+      <div id="offResults"></div>
+      <p class="subtitle" style="font-size:11px; margin:8px 0 0; line-height:1.6;">
+        Enter the barcode from the packet, or upload a picture of one. Name search
+        isn't available — Open Food Facts blocks it from pages like this one.
+      </p>
+      <button class="text-link" id="btnOffTest" style="margin-top:6px; font-size:11px;">Test the connection</button>
+      <div id="eatenList"></div>
+      <button class="mini-btn add" id="btnAddEaten">+ ADD MANUALLY</button>
+    </div>
+    <div id="customBanner" class="custom-banner" style="display:none;"></div>
+    <div class="panel" id="loadoutDayPanel" hidden>
+      <div class="eaten-head">
+        <span class="eaten-title"><svg class="px" aria-hidden="true"><use href="#i-bento"></use></svg> EDITING</span>
+        <span class="eaten-total" id="loadoutDayLbl">Day 1</span>
+      </div>
+      <div class="day-strip" id="loadoutDayStrip"></div>
+      <div class="season-hint">
+        Changing a dish here changes it on every day it's served — that's what makes it a prep.
+      </div>
+    </div>
+    <div class="timeline" id="mealTimeline"></div>
+    <button class="btn-primary" id="btnShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> BUILD SHOPPING LIST</button>
+    <p class="subtitle" style="font-size:var(--fs-body); margin-top:14px; opacity:.8;">
+      Nutrition figures are reference values and vary by brand and cut — for anything packaged, the label on the box beats this table.
+    </p>
+  </section>
+
+</div>
+
+
+<script src="js/01-boot.js"></script>
+<script src="js/02-themes.js"></script>
+<script src="js/03-data-tiers.js"></script>
+<script src="js/04-nutrition.js"></script>
+<script src="js/05-food-families.js"></script>
+<script src="js/06-dish-templates.js"></script>
+<script src="js/07-method.js"></script>
+<script src="js/08-sauces.js"></script>
+<script src="js/09-state.js"></script>
+<script src="js/10-recipe-book.js"></script>
+<script src="js/11-goal-fit.js"></script>
+<script src="js/12-journal.js"></script>
+<script src="js/13-prep-cook.js"></script>
+<script src="js/14-containers-flex.js"></script>
+<script src="js/15-quest-log.js"></script>
+<script src="js/16-tabs.js"></script>
+<script src="js/17-onboarding.js"></script>
+<script src="js/18-tier-select.js"></script>
+<script src="js/19-preferences.js"></script>
+<script src="js/20-cravings.js"></script>
+<script src="js/21-food-lookup.js"></script>
+<script src="js/22-eating-style.js"></script>
+<script src="js/23-suggested-loadout.js"></script>
+<script src="js/24-daily-loadout.js"></script>
+<script src="js/25-persistence.js"></script>
+<script src="js/26-shopping-pantry.js"></script>
+<script src="js/27-init.js"></script>
+</body>
+</html>
