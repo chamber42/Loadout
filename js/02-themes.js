@@ -80,15 +80,21 @@
     },
     farm: {
       tiers:["Sprout","Farmhand","Grower","Rancher","Homesteader"],
-      wash:"radial-gradient(ellipse at top, #1d2a17 0%, #121a0e 60%)",
+      wash:"radial-gradient(ellipse at top, #2b3d1e 0%, #111c0f 62%)",
       name:"Farm Life Sim", icon:"flower",
       blurb:"Sunlit fields and nothing but time",
       fonts:{ display:"'Fredoka', 'Trebuchet MS', sans-serif", body:"'Nunito', 'Trebuchet MS', sans-serif", scale:1, spacing:"0.5px" },
       sizes:{ "fs-6":"10px","fs-7":"11px","fs-8":"13px","fs-9":"14px","fs-10":"15px","fs-11":"16px","fs-12":"17px","fs-13":"18px","fs-18":"26px","fs-body":"14px" },
-      glow:"0 1px 0 rgba(0,0,0,.4)", accentSoft:"rgba(157,214,106,.12)", accentLine:"rgba(157,214,106,.45)",
-      colors:{ "bg-0":"#121a0e","bg-1":"#182312","panel":"#1e2b16","panel-2":"#182312","line":"#2f4326",
-               "cyan":"#9dd66a","green":"#c7e58a","amber":"#f0c05a","red":"#e0705c","magenta":"#e59ac4",
-               "text":"#f2f6e6","muted":"#a9b898" },
+      glow:"0 1px 0 rgba(0,0,0,.4)", accentSoft:"rgba(245,184,208,.14)", accentLine:"rgba(245,184,208,.50)",
+      /* Flowers, fruit and veg. The fields stay green, but the accents are a
+         flower bed: blossom pink leads, with sunflower yellow, tomato red and
+         cornflower blue behind it. Note the "magenta" slot carries the blue --
+         these keys are generic accent slots, not descriptions of the hue.
+         Green stays a supporting colour here; it is the lead in no theme now,
+         which is what stops this reading as the same palette as craft. */
+      colors:{ "bg-0":"#111c0f","bg-1":"#18280f","panel":"#1e2b16","panel-2":"#182312","line":"#35492a",
+               "cyan":"#f5b8d0","green":"#8fd46a","amber":"#ffd166","red":"#ef6f6c","magenta":"#7fb8e8",
+               "text":"#f6f2e4","muted":"#a9b898" },
       sheet:"FARMER ALMANAC", sheetTitle:"Your Farmer",
       words:{ tier:"SEASON", loadout:"HARVEST", quest:"CHORE", stat:"YIELD", inventory:"ROOT CELLAR",
               build:"Plan Your Harvest", charCreate:"NEW FARMER", hp:"STAMINA", playstyle:"FARMING STYLE",
@@ -96,15 +102,20 @@
     },
     craft: {
       tiers:["Forager","Miner","Crafter","Blacksmith","Dragonslayer"],
-      wash:"linear-gradient(180deg, #1b2018 0%, #10130e 50%)",
+      wash:"linear-gradient(180deg, #241c12 0%, #14100b 55%)",
       name:"Survival Craft", icon:"pick",
       blurb:"Punch trees, build base, fear the dark",
       fonts:{ display:"'Silkscreen', 'Courier New', monospace", body:"'VT323', 'Courier New', monospace", scale:1, spacing:"1px" },
       sizes:{ "fs-6":"11px","fs-7":"12px","fs-8":"13px","fs-9":"14px","fs-10":"15px","fs-11":"16px","fs-12":"17px","fs-13":"18px","fs-18":"25px","fs-body":"16px" },
-      glow:"none", accentSoft:"rgba(126,196,92,.12)", accentLine:"rgba(126,196,92,.45)",
-      colors:{ "bg-0":"#10130e","bg-1":"#171c14","panel":"#1d241a","panel-2":"#171c14","line":"#33402c",
-               "cyan":"#7ec45c","green":"#a4d97a","amber":"#d9a441","red":"#c85a44","magenta":"#8fa8d9",
-               "text":"#e8eee2","muted":"#a4b09c" },
+      glow:"none", accentSoft:"rgba(217,160,94,.13)", accentLine:"rgba(217,160,94,.48)",
+      /* Timber and torchlight. This genre is about felling a forest and
+         building from it, so the surfaces are bark and cut plank and the lead
+         accent is planed timber, not leaf. Foliage green is demoted to a
+         supporting role -- it was previously the primary here AND in farm,
+         which is why the two themes were hard to tell apart. */
+      colors:{ "bg-0":"#14100b","bg-1":"#1c1710","panel":"#241d14","panel-2":"#1c1710","line":"#453722",
+               "cyan":"#d9a05e","green":"#7fb054","amber":"#e8a838","red":"#c96c50","magenta":"#9fb0c4",
+               "text":"#f0e6d8","muted":"#b8ab99" },
       sheet:"PLAYER STATS", sheetTitle:"Your Player",
       words:{ tier:"LEVEL", loadout:"HOTBAR", quest:"TASK", stat:"BAR", inventory:"CHEST",
               build:"Fill Your Hotbar", charCreate:"NEW WORLD", hp:"HEARTS", playstyle:"DIFFICULTY",
