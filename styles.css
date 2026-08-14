@@ -5167,3 +5167,16 @@
   body[data-material="salvage"] #screen-quest .panel .hero-rank{
     color:var(--pp-seal-text);
   }
+
+  /* ---------- METHOD vs PLATE NOTES (32-method-check.js) ---------- */
+  .mc-uses, .mc-warn, .mc-extra, .mc-aid{
+    font-size:var(--fs-11); line-height:1.6;
+    margin:0 0 8px; padding:8px 10px; border-radius:6px;
+  }
+  .mc-uses{ background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--text); }
+  /* The plate disagrees with the written method - the loudest of the four. */
+  .mc-warn{ background:rgba(255,176,0,.10); border:1px solid var(--amber); color:var(--text); }
+  /* Needed for cooking, deliberately not in the macros, calorie-dense enough
+     that quietly omitting it would be dishonest. */
+  .mc-extra{ background:rgba(255,56,96,.08); border:1px solid var(--red); color:var(--text); }
+  .mc-aid{ color:var(--muted); border:1px solid var(--line); }

@@ -189,6 +189,10 @@
       jobs.push({
         name: (rec.dish && rec.dish.dish) || (recipe && recipe.name) || 'Dish',
         recipe, servings, ref:{store:rec.store, index:rec.index},
+        /* The selection itself, so the method can be checked against what is
+           actually on the plate rather than against a flag that only some of
+           the editing paths remember to set. */
+        sel: rec.dish || null,
         /* The plate was rebuilt around what was available, so the dish's
            written method describes food that isn't on it any more. */
         improvised: !!(rec.dish && rec.dish._improvised), ...t,
@@ -285,12 +289,27 @@
 
     <div class="panel">
       <div class="slot-label" style="margin-bottom:6px;"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> METHODS IN ORDER</div>
-      ${plan.jobs.map((j, i)=> (j.recipe && j.recipe.steps && j.recipe.steps.length && !j.improvised)
-        ? `<details class="rsteps"><summary>${i+1}. ${escapeHtml(j.name)} — ${j.recipe.steps.length} steps</summary>
+      ${plan.jobs.map((j, i)=>{
+        const hasSteps = !!(j.recipe && j.recipe.steps && j.recipe.steps.length);
+        if (!hasSteps){
+          return `<div class="cook-meta">${i+1}. ${escapeHtml(j.name)} — no written method; it's an assembly job.</div>`;
+        }
+        /* Computed against the plate, so it holds even when _improvised was
+           never set by whichever path last edited this dish. */
+        const drift = dishDiverged(j.recipe, j.sel);
+        /* Badly adrift — or flagged adrift — and the written method is about a
+           different dish. Printing it is how a prep of bacon and sourdough ends
+           up telling someone to cook grits. Show what is on the plate instead. */
+        if (j.improvised || drift.score >= 2){
+          return `<div class="cook-meta">${i+1}. ${escapeHtml(j.name)} — no written method.
+            This plate was rebuilt, so the original recipe's steps describe different food.
+            ${escapeHtml(dishIngredients(j.sel).map(x=>x.name).join(', '))}</div>`;
+        }
+        return `<details class="rsteps"><summary>${i+1}. ${escapeHtml(j.name)} — ${j.recipe.steps.length} steps</summary>
+             ${methodNotesHtml(j.recipe, j.sel)}
              <ol>${j.recipe.steps.map(st=>`<li>${escapeHtml(st)}</li>`).join('')}</ol>
-           </details>`
-        : `<div class="cook-meta">${i+1}. ${escapeHtml(j.name)} — no written method; it's an assembly job.</div>`
-      ).join('')}
+           </details>`;
+      }).join('')}
     </div>`;
   }
 
