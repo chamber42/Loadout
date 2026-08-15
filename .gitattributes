@@ -1,0 +1,25 @@
+# Normalise line endings.
+#
+# The repository already stores LF. Without this file, a Windows checkout
+# converts everything to CRLF on the way out and back to LF on the way in,
+# which is where the "LF will be replaced by CRLF" warnings come from. Pinning
+# eol=lf keeps the working copy matching what is stored, so a stray editor
+# save can never show up as an entire file rewritten.
+* text=auto eol=lf
+
+# Binary assets: never touch the bytes, never try to diff them as text.
+*.woff2 binary
+*.woff  binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.mp3   binary
+*.mp4   binary
+*.zip   binary
+*.pdf   binary
