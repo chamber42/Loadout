@@ -12,52 +12,74 @@
   const btnConfirmTier = document.getElementById('btnConfirmTier');
 
   /* Full nutrition panel, laid out like a label: macros first with their
-     sub-components indented, then minerals and vitamins. */
+     sub-components indented, then minerals and vitamins.
+
+     This shows the DAILY GOALS a person is reaching for — not a tally of what
+     they have logged. The prep itself is still planned on calories, macros and
+     fibre alone; everything below the macros is here to be read, not to steer
+     what lands on the plate. */
   function renderFullStats(){
     const host = document.getElementById('fullStatsBody');
     if (!host) return;
     // opened from the sheet, so it follows whichever day the sheet is showing
     const tg = targetsFor(sheetViewKind());
-    const n = fullNutrition();
+    const g  = dailyGoals(tg);
 
-    const row = (name, amt, pct, sub) =>
+    const row = (name, amt, note, sub) =>
       `<div class="nutri-row">
          <span class="nutri-name${sub ? ' sub' : ''}">${name}</span>
          <span class="nutri-amt">${amt}</span>
-         <span class="nutri-pct">${pct != null ? pct + '%' : ''}</span>
+         <span class="nutri-pct">${note || ''}</span>
        </div>`;
-    const pctOf = (v, dv) => dv ? Math.round(v / dv * 100) : null;
+
+    /* Whose figures these are, so the numbers aren't mistaken for universal */
+    const who = (()=>{
+      const sex  = state.sex === 'female' ? 'women' : state.sex === 'male' ? 'men' : 'adults';
+      const age  = Number(state.age);
+      return age ? `${sex} aged ${age}` : sex;
+    })();
 
     host.innerHTML =
       `<div class="nutri-group">ENERGY &amp; MACROS</div>` +
-      row('Calories', `${tg.kcal} kcal`, null) +
-      row('Protein', `${tg.protein}g`, pctOf(tg.protein, 50)) +
-      row('Carbohydrate', `${tg.carbs}g`, pctOf(tg.carbs, 275)) +
-      row('Fiber', `${Math.round(n.fibre)}g`, pctOf(n.fibre, DV.fibre), true) +
-      row('Sugars', `${Math.round(n.sugar)}g`, null, true) +
-      row('Fat', `${tg.fat}g`, pctOf(tg.fat, 78)) +
-      row('Saturated', `${Math.round(n.satfat)}g`, pctOf(n.satfat, DV.satfat), true) +
-      row('Cholesterol', `${Math.round(n.chol)}mg`, pctOf(n.chol, DV.chol)) +
+      row('Calories', `${tg.kcal} kcal`, 'target') +
+      row('Protein', `${tg.protein}g`, 'target') +
+      row('Carbohydrate', `${tg.carbs}g`, 'target') +
+      row('Fiber', `${g.fibre}g`, '14g / 1000 kcal', true) +
+      row('Added sugar', `under ${g.addedSugar}g`, 'under 10% of kcal', true) +
+      row('Fat', `${tg.fat}g`, 'target') +
+      row('Saturated', `under ${g.satfat}g`, 'under 10% of kcal', true) +
+      row('Cholesterol', `under ${g.chol}mg`, 'ceiling') +
 
       `<div class="nutri-group">MINERALS</div>` +
-      row('Sodium', `${Math.round(n.sodium)}mg`, pctOf(n.sodium, DV.sodium)) +
-      row('Potassium', `${Math.round(n.potassium)}mg`, pctOf(n.potassium, DV.potassium)) +
-      row('Calcium', `${Math.round(n.calcium)}mg`, pctOf(n.calcium, DV.calcium)) +
-      row('Iron', `${n.iron.toFixed(1)}mg`, pctOf(n.iron, DV.iron)) +
-      row('Magnesium', `${Math.round(n.magnesium)}mg`, pctOf(n.magnesium, DV.magnesium)) +
-      row('Zinc', `${n.zinc.toFixed(1)}mg`, pctOf(n.zinc, DV.zinc)) +
+      row('Sodium', `under ${g.sodium}mg`, 'ceiling') +
+      row('Potassium', `${g.potassium}mg`, 'goal') +
+      row('Calcium', `${g.calcium}mg`, 'goal') +
+      row('Iron', `${g.iron}mg`, g.ironNote ? 'goal &times;1.8' : 'goal') +
+      row('Magnesium', `${g.magnesium}mg`, 'goal') +
+      row('Zinc', `${g.zinc}mg`, 'goal') +
 
       `<div class="nutri-group">VITAMINS</div>` +
-      row('Vitamin A', `${Math.round(n.vita)}mcg`, pctOf(n.vita, DV.vita)) +
-      row('Vitamin C', `${Math.round(n.vitc)}mg`, pctOf(n.vitc, DV.vitc)) +
-      row('Vitamin D', `${n.vitd.toFixed(1)}mcg`, pctOf(n.vitd, DV.vitd)) +
+      row('Vitamin A', `${g.vita}mcg`, 'goal') +
+      row('Vitamin C', `${g.vitc}mg`, 'goal') +
+      row('Vitamin D', `${g.vitd}mcg`, 'goal') +
 
       `<div class="season-hint" style="margin-top:16px;">
-         Percentages are of general adult reference intakes. Micronutrients are
-         modelled from food class rather than read off individual products, so
-         they're a useful steer on whether a day looks short — not a substitute
-         for a label or for medical advice. Items you logged by hand count
-         toward calories and macros only.
+         These are daily goals, not a count of what you've eaten. Fiber, added
+         sugar and saturated fat scale with your calorie target; the vitamins
+         and minerals are the reference intakes published for <strong>${who}</strong>
+         and don't change with bodyweight.` +
+      (g.ironNote
+        ? ` Your iron goal is raised by the standard 1.8&times; for a meat-free
+            diet, since plant iron is absorbed far less readily.`
+        : '') +
+      (g.zincNote
+        ? ` Zinc absorbs poorly from plant foods too, so treat that figure as a
+            floor rather than a comfortable target.`
+        : '') +
+      `  Pregnancy and breastfeeding change several of these a great deal and
+         aren't accounted for here. Your prep is still built from calories,
+         macros and fiber only &mdash; these figures are for reference, and
+         aren't medical advice.
        </div>`;
   }
 

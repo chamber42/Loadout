@@ -106,16 +106,21 @@
   };
 
   /* Nutrition beyond the macros, per 100g */
+  /* FAMILY first so nothing that already resolved changes; NUTRI_FAMILY (defined
+     further down) then catches the foods FAMILY deliberately leaves out. */
+  function nutriFam(key){
+    return FAMILY[key] || NUTRI_FAMILY[key] || null;
+  }
   function fibreOf(food){
     if (!food) return 0;
     if (FIBRE_OVERRIDE[food.key] != null) return FIBRE_OVERRIDE[food.key];
-    const fam = FAMILY[food.key];
+    const fam = nutriFam(food.key);
     return (fam && FIBRE_BY_FAMILY[fam] != null) ? FIBRE_BY_FAMILY[fam] : 1.0;
   }
   function sodiumOf(food){
     if (!food) return 0;
     if (SODIUM_OVERRIDE[food.key] != null) return SODIUM_OVERRIDE[food.key];
-    const fam = FAMILY[food.key];
+    const fam = nutriFam(food.key);
     return (fam && SODIUM_BY_FAMILY[fam] != null) ? SODIUM_BY_FAMILY[fam] : 30;
   }
   /* Sauces carry their sodium in the food's own record where known */
@@ -146,9 +151,9 @@
 
   /* =========================================================
      FULL NUTRITION MODEL
-     Covers the set MyFitnessPal reports: saturated fat, cholesterol, sugar,
-     fibre, sodium, potassium, calcium, iron, magnesium, zinc and vitamins
-     A, C and D.
+     Covers the set a nutrition label carries: saturated fat, cholesterol,
+     sugar, fibre, sodium, potassium, calcium, iron, magnesium, zinc and
+     vitamins A, C and D.
 
      IMPORTANT — these are modelled by food class, not looked up per product.
      Each family carries a typical per-100g profile and individual foods
@@ -252,6 +257,42 @@
     banana:[0.1,0,12,360,5,0.3,27,0.2,3,9,0],
     peach:[0,0,8,190,6,0.3,9,0.2,16,7,0],
     driedfruit:[0.1,0,60,700,50,1.5,40,0.3,2,2,0],
+    /* Thin, salty, poured-by-the-spoon sauces: soy, teriyaki, hot sauce and
+       the like. Their sodium is carried separately in SODIUM_OVERRIDE, so
+       this row is only about what little else they bring. */
+    sauce:[0.2,0,8,150,25,0.8,20,0.3,10,3,0],
+    /* Nori and other sea vegetables: negligible energy, unusually mineral-dense */
+    seaweed:[0.1,0,0.5,356,70,1.8,67,0.4,260,39,0],
+
+    /* --- families that already existed in FAMILY but had no row here, so
+       every food in them counted as nothing. Adding a row is purely additive:
+       these foods are already grouped, so meal building is unaffected. --- */
+    bun:[1.0,0,6,130,100,3.2,30,0.9,0,0,0],
+    subroll:[0.7,0,3,140,60,3.4,35,1.0,0,0,0],
+    mayosauce:[11,40,1,20,8,0.2,1,0.1,30,0,0.2],      // as mayo
+    burgersauce:[9,30,6,30,10,0.2,2,0.1,25,0,0.2],
+    creamcondiment:[19,70,3,120,90,0.1,9,0.3,300,0.8,0.4],
+    vinaigrette:[2.0,0,3,30,10,0.2,3,0.1,5,1,0],
+    mustardsauce:[0.3,0,3,150,60,1.5,45,0.6,0,1,0],   // mustard seed carries minerals
+    gravysauce:[1.0,5,1,60,15,0.3,5,0.2,0,0,0],
+    tomatocondiment:[0,0,22,300,15,0.4,13,0.2,40,4,0],
+    pickle:[0,0,1,200,40,0.5,12,0.2,20,15,0],         // as ferment
+    friedside:[3.0,0,2,220,40,2.0,60,1.5,0,0,0],      // as chips
+    dairyliquid:[1.0,10,5,150,120,0.05,11,0.4,50,0,1.2],
+    /* Citrus juice and vinegars: nothing much beyond a little vitamin C */
+    acid:[0,0,1,100,10,0.1,5,0.05,0,20,0],
+    /* Dried and fresh seasonings. Weighed in grams, so the profile matters
+       less than not reading as zero. */
+    freshherb:[0,0,0,500,150,3.0,60,1.0,400,30,0],
+    herbblend:[0,0,0,500,150,3.0,60,1.0,400,30,0],
+    rubblend:[0,0,2,600,180,4.0,80,1.5,200,5,0],
+    driedaromatic:[0,0,2,600,180,4.0,80,1.5,200,5,0],
+    chillispice:[0,0,3,1000,280,8.0,150,2.5,900,5,0],
+    currysspice:[0,0,2,1500,480,20,250,4.0,20,1,0],
+    sweetspice:[0.5,0,5,500,200,4.0,90,1.5,10,2,0],
+    pepperspice:[0,0,1,1300,440,9.7,170,1.2,15,0,0],
+    /* Salt contributes sodium and nothing else; sodium is tracked separately */
+    salt:[0,0,0,0,0,0,0,0,0,0,0],
   };
   const NUTRI_OVERRIDE = {
     beefliver:[1.6,275,0,313,5,6.5,18,4.0,4970,1.3,1.2],
@@ -286,14 +327,115 @@
     lentils:[0.2,0,2,955,56,7.5,122,4.8,2,4.5,0],
     blackbeans:[0.2,0,2,1483,123,5.0,171,3.7,0,0,0],
     chickpeas:[0.6,0,11,875,105,6.2,115,3.4,3,4,0],
+    /* A zero-calorie sweetener genuinely contributes nothing. Stated
+       explicitly so it reads as "counted, and it's nil" rather than
+       "not modelled". */
+    monkfruit:[0,0,0,0,0,0,0,0,0,0,0],
   };
 
   const NUTRI_KEYS = ['satfat','chol','sugar','potassium','calcium','iron','magnesium','zinc','vita','vitc','vitd'];
+
+  /* =========================================================
+     NUTRITION-ONLY FAMILIES
+
+     FAMILY (05-food-families.js) is NOT a nutrition map. It decides which
+     foods count as the same thing on a plate — two members of a family can
+     only appear once per meal — and it drives ingredient substitution and the
+     suggested loadout. Around 150 foods are deliberately left out of it so
+     that, say, shrimp and crab can share a plate.
+
+     The side effect was that those foods had no nutrition row either, and
+     nutriOf() returned null for them: a shrimp dinner read as 0% iron rather
+     than "not counted". Widening FAMILY to fix that would have changed how
+     meals are built, so nutrition gets its own parallel lookup instead. It is
+     consulted only after FAMILY, so nothing that already worked changes.
+
+     Grouped by what the food IS, not by what its key suggests -- several keys
+     are historical and misleading ("curry" is a coconut curry sauce,
+     "gochugaru" is ssamjang, "ranchdip" is a dry seasoning, "nashville" is a
+     chilli oil).
+  ========================================================= */
+  const NUTRI_FAMILY = {
+    /* --- shellfish and seafood --- */
+    shrimp:'shellfish2', scallops:'shellfish2', crab:'shellfish2',
+    mussels:'shellfish2', clams:'shellfish2', lobster:'shellfish2',
+    calamari:'shellfish2', anchovy:'oilyfish', seaweed:'seaweed',
+
+    /* --- vegetables --- */
+    asparagus:'brassica', artichoke:'brassica', artichokehearts:'brassica',
+    okra:'brassica', fennel:'cabbage', bambooshoot:'cabbage',
+    heartsofpalm:'cabbage', sprouts:'cabbage', celery:'lettuce',
+    cucumber:'lettuce', eggplant:'squash', waterchest:'root',
+    corn:'peas', cornfroz:'peas', babycorn:'peas', greenbeans:'peas',
+    garlic:'onion', plantain:'banana', gnocchi:'potato',
+
+    /* --- fruit --- */
+    apricot:'peach', nectarine:'peach', plum:'peach',
+    cherries:'berry', pomegranate:'berry',
+    mango:'tropical', papaya:'tropical', guava:'tropical', lychee:'tropical',
+    passionfruit:'tropical', persimmon:'tropical', starfruit:'tropical',
+    dragonfruit:'tropical', jackfruit:'tropical', fig:'tropical',
+
+    /* --- nuts, seeds, cocoa --- */
+    coconutmeat:'nuts', coconutflake:'nuts', cacaonibs:'nuts', darkchoc:'nuts',
+
+    /* --- other whole foods --- */
+    meatball:'groundpoultry', hummus:'beans', nutyeast:'powder',
+
+    /* --- tomato-based sauces --- */
+    marinara:'tomato', pizzasauce:'tomato', salsa:'tomato', salsaroja:'tomato',
+    salsaverde:'tomato', enchilada:'tomato', bolognesejar:'tomato',
+    vodkasauce:'tomato', cocktail:'tomato',
+
+    /* --- dairy- and yogurt-based sauces --- */
+    alfredo:'cream', hollandaise:'cream', curry:'cream', korma:'cream',
+    massaman:'cream', tikka:'cream',
+    cottagealfredo:'cottage',
+    tzatziki:'yogurt', tzatzikihp:'yogurt', tzatzikilight:'yogurt',
+    tkatziki2:'yogurt', bbqyog:'yogurt', buffaloyog:'yogurt',
+    chipotleyog:'yogurt', cilantroavoyog:'yogurt', garlicparmyog:'yogurt',
+    honeymustyog:'yogurt', jalapyog:'yogurt', tacoyog:'yogurt',
+    buffalowing:'yogurt',
+
+    /* --- mayo- and oil-based dressings --- */
+    ranch:'mayo', ranchlight:'mayo', hpranch:'mayo', caesar:'mayo',
+    caesarhp:'mayo', greengoddess:'mayo', chipotlecrema:'mayo',
+    nashville:'oil', chilicrisp:'oil',
+
+    /* --- herb and nut pastes --- */
+    pesto:'pestofat', chimichurri:'pestofat', romesco:'pestofat',
+    ajiverde:'pestofat', zhoug:'pestofat', harissa:'pestofat',
+    mole:'pestofat', toum:'pestofat',
+    peanutsauce:'nutbutter', peanutlight:'nutbutter', tahinisauce:'nutbutter',
+
+    /* --- thin, salty and sweet sauces --- */
+    soy:'sauce', aminos:'sauce', teriyaki:'sauce', hoisin:'sauce',
+    ponzu:'sauce', oystersauce:'sauce', blackbean:'sauce', gochujang:'sauce',
+    gochugaru:'sauce', katsu:'sauce', nuocmam:'sauce', sweetchili:'sauce',
+    sweetsour:'sauce', honeygarlic:'sauce', honeysriracha:'sauce',
+    bbq:'sauce', bbqlight:'sauce', buffalo:'sauce', hotsauce:'sauce',
+    sriracha:'sauce', peri:'sauce', jerk:'sauce', horseradish:'sauce',
+
+    /* --- dried spices and seasoning blends ---
+       Used by the gram or two, so the profile matters far less than simply
+       not counting as zero. */
+    adobo:'herbs', allspice:'herbs', bayleaf:'herbs', caraway:'herbs',
+    cardamom:'herbs', celeryseed:'herbs', chiliflake:'herbs',
+    chiliseason:'herbs', coriander:'herbs', cumin:'herbs', fennelseed:'herbs',
+    fivespice:'herbs', ginger:'herbs', mesquite:'herbs', mint:'herbs',
+    mustardpwd:'herbs', oldbay:'herbs', poultryseason:'herbs', sage:'herbs',
+    smokedpap:'herbs', steakrub:'herbs', sumac:'herbs', tarragon:'herbs',
+    whitepepper:'herbs', zaatar:'herbs', ranchdip:'herbs',
+
+    /* --- last few one-offs that sit in no family at all --- */
+    chipotle:'chilli', fishsauce:'sauce', applesaucecond:'apple',
+  };
 
   function nutriOf(food){
     if (!food) return null;
     const row = NUTRI_OVERRIDE[food.key]
       || NUTRI_BY_FAMILY[FAMILY[food.key]]
+      || NUTRI_BY_FAMILY[NUTRI_FAMILY[food.key]]
       || null;
     if (!row) return null;
     const out = {};
@@ -301,10 +443,103 @@
     return out;
   }
 
-  /* Reference daily values, adult, roughly FDA %DV */
+  /* Reference daily values, adult, roughly FDA %DV.
+     Kept for anything that wants one flat adult column; the Full Stats panel
+     uses dailyGoals() below, which varies the figures by age and sex. */
   const DV = { satfat:20, chol:300, sugar:50, fibre:28, sodium:2300,
                potassium:4700, calcium:1300, iron:18, magnesium:420,
                zinc:11, vita:900, vitc:90, vitd:20 };
+
+  /* =========================================================
+     DAILY MICRONUTRIENT GOALS
+
+     DISPLAY ONLY. Meal planning — portioning, food choice, goal-fit scoring —
+     runs on calories, macros and fibre alone, exactly as it always has. None
+     of the figures below feed computeTargets or the loadout builder. They
+     exist so a person can see what they are reaching for.
+
+     Values are the RDA (or AI where no RDA exists) published by the NIH Office
+     of Dietary Supplements, which vary by AGE and SEX. They do NOT scale with
+     bodyweight — a heavier person does not need more vitamin C. Only the
+     calorie-linked figures below move with the target.
+
+     Bands are 14-18, 19-30, 31-50, 51-70 and 71+. Pregnancy and lactation
+     change several of these substantially and are deliberately not modelled;
+     the panel says so rather than quietly showing the wrong number.
+  ========================================================= */
+  function ageBand(age){
+    const a = Number(age);
+    if (!a || a < 19) return '14';    // also the fallback when age is unset
+    if (a <= 30) return '19';
+    if (a <= 50) return '31';
+    if (a <= 70) return '51';
+    return '71';
+  }
+
+  /* [male, female] per age band, in the unit shown in the panel */
+  const DRI = {
+    iron:      {'14':[11,15],  '19':[8,18],   '31':[8,18],   '51':[8,8],    '71':[8,8]},
+    calcium:   {'14':[1300,1300],'19':[1000,1000],'31':[1000,1000],'51':[1000,1200],'71':[1200,1200]},
+    magnesium: {'14':[410,360],'19':[400,310],'31':[420,320],'51':[420,320],'71':[420,320]},
+    zinc:      {'14':[11,9],   '19':[11,8],   '31':[11,8],   '51':[11,8],   '71':[11,8]},
+    vita:      {'14':[900,700],'19':[900,700],'31':[900,700],'51':[900,700],'71':[900,700]},
+    vitc:      {'14':[75,65],  '19':[90,75],  '31':[90,75],  '51':[90,75],  '71':[90,75]},
+    vitd:      {'14':[15,15],  '19':[15,15],  '31':[15,15],  '51':[15,15],  '71':[20,20]},
+    potassium: {'14':[3000,2300],'19':[3400,2600],'31':[3400,2600],'51':[3400,2600],'71':[3400,2600]},
+  };
+
+  /* Ceilings rather than targets — the point is to stay under them.
+     Sodium is the CDRR; cholesterol has no DRI, so the FDA label value stands
+     in; saturated fat follows the Dietary Guidelines' "under 10% of calories". */
+  const SODIUM_CEILING = 2300;   // mg
+  const CHOL_CEILING   = 300;    // mg
+
+  /* Pass the targets for whichever day is on screen (rest vs training); the
+     calorie-linked goals follow it. Defaults to the current day. */
+  function dailyGoals(tgIn){
+    const tg   = tgIn || currentTargets();
+    const kcal = tg.kcal;
+    const band = ageBand(state.age);
+    const i    = (state.sex === 'female') ? 1 : 0;
+    const pick = k => DRI[k][band][i];
+
+    const prefs = state.preferences || [];
+    const meatFree = prefs.includes('vegetarian') || prefs.includes('vegan');
+
+    return {
+      /* Calorie-linked. These are the only figures that move with the target.
+         Fibre matches fibreTarget()'s rule exactly, but reads kcal from the
+         day being shown rather than always the current one. */
+      fibre:     Math.round(Math.max(14 * (kcal / 1000), 21)),
+      addedSugar: Math.round(kcal * 0.10 / 4),        // under 10% of calories
+      satfat:    Math.round(kcal * 0.10 / 9),         // under 10% of calories
+
+      /* Ceilings */
+      sodium: SODIUM_CEILING,
+      chol:   CHOL_CEILING,
+
+      /* Age and sex based */
+      potassium: pick('potassium'),
+      calcium:   pick('calcium'),
+      /* The one adjustment with an official multiplier: the DRI for iron is
+         1.8x higher on a vegetarian diet, because non-heme iron from plants is
+         far less bioavailable than heme iron from meat. Zinc absorption is
+         also poorer on a plant-based diet, but no official multiplier is
+         published for it, so zinc is left at the RDA and flagged in the note
+         instead of being quietly inflated. */
+      iron:      meatFree ? Math.round(pick('iron') * 1.8) : pick('iron'),
+      ironNote:  meatFree,
+      magnesium: pick('magnesium'),
+      zinc:      pick('zinc'),
+      zincNote:  meatFree,
+      vita:      pick('vita'),
+      vitc:      pick('vitc'),
+      vitd:      pick('vitd'),
+
+      /* So the panel can say whose figures these are */
+      band, sex: state.sex || null, meatFree,
+    };
+  }
 
   function fullNutrition(){
     const out = {fibre:0, sodium:0};
