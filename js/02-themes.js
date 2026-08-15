@@ -15,7 +15,7 @@
   ========================================================= */
   const THEMES = {
     cyberpunk: {
-      tiers:["Netrunner", "Techie", "Fixer", "Nomad", "Solo"],
+      tiers:["Netrunner", "Techie", "Fixer", "Nomad", "Psycho"],
       wash:"radial-gradient(ellipse at top, #10202b 0%, #0a0e14 55%), repeating-linear-gradient(0deg, rgba(0,255,242,0.018) 0px, rgba(0,255,242,0.018) 1px, transparent 1px, transparent 4px)",
       name:"Cyberpunk", icon:"city",
       blurb:"Neon, chrome and bad decisions at 3am",
@@ -47,7 +47,7 @@
               meals:"Lay Out Your Feast", tierPick:"Choose Your Rank" }
     },
     fps: {
-      tiers:["Recon", "Medic", "Engineer", "Assault", "Support"],
+      tiers:["Recon", "Medic", "Engineer", "Assault", "Tank"],
       wash:"linear-gradient(180deg, #15181a 0%, #0e0f10 45%)",
       name:"Tactical FPS", icon:"crosshair",
       blurb:"Matte black, orange accents, zero nonsense",
@@ -79,7 +79,10 @@
               meals:"Ration Out Your Day", tierPick:"Choose Your Grade" }
     },
     farm: {
-      tiers:["Sprout","Farmhand","Grower","Rancher","Homesteader"],
+      /* Named for the flower bed rather than the people working it, so the
+         ladder climbs by how big the bloom grows: a violet low to the ground
+         up to a sunflower you have to look up at. */
+      tiers:["Violet","Daisy","Tulip","Hollyhock","Sunflower"],
       wash:"radial-gradient(ellipse at top, #2b3d1e 0%, #111c0f 62%)",
       name:"Farm Life Sim", icon:"flower",
       blurb:"Sunlit fields and nothing but time",
@@ -101,7 +104,7 @@
               meals:"Lay Out Your Table", tierPick:"Choose Your Season" }
     },
     craft: {
-      tiers:["Forager","Miner","Crafter","Blacksmith","Dragonslayer"],
+      tiers:["Forager","Miner","Crafter","Blacksmith","Artisan"],
       wash:"linear-gradient(180deg, #241c12 0%, #14100b 55%)",
       name:"Survival Craft", icon:"pick",
       blurb:"Punch trees, build base, fear the dark",
