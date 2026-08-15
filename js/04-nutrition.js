@@ -113,6 +113,7 @@
   }
   function fibreOf(food){
     if (!food) return 0;
+    if (typeof USDA_FF_FIBRE !== 'undefined' && USDA_FF_FIBRE[food.key] != null) return USDA_FF_FIBRE[food.key];
     if (typeof USDA_FIBRE !== 'undefined' && USDA_FIBRE[food.key] != null) return USDA_FIBRE[food.key];
     if (FIBRE_OVERRIDE[food.key] != null) return FIBRE_OVERRIDE[food.key];
     const fam = nutriFam(food.key);
@@ -120,6 +121,7 @@
   }
   function sodiumOf(food){
     if (!food) return 0;
+    if (typeof USDA_FF_SODIUM !== 'undefined' && USDA_FF_SODIUM[food.key] != null) return USDA_FF_SODIUM[food.key];
     if (typeof USDA_SODIUM !== 'undefined' && USDA_SODIUM[food.key] != null) return USDA_SODIUM[food.key];
     if (SODIUM_OVERRIDE[food.key] != null) return SODIUM_OVERRIDE[food.key];
     const fam = nutriFam(food.key);
@@ -431,6 +433,361 @@
 
     /* --- last few one-offs that sit in no family at all --- */
     chipotle:'chilli', fishsauce:'sauce', applesaucecond:'apple',
+  };
+
+  /* =========================================================
+     USDA FOUNDATION FOODS -- the most recent and most thorough layer
+
+     SR Legacy above is frozen at 2018 and was largely compiled from older
+     analyses. Foundation Foods is the current programme: fewer foods, but
+     each one freshly sampled across multiple lots and fully analysed. Where
+     a food appears in both, this layer wins.
+
+     Same caution as before. Every match was read rather than trusted, and
+     23 were rejected. Some were the usual near-misses -- "Butter" reaching
+     peanut butter again, "Almonds" reaching almond butter, "Spinach"
+     reaching baby spinach when the app lists those separately.
+
+     Five were a subtler trap worth recording: the dry beans in Foundation
+     Foods are published "(0% moisture)", an analytical basis with the water
+     mathematically removed. Real dry beans hold roughly 11% moisture, so
+     those figures would have overstated every nutrient by about a tenth.
+     Those beans keep their SR Legacy values, which are on a normal basis.
+  ========================================================= */
+  const USDA_FF_NUTRI = {
+    acornsq:         [0,0,0,332.1,24.82,0.3078,23.75,0.2935,0,7,0],  // Squash, winter, acorn, raw
+    almondbutter:    [4.253,0,0,745.4,263.8,4.108,267.8,3.178,0,0,0],  // Almond butter, creamy
+    almondflour:     [0,0,0,666.8,232.3,3.225,251.1,2.795,0,0,0],  // Flour, almond
+    applesauce:      [0,0,9.663,107.7,3.821,0.04475,3.938,0.002625,0,43.69,0],  // Applesauce, unsweetened, with added vitamin C
+    apricot:         [0,0,6.25,231.4,11.59,0.1634,8.883,0.1483,0,3.071,0],  // Apricot, with skin, raw
+    arugula:         [0,0,0,406.8,203.7,1.393,42.65,0.3483,0,101.4,0],  // Arugula, baby, raw
+    asparagus:       [0,0,0,277.5,20.58,0.4436,13.78,0.5955,0,9.153,0],  // Asparagus, green, raw
+    babycarrot:      [0,0,0,237.3,42.23,0.088,11.06,0.1597,0,0,0],  // Carrots, baby, raw
+    babyspinach:     [0,0,0,581.8,68.35,1.261,92.86,0.4471,283.11981667,26.52,0],  // Spinach, baby
+    beef80:          [6.845,67.74,0,273.3,6.889,1.965,16.41,3.848,0,0,0],  // Beef, ground, 80% lean meat / 20% fat, raw
+    beetgreens:      [0,0,0.89,368.7,72.8,3.163,74.36,0.3154,0,8.583,0],  // Beet greens, raw
+    beets:           [0,0,5.1015,341.5,13.82,0.4281,21.01,0.3104,0,4.6,0],  // Beets, raw
+    berries:         [0,0,9.356,85.64,11.69,0.3398,6.179,0.08534,0,8.059,0],  // Blueberries, raw
+    blackberry:      [0,0,6.52125,167.4,15.45,0.2079,20.58,0.1889,0,15.4,0],  // Blackberries, raw
+    bologna:         [9.21,0,0,0,0,0,0,0,0,0,0],  // Bologna, beef
+    broccoli:        [0.039,0,1.4,303.0,46.0,0.69,21.0,0.42,8.0,53.3,0],  // Broccoli, raw
+    brussels:        [0,0,0,476.8,38.64,0.7305,25.0,0.3663,0,142.9,0],  // Brussels sprouts, raw
+    bulgur:          [0,0,0,358.3,34.11,2.625,118.9,2.149,0,0,0],  // Bulgur, dry, raw
+    butternut:       [0,0,0,329.1,21.74,0.2129,14.95,0.193,0,7.6,0],  // Squash, winter, butternut, raw
+    cabbage:         [0,0,0,207.1,41.84,0.06625,13.86,0.2112,0,40.34,0],  // Cabbage, green, raw
+    canola:          [6.61,0,0,0,0,0,0,0,0,0,0],  // Oil, canola
+    carrots:         [0,0,0,279.6,30.48,0.1504,12.45,0.2364,0,0,0],  // Carrots, mature, raw
+    cauliflower:     [0,0,0,274.4,20.35,0.3338,14.2,0.2344,0,67.1,0],  // Cauliflower, raw
+    celery:          [0,0,0,265.2,46.28,0.0,10.93,0.0929,0,0,0],  // Celery, raw
+    cheddar:         [19.2,100.0,0.33,77.0,707.0,0.16,26.8,3.67,316.0,0,0],  // Cheese, cheddar
+    cherries:        [0,0,13.872,229.6,12.26,0.1054,12.11,0.06446,0,10.39,0],  // Cherries, sweet, dark red, raw
+    chia:            [0,0,0,642.1,595.4,6.043,326.3,5.556,0,0,0],  // Chia seeds, dry, raw
+    chicken:         [0.3488,72.73,0,330.1,3.939,0.3543,26.2,0.6545,0,0,0],  // Chicken, breast, boneless, skinless, raw
+    chickpeas:       [0,0,0,1074.0,111.1,5.094,134.8,3.124,0,0,0],  // Chickpeas, (garbanzo beans, bengal gram), dry
+    chickthigh:      [1.658,91.66,0,271.8,5.65,0.6018,21.8,1.348,0,0,0],  // Chicken, thigh, boneless, skinless, raw
+    chickwing:       [0,98.88,0,194.0,13.55,0.5111,16.53,1.179,0,0,0],  // Chicken, wing, meat and skin, raw
+    coconut:         [82.5,0,0,0.0,1.0,0.05,0.0,0.02,0,0,0],  // Oil, coconut
+    corn:            [0,0,7.372,237.0,0.6563,0.3875,25.76,0.5564,0,0,0],  // Corn, sweet, yellow and white kernels, Â fresh, raw
+    corntort6:       [0,0,0,168.2,35.16,0.7912,45.19,0.9344,0,0,0],  // Tortilla, corn, shelf stable
+    cottage2:        [1.26,12.0,4.1,120.0,103.0,0.13,8.9,0.61,69.0,0,0],  // Cheese, cottage, lowfat, 2% milkfat
+    creamcheese:     [19.73,101.0,0,124.8,97.11,0.0,8.914,0.5891,0,0,0],  // Cream cheese, full fat, block
+    cucumber:        [0,0,0,169.6,16.34,0.0,10.11,0.204,0,0,0],  // Cucumber, with peel, raw
+    eggplant:        [0,0,2.354,222.1,11.06,0.0,13.54,0.1189,0,0.8,0],  // Eggplant, raw
+    enoki:           [0,0,0,402.3,1.432,1.275,12.84,0.4815,0,0,0.0],  // Mushroom, enoki
+    farro:           [0,0,0,385.4,25.94,3.195,118.8,3.968,0,0,0],  // Farro, pearled, dry, raw
+    fennel:          [0,0,3.196,332.4,41.3,0.0,14.98,0.1413,0,14.7,0],  // Fennel, bulb, raw
+    feta:            [11.17,57.52,1.6257,105.3,371.1,0.0675,17.69,2.353,0,0,0.0],  // Cheese, feta, whole milk, crumbled
+    figsdried:       [0,0,47.9,680.0,162.0,2.03,67.6,0.66,0.0,1.2,0],  // Figs, dried, uncooked
+    flaxseed:        [3.281,0,0,793.4,229.9,5.778,372.1,4.738,0,0,0],  // Flaxseed, ground
+    flourtort8:      [0,0,0,135.6,137.7,3.429,19.85,0.4969,0,0,0],  // Tortilla, wheat flour, shelf stable
+    fonio:           [0,0,0,43.79,11.65,2.663,39.1,1.849,0,0,0],  // Fonio, grain, dry, raw
+    grapefruit:      [0,0,7.983,155.9,21.36,0.0,9.58,0.0292,0,38.0,0],  // Grapefruit, raw
+    grapes:          [0,0,17.341,229.4,10.17,0.1615,8.556,0.03603,0,3.308,0],  // Grapes, red, seedless, raw
+    greenbeans:      [0,0,2.3338,290.4,40.05,0.6516,28.21,0.3498,0,0,0],  // Beans, snap, green, raw
+    greentom:        [0,0,2.8678,239.1,7.141,0.245,13.51,0.1594,0,2.181,0],  // Tomatillos, dehusked, raw
+    grndlamb:        [0,75.02,0,272.1,6.575,1.643,17.48,3.13,0,0,0],  // Lamb, ground, raw
+    grndturk93:      [2.264,82.26,0,246.3,23.63,1.087,17.3,2.95,0,0,0],  // Turkey, ground, 93% lean/ 7% fat, raw
+    heavycream:      [20.45,103.1,0,96.94,61.21,0.0,5.974,0.2231,0,0,0],  // Cream, heavy
+    honeydew:        [0,0,7.029,208.9,6.579,0.0,9.504,0.05999,0,15.73,0],  // Melons, honeydew, raw
+    hummus:          [2.22,0,0.34,289.0,41.0,2.41,71.1,1.38,1.0,0.0,0],  // Hummus, commercial
+    iceberg:         [0,0,0,139.3,14.24,0.03325,6.311,0.1728,0,0,0],  // Lettuce, iceberg, raw
+    kale:            [0,0,0.8,348.0,254.0,1.6,32.7,0.39,241.0,93.4,0],  // Kale, raw
+    lentils:         [0,0,0,948.9,61.85,7.158,106.7,3.863,0,0,0],  // Lentils, dry
+    macadamia:       [0,0,0,372.6,52.71,1.881,106.8,1.2,0,0,0],  // Nuts, macadamia nuts, raw
+    marinara:        [0.17,0,5.5,319.0,27.0,0.78,18.5,0.2,32.0,0,0],  // Sauce, pasta, spaghetti/marinara, ready-to-serve
+    mayo:            [11.3,0,0,0,0,0,0,0,0,0,0],  // Mayonnaise, Regular
+    milkwhole:       [1.86,12.0,4.81,150.0,123.0,0.0,11.9,0.41,32.0,0,1.0],  // Milk, whole, 3.25% milkfat, with added vitamin D
+    mustard:         [0.252,0,1.42,150.0,63.0,1.59,47.7,0.64,4.0,0.4,0],  // Mustard, prepared, yellow
+    napa:            [0,0,2.76675,234.6,35.05,0.2554,11.26,0.2526,0,0,0],  // Cabbage, napa, leaf, destemmed, raw
+    oil:             [15.4,0,0,0,0,0,0,0,0,0,0],  // Oil, olive, extra virgin
+    oj:              [0,0,8.276,179.5,12.81,0.06458,10.64,0.03189,0,26.89,0],  // Orange juice, no pulp, not fortified, from concentrate, refrigerated
+    oystermush:      [0,0,0,281.6,0.0,0.6981,13.91,0.6843,0,0,0],  // Mushroom, oyster
+    parsnip:         [0,0,10.52,492.6,44.16,0.5053,22.0,0.328,0,11.85,0],  // Parsnips, raw
+    pasta:           [0,0,0,237.4,18.27,3.887,56.74,1.493,0,0,0],  // Pasta, dry, enriched, spaghetti
+    peanutoil:       [16.2,0,0,0,0,0,0,0,0,0,0],  // Oil, peanut
+    peanuts:         [0,0,0,635.6,49.13,1.554,179.7,2.78,0,0,0],  // Peanuts, raw
+    pepperoni:       [15.84,0,0,0,0,0,0,0,0,0,0],  // Pepperoni, beef and pork, sliced
+    peppers:         [0,0,0,163.1,7.496,0.1861,9.004,0.1256,0,99.51,0],  // Peppers, bell, green, raw
+    pickles:         [0,0,1.28,112.0,54.0,0.23,7.1,0.11,4.0,2.1,0],  // Pickles, cucumber, dill or kosher dill
+    pineapple:       [0,0,11.42,137.1,12.5,0.054,13.38,0.1067,0,58.61,0],  // Pineapple, raw
+    pinenuts:        [0,0,0,654.8,8.736,5.36,205.9,5.713,0,0,0],  // Nuts, pine nuts, raw
+    plantainrp:      [0,0,14.243,395.6,3.825,0.3192,33.93,0.1467,0,20.08,0],  // Plantains, ripe, raw
+    poblano:         [0,0,2.681,191.6,8.366,0.1171,10.73,0.1284,0,128.4,0],  // Peppers, poblano, seeded, raw
+    pollock:         [0.2374,59.95,0,353.0,40.36,0.2402,22.82,0.4313,2.61,0,0.0],  // Alaska Pollock, raw
+    pork:            [0.8663,59.58,0,397.4,4.528,0.9293,24.66,1.773,0,0,0],  // Pork, loin, tenderloin, boneless, raw
+    porkbelly:       [0,66.62,0,207.9,4.205,0.3817,12.18,1.067,0,0,0],  // Pork, belly, with skin, raw
+    pumpkinseeds:    [0,0,0,691.2,37.38,8.363,499.7,6.341,0,0,0],  // Seeds, pumpkin seeds (pepitas), raw
+    radicchio:       [0,0,2.246,334.6,30.91,0.4006,12.95,0.1999,0,6.181,0],  // Radicchio, raw
+    radish:          [0,0,2.644,197.8,21.51,0.0,8.944,0.1039,0,17.76,0],  // Radishes, red, raw
+    ranch:           [7.059,0,0,0,0,0,0,0,0,0,0],  // Dressing, Ranch
+    raspberry:       [0,0,2.6759,155.8,16.41,0.4501,19.15,0.2213,0,23.04,0],  // Raspberries, raw
+    redcabbage:      [0,0,0,269.1,30.99,0.0,13.3,0.245,0,53.88,0],  // Cabbage, red, raw
+    redonion:        [0,0,5.76,197.0,17.0,0.24,11.4,0.17,0,8.1,0],  // Onions, red, raw
+    redrice:         [0,0,0,245.1,9.224,1.198,125.5,2.563,0,0,0],  // Rice, red, unenriched, dry, raw
+    romaine:         [0,0,0,260.4,27.56,0.267,12.05,0.2516,0,0,0],  // Lettuce, romaine, green, raw
+    rutabaga:        [0,0,6.0133,266.6,42.0,0.1373,15.44,0.2111,0,0,0],  // Rutabaga, peeled, raw
+    salami:          [12.98,0,0,0,0,0,0,0,0,0,0],  // Salami, hard, sliced
+    serrano:         [0,0,2.524,224.5,12.86,0.05725,12.68,0.138,0,94.61,0],  // Peppers, serrano, seeded, raw
+    shallot:         [0,0,4.351,251.5,26.06,0.3323,15.1,0.2816,0,0,0],  // Shallots, bulb, peeled, root removed, raw
+    shiitake:        [0,0,0,243.0,0.7663,0.1443,14.06,0.7641,0,0,0],  // Mushrooms, shiitake
+    sourcream:       [10.7,52.69,0,153.8,107.2,0.0,10.11,0.3919,0,0,0],  // Cream, sour, full fat
+    soymilk:         [0.3138,0,0.5569,158.2,101.0,0.5416,21.54,0.3118,58.2,0,0.681],  // Soy milk, unsweetened, plain, shelf stable
+    spaghettisq:     [0,0,4.0085,266.9,16.55,0.03125,13.34,0.1049,0,5.554,0],  // Squash, spaghetti, peeled, seeded, raw
+    squash:          [0,0,0,220.5,22.69,0.1369,16.84,0.203,0,17,0],  // Squash, summer, yellow, includes skin, raw
+    strawberry:      [0.0,0,5.34,89.0,12.0,0.28,11.8,0.18,1.0,36.3,0],  // Strawberries, raw
+    sunflowerseeds:  [0,0,0,656.8,115.6,4.37,301.9,5.578,0,0,0],  // Seeds, sunflower seed, kernel, raw
+    swisscheese:     [18.2,93.0,0.0,71.0,890.0,0.13,33.4,4.37,292.0,0,0.0],  // Cheese, swiss
+    tomatillo:       [0,0,2.8678,239.1,7.141,0.245,13.51,0.1594,0,2.181,0],  // Tomatillos, dehusked, raw
+    turnip:          [0,0,5.091,262.1,32.7,0.0,10.39,0.1561,0,26.78,0],  // Turnips, raw
+    watermelon:      [0,0,7.197,117.3,7.861,0.02131,11.45,0.1023,0,6.458,0],  // Watermelon, seedless, flesh only, raw
+    whitebeans:      [0,0,0,1424.0,142.9,6.673,153.6,2.72,0,0,0],  // Beans, cannellini, dry
+    wildrice:        [0,0,0,298.8,7.973,1.53,108.5,5.845,0,0,0],  // Wild rice, dry, raw
+    yogurt5:         [2.393,16.84,3.2474,146.9,110.9,0.0,10.7,0.473,0,0,0.0],  // Yogurt, Greek, plain, whole milk
+    yogurtwhole:     [2.393,16.84,3.2474,146.9,110.9,0.0,10.7,0.473,0,0,0.0],  // Yogurt, Greek, plain, whole milk
+  };
+
+  const USDA_FF_FIBRE = {
+    acornsq: 2.635,
+    almondbutter: 9.718,
+    almondflour: 9.266,
+    applesauce: 0,
+    apricot: 1.51,
+    arugula: 2.28,
+    asparagus: 1.883,
+    babycarrot: 2.694,
+    babyspinach: 1.558,
+    beef80: 0,
+    beetgreens: 2.578,
+    beets: 3.119,
+    berries: 0,
+    blackberry: 5.3,
+    bologna: 0,
+    broccoli: 2.4,
+    brussels: 4.785,
+    bulgur: 11.72,
+    butternut: 1.959,
+    cabbage: 0,
+    canola: 0,
+    carrots: 3.095,
+    cauliflower: 1.948,
+    celery: 0,
+    cheddar: 0,
+    cherries: 0,
+    chia: 0,
+    chicken: 0,
+    chickpeas: 0,
+    chickthigh: 0,
+    chickwing: 0,
+    coconut: 0,
+    corn: 2.428,
+    corntort6: 0,
+    cottage2: 0,
+    creamcheese: 0,
+    cucumber: 0,
+    eggplant: 2.448,
+    enoki: 2.945,
+    farro: 7.31,
+    fennel: 2.046,
+    feta: 0,
+    figsdried: 9.8,
+    flaxseed: 23.13,
+    flourtort8: 0,
+    fonio: 2.197,
+    grapefruit: 0.6525,
+    grapes: 0,
+    greenbeans: 3.011,
+    greentom: 1.7,
+    grndlamb: 0,
+    grndturk93: 0,
+    heavycream: 0,
+    honeydew: 0,
+    hummus: 5.4,
+    iceberg: 0,
+    kale: 4.1,
+    lentils: 0,
+    macadamia: 7.563,
+    marinara: 1.8,
+    mayo: 0,
+    milkwhole: 0,
+    mustard: 4.3,
+    napa: 1.2,
+    oil: 0,
+    oj: 0,
+    oystermush: 0,
+    parsnip: 5.351,
+    pasta: 0,
+    peanutoil: 0,
+    peanuts: 8.014,
+    pepperoni: 0,
+    peppers: 0.9419,
+    pickles: 1.0,
+    pineapple: 0.9346,
+    pinenuts: 3.941,
+    plantainrp: 2.125,
+    poblano: 2.07,
+    pollock: 0.0,
+    pork: 0,
+    porkbelly: 0,
+    pumpkinseeds: 5.079,
+    radicchio: 2.114,
+    radish: 1.314,
+    ranch: 0,
+    raspberry: 0,
+    redcabbage: 0,
+    redonion: 2.2,
+    redrice: 4.198,
+    romaine: 0,
+    rutabaga: 2.9,
+    salami: 0,
+    serrano: 2.521,
+    shallot: 2.2,
+    shiitake: 0,
+    sourcream: 0,
+    soymilk: 0.0,
+    spaghettisq: 1.4,
+    squash: 0.9563,
+    strawberry: 1.8,
+    sunflowerseeds: 7.215,
+    swisscheese: 0,
+    tomatillo: 1.7,
+    turnip: 1.915,
+    watermelon: 0,
+    whitebeans: 0,
+    wildrice: 4.26,
+    yogurt5: 0,
+    yogurtwhole: 0,
+  };
+
+  const USDA_FF_SODIUM = {
+    acornsq: 0.0,
+    almondbutter: 0.9963,
+    almondflour: 0.8944,
+    applesauce: 0.5038,
+    apricot: 0.0,
+    arugula: 86.93,
+    asparagus: 2.46,
+    babycarrot: 62.66,
+    babyspinach: 111.4,
+    beef80: 54.94,
+    beetgreens: 280.5,
+    beets: 111.6,
+    berries: 0.0,
+    blackberry: 1.548,
+    bologna: 0,
+    broccoli: 36.0,
+    brussels: 25.74,
+    bulgur: 2.18,
+    butternut: 0.0,
+    cabbage: 16.1,
+    canola: 0,
+    carrots: 86.65,
+    cauliflower: 20.0,
+    celery: 97.21,
+    cheddar: 654.0,
+    cherries: 0.0,
+    chia: 0.0,
+    chicken: 65.75,
+    chickpeas: 8.779,
+    chickthigh: 62.33,
+    chickwing: 84.14,
+    coconut: 0.0,
+    corn: 0.0,
+    corntort6: 34.91,
+    cottage2: 321.0,
+    creamcheese: 367.8,
+    cucumber: 1.515,
+    eggplant: 0.4425,
+    enoki: 0.4167,
+    farro: 0.845,
+    fennel: 49.03,
+    feta: 1034.0,
+    figsdried: 10.0,
+    flaxseed: 36.74,
+    flourtort8: 730.5,
+    fonio: 2.967,
+    grapefruit: 0.0,
+    grapes: 6.999,
+    greenbeans: 0.0,
+    greentom: 0.3113,
+    grndlamb: 53.45,
+    grndturk93: 80.18,
+    heavycream: 20.61,
+    honeydew: 21.15,
+    hummus: 438.0,
+    iceberg: 16.11,
+    kale: 53.0,
+    lentils: 0.0,
+    macadamia: 0.0,
+    marinara: 419.0,
+    mayo: 0,
+    milkwhole: 38.0,
+    mustard: 1100.0,
+    napa: 12.65,
+    oil: 0,
+    oj: 5.231,
+    oystermush: 1.128,
+    parsnip: 0.4913,
+    pasta: 2.406,
+    peanutoil: 0,
+    peanuts: 1.493,
+    pepperoni: 0,
+    peppers: 0.0,
+    pickles: 808.0,
+    pineapple: 0.0,
+    pinenuts: 0.0,
+    plantainrp: 0.0,
+    poblano: 0.0,
+    pollock: 114.8,
+    pork: 41.39,
+    porkbelly: 49.7,
+    pumpkinseeds: 0.0,
+    radicchio: 8.076,
+    radish: 51.16,
+    ranch: 0,
+    raspberry: 0.0,
+    redcabbage: 11.72,
+    redonion: 1.0,
+    redrice: 0.4375,
+    romaine: 23.0,
+    rutabaga: 4.591,
+    salami: 0,
+    serrano: 0.0,
+    shallot: 3.636,
+    shiitake: 0.9363,
+    sourcream: 50.04,
+    soymilk: 34.28,
+    spaghettisq: 0.3125,
+    squash: 0.0,
+    strawberry: 10.0,
+    sunflowerseeds: 0.0,
+    swisscheese: 185.0,
+    tomatillo: 0.3113,
+    turnip: 12.8,
+    watermelon: 0.0,
+    whitebeans: 0.0,
+    wildrice: 1.014,
+    yogurt5: 33.76,
+    yogurtwhole: 33.76,
   };
 
   /* =========================================================
@@ -1224,11 +1581,13 @@
     yogurtwhole: 35,
   };
 
-  /* Measured USDA values first, then the hand overrides, then the family
-     model. Only the first of these is real data for that specific food. */
+  /* Most recent measured data first, then the older measured set, then the
+     hand overrides, then the family model. Only the first two are real data
+     for that specific food; everything after is an estimate. */
   function nutriOf(food){
     if (!food) return null;
-    const row = USDA_NUTRI[food.key]
+    const row = USDA_FF_NUTRI[food.key]
+      || USDA_NUTRI[food.key]
       || NUTRI_OVERRIDE[food.key]
       || NUTRI_BY_FAMILY[FAMILY[food.key]]
       || NUTRI_BY_FAMILY[NUTRI_FAMILY[food.key]]

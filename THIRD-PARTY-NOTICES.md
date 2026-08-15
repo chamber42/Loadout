@@ -85,6 +85,8 @@ works of the United States federal government, which are not subject to
 copyright in the United States (17 U.S.C. § 105) and are in the public domain:
 
 - USDA FoodData Central — https://fdc.nal.usda.gov/
+  - Foundation Foods (2026-04-30)
+  - SR Legacy (2018-04)
 - U.S. Food and Drug Administration Daily Values (21 CFR 101.9)
 - National Institutes of Health, Office of Dietary Supplements
 
