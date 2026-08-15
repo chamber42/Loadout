@@ -266,8 +266,9 @@
       <label class="field-label" style="margin-top:20px;">YOUR DATA</label>
       <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
         Everything you enter is stored on this device only. There are no accounts, no analytics
-        and no tracking, and nothing is ever uploaded. Barcode photos are decoded on this device
-        and are never transmitted or saved.
+        and no tracking. Camera frames and barcode photos are decoded on this device and are
+        never transmitted or saved &mdash; when you scan or search for a food, only the barcode
+        number or the words you typed are sent out, to look that product up.
       </p>
       <button class="btn-ghost" id="legalPrivacy" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> Read the full privacy policy</button>
 
@@ -282,10 +283,14 @@
 
       <label class="field-label" style="margin-top:20px;">OPEN SOURCE</label>
       <p class="subtitle" style="font-size:12px; margin:8px 0 0;">
-        <strong>ZXing-js</strong> (@zxing/library) &mdash; barcode decoding, used under the MIT
-        License, Copyright &copy; ZXing-js authors. Loaded on demand from the jsDelivr CDN.<br><br>
-        <strong>Typefaces</strong> &mdash; supplied by Google Fonts under the SIL Open Font
-        License or the Apache License 2.0.
+        <strong>ZXing-js</strong> (@zxing/library) &mdash; barcode decoding, used under the
+        Apache License 2.0, Copyright &copy; the ZXing-js authors. Loaded on demand from the
+        jsDelivr CDN.<br><br>
+        <strong>Typefaces</strong> &mdash; supplied by Google Fonts. Most are used under the
+        SIL Open Font License 1.1; Roboto Slab and Special Elite under the Apache License 2.0.
+        <br><br>
+        Full licence texts ship with the app in <strong>licenses/</strong>, and every
+        per-family copyright notice is listed in <strong>THIRD-PARTY-NOTICES.md</strong>.
       </p>
 
       <label class="field-label" style="margin-top:20px;">TRADEMARKS</label>
@@ -395,14 +400,14 @@
     </div>
     <div class="eyebrow" data-word="charCreate">CHARACTER CREATION</div>
     <h1 class="title">Set Your Daily Target</h1>
-    <p class="subtitle">Already tracking in MyFitnessPal or another app? Paste that number in — it will always beat a formula. Otherwise the calculator below will estimate it.</p>
+    <p class="subtitle">Have your number from a coach or another app? Paste it in — it will always beat a formula. Otherwise the calculator below will estimate it.</p>
 
 
 
     <div class="panel">
       <label class="field-label">SET CALORIES BY</label>
       <div class="choice-grid" id="modeGrid" style="grid-template-columns:1fr 1fr;">
-        <button class="choice-btn selected" data-mode="direct"><span><strong>My number</strong><span class="desc">From MyFitnessPal or a coach</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg></span></button>
+        <button class="choice-btn selected" data-mode="direct"><span><strong>My number</strong><span class="desc">From a coach or another app</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg></span></button>
         <button class="choice-btn" data-mode="calc"><span><strong>Calculate</strong><span class="desc">Estimate from my stats</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-calc"></use></svg></span></button>
       </div>
     </div>
@@ -418,7 +423,7 @@
         <input type="number" id="directCInput" placeholder="Carbs g" inputmode="numeric" min="0" max="900">
         <input type="number" id="directFInput" placeholder="Fat g" inputmode="numeric" min="0" max="300">
       </div>
-      <p class="subtitle" style="font-size:10px; margin:10px 0 0;">Copy these straight from your MyFitnessPal goal screen and the two apps will agree exactly.</p>
+      <p class="subtitle" style="font-size:10px; margin:10px 0 0;">Have macros from a coach or another app? Copy them straight in and your targets will match them exactly.</p>
 
       <label class="field-label" style="margin-top:16px;">BODYWEIGHT (LBS) — OPTIONAL</label>
       <input type="number" id="directBwInput" placeholder="e.g. 213" inputmode="numeric" min="70" max="500">
@@ -444,7 +449,7 @@
         <button class="choice-btn" data-activity="1.6"><span><strong>Active</strong><span class="desc">Walking/moving most of the day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-run"></use></svg></span></button>
         <button class="choice-btn" data-activity="1.8"><span><strong>Very Active</strong><span class="desc">Physical labor all day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-build"></use></svg></span></button>
       </div>
-      <p class="subtitle" style="font-size:10px; margin:10px 0 0;">Like MyFitnessPal, this describes your job and daily movement only. Log training below.</p>
+      <p class="subtitle" style="font-size:10px; margin:10px 0 0;">This describes your job and daily movement only. Log training below.</p>
 
       <label class="field-label" style="margin-top:16px;">A TYPICAL TRAINING SESSION</label>
       <div id="exerciseOptions" style="margin-top:2px;">
@@ -453,7 +458,7 @@
       </div>
       <p class="subtitle" id="exerciseNote" style="font-size:10px; margin:10px 0 0;"></p>
       <p class="subtitle" style="font-size:10px; margin:8px 0 0;">
-        This is one session's burn, the same figure you'd eat back in MyFitnessPal — not how often you train.
+        This is one session's burn, the same figure you'd eat back in another app — not how often you train.
         You'll get <strong>two targets</strong>: a rest-day number and a training-day number. How many of each
         you're cooking for is decided later, when you build the prep.
       </p>

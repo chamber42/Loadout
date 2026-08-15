@@ -20,8 +20,8 @@
     {id:5, name:"The Juggernaut", min:3150, max:4000},
   ];
 
-  /* Goal → flat daily calorie adjustment, matching MyFitnessPal's
-     "500 kcal per pound per week" model rather than a percentage. */
+  /* Goal → flat daily calorie adjustment, on the standard
+     "500 kcal a day per pound a week" model rather than a percentage. */
   const GOAL_ADJUST = {
     extreme_loss: -1000,
     loss:          -500,

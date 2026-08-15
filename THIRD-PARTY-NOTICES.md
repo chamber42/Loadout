@@ -1,0 +1,100 @@
+# Third-Party Notices
+
+Loadout bundles or loads the third-party material listed below. Full licence
+texts are in the `licenses/` directory:
+
+- `licenses/SIL-OFL-1.1.txt` — SIL Open Font License, Version 1.1
+- `licenses/Apache-2.0.txt` — Apache License, Version 2.0
+
+---
+
+## Typefaces
+
+All typefaces are self-hosted in `fonts/` and supplied via Google Fonts.
+
+### Under the SIL Open Font License 1.1
+
+The OFL requires that this licence and its copyright notices be distributed
+with the fonts. Reserved Font Names, where declared, are reproduced in the
+copyright lines below and must not be used by derivative works.
+
+| Family | Copyright |
+|---|---|
+| Barlow Condensed | Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow) |
+| Chakra Petch | Copyright 2018 The Chakra Petch Project Authors (https://github.com/m4rc1e/Chakra-Petch.git) |
+| Cinzel | Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel) |
+| Courier Prime | Copyright 2015 The Courier Prime Project Authors (https://github.com/quoteunquoteapps/CourierPrime) |
+| Crimson Text | Copyright 2010 The Crimson Text Project Authors (https://github.com/googlefonts/Crimson) |
+| EB Garamond | Copyright 2017 The EB Garamond Project Authors (https://github.com/octaviopardo/EBGaramond12) |
+| Fredoka | Copyright 2016 The Fredoka Project Authors (https://github.com/hafontia/Fredoka-One) |
+| IM Fell English SC | Copyright (c) 2010, Igino Marini (mail@iginomarini.com) |
+| Lato | Copyright (c) 2010-2014 by tyPoland Lukasz Dziedzic (team@latofonts.com) with Reserved Font Name "Lato" |
+| Metamorphous | Copyright (c) 2011-2012 by Sorkin Type Co (www.sorkintype.com) |
+| Nunito | Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito) |
+| Orbitron | Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name: "Orbitron" |
+| Press Start 2P | Copyright 2012 The Press Start 2P Project Authors (cody@zone38.net), with Reserved Font Name "Press Start 2P" |
+| Racing Sans One | Copyright (c) 2012, Pablo Impallari (www.impallari.com\|impallari@gmail.com), Rodrigo Fuenzalida (www.rfuenzalida.com\|hello@rfuenzalida.com), with Reserved Font Name Racing Sans |
+| Rajdhani | Copyright (c) 2014, Indian Type Foundry (info@indiantypefoundry.com) |
+| Share Tech Mono | Copyright (c) 2012, Carrois Type Design, Ralph du Carrois (post@carrois.com www.carrois.com), with Reserved Font Name 'Share' |
+| Silkscreen | Copyright 2001 The Silkscreen Project Authors (https://github.com/googlefonts/silkscreen) |
+| Titillium Web | Copyright (c) 2009-2011 by Accademia di Belle Arti di Urbino and students of MA course of Visual design. Some rights reserved. |
+| VT323 | Copyright 2011, The VT323 Project Authors (peter.hull@oikoi.com) |
+
+### Under the Apache License 2.0
+
+| Family | Notes |
+|---|---|
+| Roboto Slab | Licensed under the Apache License, Version 2.0 |
+| Special Elite | Licensed under the Apache License, Version 2.0 |
+
+---
+
+## Software
+
+### ZXing-js (`@zxing/library`)
+
+Barcode decoding. Licensed under the **Apache License, Version 2.0**.
+Copyright © the ZXing-js authors. https://github.com/zxing-js/library
+
+This library is not bundled with the app; it is fetched on demand from the
+jsDelivr CDN when a barcode decoder is needed. See `js/21-food-lookup.js`.
+
+---
+
+## Data
+
+### Open Food Facts
+
+Product and nutrition information for scanned barcodes and food searches comes
+from Open Food Facts (https://world.openfoodfacts.org/), used under the
+**Open Database License (ODbL) v1.0**. https://opendatacommons.org/licenses/odbl/
+
+Loadout queries the Open Food Facts API at runtime and displays the results. It
+does not redistribute the database or any adapted copy of it, so the app is a
+"Produced Work" under the ODbL rather than a Derivative Database. Product
+photographs, where shown, are licensed CC-BY-SA by their contributors.
+
+**If a snapshot of Open Food Facts data is ever bundled into the app, that
+bundled database falls under the ODbL's share-alike terms and this notice must
+be revised accordingly.**
+
+### U.S. Government nutrition data
+
+Where used, nutrient reference values and food composition data are drawn from
+works of the United States federal government, which are not subject to
+copyright in the United States (17 U.S.C. § 105) and are in the public domain:
+
+- USDA FoodData Central — https://fdc.nal.usda.gov/
+- U.S. Food and Drug Administration Daily Values (21 CFR 101.9)
+- National Institutes of Health, Office of Dietary Supplements
+
+No attribution is required for these sources, and their use here does not imply
+endorsement by the USDA, the FDA, the NIH or any other agency.
+
+---
+
+## Trademarks
+
+Product names and brands appearing in nutrition results belong to their
+respective owners. Loadout is not affiliated with, endorsed by or sponsored by
+any of them.
