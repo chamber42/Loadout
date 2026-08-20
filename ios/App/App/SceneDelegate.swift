@@ -8,7 +8,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
 
         window = UIWindow(windowScene: windowScene)
-        window?.rootViewController = CAPBridgeViewController()
+        /* MainViewController, not CAPBridgeViewController: the subclass is
+           what registers HealthKitPlugin. The root view controller is built
+           here in code, so Main.storyboard's class is never consulted and
+           setting it there has no effect. */
+        window?.rootViewController = MainViewController()
         window?.makeKeyAndVisible()
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
