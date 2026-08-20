@@ -6,3 +6,7 @@ index.original.html
 # Transient test harnesses are written into this folder and deleted again.
 # Ignored so a crashed run can never commit one by accident.
 __*.html
+
+# Per-machine Claude Code permissions. Local settings, not project settings —
+# committing them would push one machine's allowlist onto every clone.
+.claude/

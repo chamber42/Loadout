@@ -13,7 +13,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="LOADOUT">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M50 8 L88 24 V52 C88 74 72 88 50 96 C28 88 12 74 12 52 V24 Z' fill='none' stroke='%2300fff2' stroke-width='4'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
+<!-- iOS ignores SVG here — a home-screen icon must be a raster file, or the
+     springboard falls back to a grey screenshot of the page. PNG it is. -->
+<link rel="apple-touch-icon" href="app-icons/icon-180.png">
+
+<!-- Android/Chrome installability. Every path inside is relative because the
+     app is served from a /Loadout/ subpath on Pages, not a domain root. -->
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230a0e14'/%3E%3Cpath d='M46 28 L30 56 H46 L42 76 L70 42 H52 Z' fill='%2339ff88'/%3E%3C/svg%3E">
 
 <!-- Fonts are served from this repo, not from Google. Self-hosting keeps every
@@ -924,5 +930,33 @@
 <script src="js/30-timers.js"></script>
 <script src="js/31-journal-scan.js"></script>
 <script src="js/32-method-check.js"></script>
+
+<!-- ==========================================================================
+     SERVICE WORKER REGISTRATION
+
+     Registered last, and only after load, so fetching and parsing sw.js can
+     never compete with the first paint. The app works without it; offline
+     support is an enhancement, not a dependency.
+
+     Guarded on protocol as well as support: service workers are unavailable
+     on file:// URLs, where register() throws rather than returning a rejected
+     promise in some browsers. Opened as a local file the app simply runs
+     online-only, exactly as it did before.
+     ========================================================================== -->
+<script>
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(err){
+      /* Registration failing is survivable — the app is fully functional
+         online. Log it rather than surfacing a scary message about a
+         feature the user never asked for. */
+      console.warn('Service worker registration failed:', err);
+    });
+  });
+})();
+</script>
 </body>
 </html>
