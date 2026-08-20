@@ -66,5 +66,12 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<!-- Shown verbatim in the iOS permission prompt. Without this key iOS does
+	     not deny the camera, it refuses to ask at all, so getUserMedia fails
+	     with no prompt and no error the user can act on. Worded to match what
+	     the app actually does: the frame is decoded on device and only the
+	     digits of the barcode are ever sent anywhere. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Loadout scans barcodes on food packaging to look up nutrition information. The picture is read on your device — only the barcode number is sent to Open Food Facts.</string>
 </dict>
 </plist>
