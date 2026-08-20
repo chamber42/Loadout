@@ -34,12 +34,19 @@
     document.head.appendChild(link);
   }catch(e){ /* manifest injection best-effort */ }
 
-  /* Prevent rubber-band / pull-to-refresh + pinch zoom gestures */
+  /* Prevent pinch zoom. Rubber-band is handled by overscroll-behavior:none
+     in the stylesheet, and double-tap zoom by touch-action:manipulation on
+     the body — which is why the touchend guard that used to sit here is
+     gone.
+
+     That guard called preventDefault() on any touchend within 300ms of the
+     previous one, to stop double-tap zoom the way it had to be done before
+     touch-action existed. But cancelling touchend also cancels the click
+     WebKit is about to synthesise from it, so every tap inside that window
+     was thrown away: tapping two buttons quickly, or the same button twice,
+     did nothing at all. Measured on device, every dropped tap was under
+     300ms from the one before it, and no tap outside the window was ever
+     lost. touch-action:manipulation already suppresses double-tap zoom
+     without touching the click. */
   document.addEventListener('gesturestart', e => e.preventDefault());
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', function(e){
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) e.preventDefault();
-    lastTouchEnd = now;
-  }, {passive:false});
 
