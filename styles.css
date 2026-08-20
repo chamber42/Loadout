@@ -4723,6 +4723,18 @@
   body.attract-mode .screen{
     padding-top:0; padding-bottom:0; max-width:none;
   }
+  /* Nothing on the title screen is meant to scroll: --fit-h sizes the cabinet
+     from the viewport height precisely so the whole machine fits. It still
+     ends up a pixel or two over, because the ~30 parts that sum to its 238u
+     each round independently once --u is fractional.
+
+     Two pixels of scrollable range is worse than it sounds. A drag rubber-
+     bands against it, which reads as the screen shaking, and iOS spends the
+     first tap cancelling that scroll instead of delivering a click — so
+     buttons need tapping twice. Both only appear once the safe-area insets
+     are non-zero, which is why Safari looks fine and a home-screen or native
+     launch does not. */
+  body.attract-mode{ height:100vh; height:100dvh; overflow:hidden; }
   .attract{
     justify-content:center;
     min-height:100vh; min-height:100dvh;
