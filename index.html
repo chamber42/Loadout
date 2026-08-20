@@ -474,6 +474,15 @@
       </p>
       <div id="targetPairPreview"></div>
 
+      <!-- Native builds only. Hidden by default and revealed by
+           34-health-import.js where HealthKit can actually answer, the same
+           way the scanner hides its camera button on the web. -->
+      <button class="btn-ghost" id="btnHealthImport" hidden style="margin-top:18px;">
+        <svg class="px" aria-hidden="true"><use href="#i-muscle"></use></svg> IMPORT FROM HEALTH
+      </button>
+      <p class="subtitle" id="healthImportNote" hidden
+         style="font-size:10px; margin:6px 0 0;"></p>
+
       <label class="field-label" style="margin-top:18px;">BIOLOGICAL SEX</label>
       <div class="choice-grid" id="sexGrid" style="grid-template-columns:1fr 1fr;">
         <button class="choice-btn" data-sex="male"><span><strong>Male</strong></span></button>
@@ -933,6 +942,7 @@
 <script src="js/31-journal-scan.js"></script>
 <script src="js/32-method-check.js"></script>
 <script src="js/33-native-backup.js"></script>
+<script src="js/34-health-import.js"></script>
 
 <!-- ==========================================================================
      SERVICE WORKER REGISTRATION

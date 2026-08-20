@@ -71,6 +71,12 @@
 	     with no prompt and no error the user can act on. Worded to match what
 	     the app actually does: the frame is decoded on device and only the
 	     digits of the barcode are ever sent anywhere. -->
+	<!-- Read access only; nothing is written back to Health, so there is no
+	     NSHealthUpdateUsageDescription. Names the four fields explicitly
+	     rather than saying "health data", because this is the sentence the
+	     permission sheet shows and a vague one earns a refusal. -->
+	<key>NSHealthShareUsageDescription</key>
+	<string>Loadout can fill in your height, weight, age and sex from the Health app so you don't have to type them. It only reads these four values, and they stay on your device.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Loadout scans barcodes on food packaging to look up nutrition information. The picture is read on your device — only the barcode number is sent to Open Food Facts.</string>
 </dict>
