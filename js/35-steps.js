@@ -70,35 +70,86 @@
       return (typeof n === 'number') ? n : null;
     };
 
-    /* The buff earned on a given day. Returns null when there is none, so a
-       caller can test the result rather than compare a number against zero.
+    /* Active energy recorded on a day key, or null. */
+    window.energyOn = function(key){
+      if (!latest || !latest.energyByDay) return null;
+      var n = latest.energyByDay[key];
+      return (typeof n === 'number') ? n : null;
+    };
 
-       Works for any day in the window, not just today: a past day's count is
-       final, which makes its buff more trustworthy than today's — today is
-       still being walked. */
+    /* The buff earned on a given day. Null when there is none, so a caller
+       can test the result rather than compare a number against zero.
+
+       Works for any day in the window, not just today: a past day's figures
+       are final, which makes its buff more trustworthy than today's — today
+       is still being lived.
+
+       TWO SOURCES, PREFERRED IN ORDER
+
+       1. Measured active energy. Apple derives it from heart rate and
+          motion, so it knows a hill from a flat stroll, a fast walk from a
+          slow one, and counts activity that takes no steps at all. Where it
+          exists it is simply better evidence.
+
+       2. Step count times a textbook net walking cost. Blind to pace,
+          terrain and load — two identical step counts can be quite
+          different days. Used only when active energy is missing, which is
+          common on a phone carried without a Watch.
+
+       Either way the figure is the DIFFERENCE from a usual day, never the
+       whole thing: state.activity is already a multiplier over BMR standing
+       for how much this person moves normally, so crediting a normal day
+       again would pay for the same movement twice. */
     window.stepBuffFor = function(key){
-      if (!latest || !latest.average) return null;
+      if (!latest) return null;
       if (typeof state === 'undefined' || !(state.bodyweight > 0)) return null;
 
-      /* On a training day the session burn is already credited, and the
-         steps taken during it would be counted a second time here. Skipping
-         the buff entirely is blunt, but it errs the way the rest of the
-         app errs: toward protecting the deficit. */
-      if (typeof activeDayKind === 'function' && activeDayKind() === 'train') return null;
+      var source, extraKcal;
+      var steps  = window.stepsOn(key);
+      var energy = window.energyOn(key);
 
-      var steps = window.stepsOn(key);
-      if (steps == null) return null;
+      if (energy != null && latest.energyAverage > 0){
+        source = 'energy';
+        extraKcal = energy - latest.energyAverage;
+      } else if (steps != null && latest.average > 0){
+        source = 'steps';
+        var kg = state.bodyweight * 0.453592;
+        extraKcal = (steps - latest.average) * NET_KCAL_PER_STEP_PER_KG * kg;
+      } else {
+        return null;
+      }
 
-      var extra = steps - latest.average;
-      if (extra <= 0) return null;
+      /* On a training day the logged session burn is already added into the
+         training-day target, and the same effort is inside these figures
+         too. Measured energy can have it taken back out, so a training day
+         that ALSO involved a lot of walking still earns something for the
+         walking — which is the fair answer, and a kinder one than refusing
+         the whole day. A step count cannot be separated that way: there is
+         no telling which steps belonged to the session, so that path still
+         declines rather than risk paying twice. */
+      if (typeof activeDayKind === 'function' && activeDayKind() === 'train'){
+        if (source !== 'energy') return null;
+        var session = (typeof rawExerciseKcal === 'function') ? rawExerciseKcal() : 0;
+        extraKcal -= session;
+      }
 
-      var kg = state.bodyweight * 0.453592;
+      if (extraKcal <= 0) return null;
+
+      /* The same slide the app applies to exercise. Both sources run high —
+         wearables optimistically, step formulas by ignoring that most of a
+         day is not brisk walking — and an over-estimate should hurt least
+         where it matters most. */
       var rate = (typeof creditRate === 'function') ? creditRate() : 0.85;
-      var kcal = Math.round(extra * NET_KCAL_PER_STEP_PER_KG * kg * rate);
+      var kcal = Math.round(extraKcal * rate);
       if (kcal <= 0) return null;
 
-      return { kcal: kcal, extra: Math.round(extra),
-               steps: steps, average: latest.average };
+      return {
+        kcal: kcal,
+        source: source,
+        steps: steps,
+        average: latest.average,
+        extra: (steps != null && latest.average) ? Math.round(steps - latest.average) : null
+      };
     };
 
     /* A usual day lately, over the last seven completed days. Null until
@@ -149,8 +200,11 @@
             ' Averaged over the last ' + res.days + ' full ' +
             (res.days === 1 ? 'day' : 'days') + ', today not counted.' +
             (bonus > 0
-              ? ' The buff lands on your journal, not your prep — only the walking ' +
-                'beyond your usual counts, since the rest is already in your activity level.'
+              ? ' The buff lands on your journal, not your prep, and counts only what you did ' +
+                'beyond a usual day — the rest is already in your activity level. ' +
+                (buff.source === 'energy'
+                  ? 'Measured from your activity data.'
+                  : 'Estimated from step count, which cannot see pace or hills.')
               : '') +
             '</p>'
           : '');

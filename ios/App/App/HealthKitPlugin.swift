@@ -37,6 +37,7 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         if let t = HKObjectType.quantityType(forIdentifier: .height)              { types.insert(t) }
         if let t = HKObjectType.quantityType(forIdentifier: .bodyMass)            { types.insert(t) }
         if let t = HKObjectType.quantityType(forIdentifier: .stepCount)           { types.insert(t) }
+        if let t = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned)  { types.insert(t) }
         return types
     }
 
@@ -154,6 +155,56 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         keyFormatter.locale = Locale(identifier: "en_US_POSIX")
         keyFormatter.timeZone = calendar.timeZone
 
+        var out = JSObject()
+        let group = DispatchGroup()
+
+        /* Steps, and active energy, gathered the same way. Active energy is
+           the better signal where it exists — Apple derives it from heart
+           rate and motion, so it knows the difference between a flat stroll
+           and a hill, which a step count never can. It is not always there,
+           though: a phone left on a desk records neither, and a phone
+           without a Watch records far less of it. So both are fetched and
+           the caller decides which it can trust. */
+        group.enter()
+        dailyTotals(of: type, in: HKUnit.count(), from: windowStart,
+                    anchoredTo: startOfToday, calendar: calendar,
+                    keyed: keyFormatter) { byDay, today, average, days in
+            out["byDay"] = byDay
+            if let today = today { out["today"] = today }
+            if let average = average { out["average"] = average; out["days"] = days }
+            group.leave()
+        }
+
+        if let energy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+            group.enter()
+            dailyTotals(of: energy, in: HKUnit.kilocalorie(), from: windowStart,
+                        anchoredTo: startOfToday, calendar: calendar,
+                        keyed: keyFormatter) { byDay, today, average, days in
+                out["energyByDay"] = byDay
+                if let today = today { out["energyToday"] = today }
+                if let average = average { out["energyAverage"] = average; out["energyDays"] = days }
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) { call.resolve(out) }
+    }
+
+    /* One day-by-day cumulative total, plus today's figure and the mean of
+       the last seven COMPLETED days.
+
+       Seven days even though a month is returned: the mean is meant to say
+       "a usual day lately", and a month is long enough to average away a
+       real change in how much someone is moving. Today is left out of it
+       because it is still being lived, and a part-finished day would drag
+       the figure down for no reason. */
+    private func dailyTotals(of type: HKQuantityType,
+                             in unit: HKUnit,
+                             from windowStart: Date,
+                             anchoredTo startOfToday: Date,
+                             calendar: Calendar,
+                             keyed keyFormatter: DateFormatter,
+                             done: @escaping (JSObject, Int?, Int?, Int) -> Void) {
         var oneDay = DateComponents()
         oneDay.day = 1
 
@@ -165,46 +216,25 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             intervalComponents: oneDay)
 
         query.initialResultsHandler = { _, collection, _ in
-            var out = JSObject()
-            guard let collection = collection else {
-                DispatchQueue.main.async { call.resolve(out) }
-                return
-            }
-
             var byDay = JSObject()
-            var recentTotals: [Double] = []      // the last 7 completed days
             var today: Double?
-
-            /* Newest first, so "the last seven completed days" can be taken
-               off the front rather than sorted afterwards. */
             var completed: [(Date, Double)] = []
 
-            collection.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
-                let steps = stat.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
-                byDay[keyFormatter.string(from: stat.startDate)] = Int(steps.rounded())
+            collection?.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
+                let total = stat.sumQuantity()?.doubleValue(for: unit) ?? 0
+                byDay[keyFormatter.string(from: stat.startDate)] = Int(total.rounded())
                 if calendar.isDate(stat.startDate, inSameDayAs: startOfToday) {
-                    today = steps
+                    today = total
                 } else {
-                    completed.append((stat.startDate, steps))
+                    completed.append((stat.startDate, total))
                 }
             }
 
-            /* The average stays a SEVEN day figure even though a month of
-               days is returned: it is meant to describe "a usual day lately",
-               and a month is long enough to smooth away a genuine change in
-               how much someone is walking. Today is excluded because it is
-               still being counted, and a part-finished day would drag it
-               down for no reason. */
-            recentTotals = completed.sorted { $0.0 > $1.0 }.prefix(7).map { $0.1 }
+            let recent = completed.sorted { $0.0 > $1.0 }.prefix(7).map { $0.1 }
+            let mean = recent.isEmpty ? nil
+                     : Int((recent.reduce(0, +) / Double(recent.count)).rounded())
 
-            out["byDay"] = byDay
-            if let today = today { out["today"] = Int(today.rounded()) }
-            if !recentTotals.isEmpty {
-                let mean = recentTotals.reduce(0, +) / Double(recentTotals.count)
-                out["average"] = Int(mean.rounded())
-                out["days"] = recentTotals.count
-            }
-            DispatchQueue.main.async { call.resolve(out) }
+            done(byDay, today.map { Int($0.rounded()) }, mean, recent.count)
         }
 
         store.execute(query)

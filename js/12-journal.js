@@ -97,9 +97,11 @@
               ? `STEP BUFF <strong>+${buff.kcal} kcal</strong>`
               : `STEPS <strong>${daySteps.toLocaleString()}</strong>`}</span>
             <span class="qb-buff-sub">${buff
-              ? `${buff.extra.toLocaleString()} past your usual ${buff.average.toLocaleString()} — only the extra is credited`
+              ? (buff.source === 'energy'
+                  ? `${daySteps != null ? daySteps.toLocaleString() + ' steps · ' : ''}measured from your activity, beyond a usual day`
+                  : `${buff.extra != null ? buff.extra.toLocaleString() + ' past your usual ' + buff.average.toLocaleString() + ' · ' : ''}estimated from steps`)
               : `${dayAverage ? `Your usual is about ${dayAverage.toLocaleString()}. ` : ''}${
-                  isToday ? 'Walk past that and today\'s target goes up.'
+                  isToday ? 'Go past that and today\'s target goes up.'
                           : 'No further than usual, so no buff.'}`}</span>
           </span>
         </div>` : ''}
