@@ -39,7 +39,21 @@
     setup.hidden = true;
 
     const log = dayLog(key);
-    const tg = currentTargets();
+
+    /* Which kind of day THIS date was. Stamped into the log the moment
+       anybody sets it, so scrolling back later still knows: the prep
+       schedule only records which prep days are training, never which
+       calendar dates were. A date nobody ever marked is taken as a rest
+       day — it is the one the person did not go out of their way to
+       record, and assuming training would quietly withhold both the
+       training target and a step buff they may have earned. */
+    const dayKind = log.dayKind || (isToday && typeof activeDayKind === 'function'
+                                      ? activeDayKind() : 'rest');
+
+    /* Targets for that kind, not for whatever kind today happens to be —
+       otherwise a Tuesday marked as training is still scored against the
+       rest-day number once the week moves on. */
+    const tg = (typeof targetsFor === 'function') ? targetsFor(dayKind) : currentTargets();
     const t = dayTotals(key);
     const fromPlan = slots.length && slots[0].planned;
     const planned = characterExists() && Object.values(state.selections||{})
@@ -64,8 +78,15 @@
        was asked for, and on training days where the session burn already
        covers the movement. */
     const daySteps   = (typeof stepsOn === 'function') ? stepsOn(key) : null;
-    const buff       = (typeof stepBuffFor === 'function') ? stepBuffFor(key) : null;
+    const buff       = (typeof stepBuffFor === 'function') ? stepBuffFor(key, dayKind) : null;
     const dayAverage = (typeof stepAverage === 'function') ? stepAverage() : null;
+
+    /* Which prep day is being eaten, and whether it is a rest or training
+       day. Both drive the target, and until now neither could be set from
+       the screen where you actually log what you ate. */
+    const prepDays  = (typeof prepReady === 'function' && prepReady())
+                        ? state.prep.schedule.length : 0;
+    const showSplit = (typeof hasSplit === 'function') && hasSplit();
     const goal     = tg.kcal + (buff ? buff.kcal : 0);
     const pct      = goal ? Math.round(t.kcal / goal * 100) : 0;
     const macro = (label, got, want, cls)=>{
@@ -111,6 +132,27 @@
           ${macro('FAT',     t.fat,     tg.fat,     'f')}
         </div>
       </div>` +
+      ((prepDays > 1 || showSplit) ? `<div class="panel jday">
+        ${prepDays > 1 ? `<label class="field-label">WHICH PREP DAY ARE YOU EATING?</label>
+          <div class="day-strip jday-strip">
+            ${Array.from({length:prepDays}, (_,i)=>i+1).map(n=>{
+              const k = dayKindAt(n - 1);
+              return `<button class="day-chip${n === (dayIndex()+1) ? ' on' : ''}${
+                showSplit && k === 'train' ? ' train' : ''}" data-jday="${n}">${n}${
+                showSplit ? `<span class="kd">${ic(DAY_KIND_ICON[k])}</span>` : ''}</button>`;
+            }).join('')}
+          </div>` : ''}
+        ${showSplit ? `<label class="field-label" style="margin-top:${prepDays > 1 ? '14px' : '0'};">WAS THIS A REST OR TRAINING DAY?</label>
+          <div class="seg jday-seg">
+            ${['rest','train'].map(k=>
+              `<button class="${dayKind === k ? 'on' : ''}" data-jkind="${k}">${ic(DAY_KIND_ICON[k])} ${DAY_KIND_LABEL[k]}</button>`).join('')}
+          </div>
+          <p class="subtitle" style="font-size:11px; margin:10px 0 0;">
+            ${isToday
+              ? 'Sets today\'s target, and is remembered against this date.'
+              : 'Remembered against this date — it does not change your plan.'}
+          </p>` : ''}
+      </div>` : '') +
       slots.map(sl=>{
         const items = log.meals[sl.name] || [];
         const sub = items.reduce((a,i)=>a + (+i.kcal||0), 0);
@@ -134,6 +176,40 @@
           ${planned ? `<button class="mini-btn add" data-jplan="${escapeHtml(sl.key)}|${escapeHtml(sl.name)}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg> COPY FROM MY PREP PLAN</button>` : ''}
         </div>`;
       }).join('');
+
+    /* Switching prep day goes through the same path the loadout strip uses:
+       write back whatever the current day was showing first, or the edits
+       made to it are lost as the selections are rebuilt. */
+    body.querySelectorAll('[data-jday]').forEach(b=>b.addEventListener('click', ()=>{
+      writeBackActiveDay();
+      applyDayToSelections(parseInt(b.getAttribute('data-jday'), 10));
+      renderJournal();
+      refreshTargets();
+      saveState();
+    }));
+
+    body.querySelectorAll('[data-jkind]').forEach(b=>b.addEventListener('click', ()=>{
+      const kind = b.getAttribute('data-jkind');
+
+      /* Recorded against the date either way, so the journal still knows
+         months later what kind of day this was. */
+      log.dayKind = kind;
+
+      /* Only today may change the plan itself. Editing the schedule from a
+         date three weeks back would silently re-target the prep day that
+         happens to sit at that index now, which is not what anyone means by
+         "that Tuesday was a training day". */
+      if (isToday && prepReady()){
+        const row = state.prep.schedule[dayIndex()];
+        if (row) row.kind = kind;
+        state.prep.trainingDays = state.prep.schedule.filter(r=>r.kind === 'train').length;
+        state.trainingDays = state.prep.trainingDays;
+      }
+
+      renderJournal();
+      refreshTargets();
+      saveState();
+    }));
 
     body.querySelectorAll('[data-jadd]').forEach(b=>b.addEventListener('click', ()=>
       openJournalFoodPicker(b.getAttribute('data-jadd'))));

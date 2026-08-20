@@ -100,7 +100,7 @@
        whole thing: state.activity is already a multiplier over BMR standing
        for how much this person moves normally, so crediting a normal day
        again would pay for the same movement twice. */
-    window.stepBuffFor = function(key){
+    window.stepBuffFor = function(key, kind){
       if (!latest) return null;
       if (typeof state === 'undefined' || !(state.bodyweight > 0)) return null;
 
@@ -127,7 +127,12 @@
          the whole day. A step count cannot be separated that way: there is
          no telling which steps belonged to the session, so that path still
          declines rather than risk paying twice. */
-      if (typeof activeDayKind === 'function' && activeDayKind() === 'train'){
+      /* The caller passes the kind of the day being LOOKED AT. Falling back
+         to activeDayKind() would answer for today whatever day is on screen,
+         which is wrong the moment anyone scrolls back through the journal. */
+      var dayKind = kind || ((typeof activeDayKind === 'function') ? activeDayKind() : 'rest');
+
+      if (dayKind === 'train'){
         if (source !== 'energy') return null;
         var session = (typeof rawExerciseKcal === 'function') ? rawExerciseKcal() : 0;
         extraKcal -= session;

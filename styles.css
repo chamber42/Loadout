@@ -2412,6 +2412,14 @@
     color:var(--muted);
   }
 
+  /* The journal's own prep-day and rest/training controls. Both reuse the
+     .day-chip and .seg components the loadout and character sheet already
+     use, so the same choice looks the same wherever it is offered — only
+     the spacing differs, since here they sit inside a panel of their own. */
+  .jday{ padding:14px; }
+  .jday-strip{ margin:8px 0 0; }
+  .jday-seg{ margin:8px 0 0; }
+
   /* STEP BUFF — reads as a status effect on the day rather than another
      statistic, which is what it is: a thing that happened to the target.
      Green while it is active, and the same row goes flat and muted on a day
