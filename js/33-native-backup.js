@@ -70,6 +70,7 @@
     }
 
     function writeBackup(){
+      if (stopped) return;                 // a wipe is in progress
       var data = readAll();
       if (!data[PRIMARY]) return;          // nothing worth keeping yet
       FS.writeFile({
@@ -109,6 +110,30 @@
              readFile rejects rather than returning empty. Not an error. */
         });
     }
+
+    /* ---- deliberate wipe ------------------------------------------------
+
+       "Start over" must actually start over. Without this the wipe clears
+       localStorage, the app reloads, the restore above finds the key
+       missing, assumes the system evicted it, and puts everything back —
+       so the button appeared to do nothing. Distinguishing an eviction
+       from a deliberate wipe is not possible after the fact, so the wipe
+       has to say so at the time by deleting the backup too.
+
+       `stopped` closes the other half of the race: the click that starts
+       the wipe also schedules a mirror, which would otherwise write the
+       file again a moment after it was deleted.
+       -------------------------------------------------------------------- */
+
+    var stopped = false;
+
+    window.clearNativeBackup = function(){
+      stopped = true;
+      clearTimeout(pending);
+      try{ sessionStorage.removeItem(TRIED); }catch(e){}
+      return FS.deleteFile({ path: FILE, directory: DIR })
+        .catch(function(){ /* already absent — that is the desired end state */ });
+    };
 
     /* ---- wiring -------------------------------------------------------- */
 

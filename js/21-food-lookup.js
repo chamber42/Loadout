@@ -462,7 +462,12 @@
       setTimeout(()=>{ btn.dataset.armed=''; btn.innerHTML = ic('power') + ' Start over — wipes everything saved'; }, 5000);
       return;
     }
-    clearSaved(); location.reload();
+    /* Wait for the wipe to finish before reloading. On native there is a
+       backup file to delete too, and reloading first would race it — the
+       app would come back up, find the file still there, and restore the
+       data this button just deleted. */
+    btn.innerHTML = ic('power') + ' Wiping…';
+    clearSaved().then(function(){ location.reload(); });
   });
 
   const foodPickSearchEl = document.getElementById('foodPickSearch');

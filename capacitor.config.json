@@ -3,6 +3,6 @@
   "appName": "Loadout",
   "webDir": "www",
   "ios": {
-    "contentInset": "always"
+    "contentInset": "never"
   }
 }

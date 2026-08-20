@@ -114,8 +114,20 @@
     }catch(e){ return false; }
   }
 
+  /* Returns a promise: on native there is a backup file to delete as well,
+     and the caller must not reload until that has actually happened.
+
+     The pending save has to be cancelled first. Every click schedules one
+     400ms out, including the click that started the wipe — so without this
+     the debounced save fires after the key was removed and quietly writes
+     the whole state back. */
   function clearSaved(){
+    clearTimeout(saveTimer);
     try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+    if (typeof clearNativeBackup === 'function'){
+      return Promise.resolve(clearNativeBackup()).catch(function(){});
+    }
+    return Promise.resolve();
   }
 
   /* Any interaction is worth persisting — cheap, and debounced above */
