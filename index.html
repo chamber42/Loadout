@@ -28,6 +28,20 @@
      user IP address off Google's servers (a GDPR concern with hotlinked fonts)
      and lets the app render fully offline. Licensed under the SIL Open Font
      License / Apache 2.0, both of which permit redistribution. -->
+
+<!-- The two faces the first screen actually paints with, fetched in parallel
+     with the stylesheet instead of after it. Every face is font-display:swap,
+     so without this the title screen paints in the fallback and relayouts when
+     the real font arrives — and Press Start 2P is a pixel font whose metrics
+     are nothing like monospace, so the cabinet visibly jumps. Only the latin
+     subsets, 12KB each: the other 64 faces can keep arriving late.
+     crossorigin is required even same-origin, because fonts are always
+     fetched anonymously and a preload without it is simply fetched twice. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin
+      href="fonts/pressstart2p_v16_e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin
+      href="fonts/sharetechmono_v16_J7aHnp1uDWRBEqV98dVQztYldFcLowEF.woff2">
+
 <link rel="stylesheet" href="fonts.css">
 
 <link rel="stylesheet" href="styles.css">
