@@ -23,7 +23,7 @@
    answer that looks live.
    ========================================================================== */
 
-const CACHE_VERSION = 'loadout-v1';
+const CACHE_VERSION = 'loadout-v2';
 
 /* Kept in the same order index.html loads them, so a missing file here is
    easy to spot against the <script> block there. */
@@ -35,6 +35,7 @@ const SHELL = [
   './icons.js',
   './privacy.html',
   './manifest.webmanifest',
+  './icon.svg',
   './app-icons/icon-180.png',
   './app-icons/icon-192.png',
   './app-icons/icon-512.png',
