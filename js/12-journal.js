@@ -138,8 +138,14 @@
          a control that moves nothing — the loadout tab still has its day
          strip for changing which dishes are on the plate.
 
+         Where a prep spans several days the chips replace the toggle rather
+         than joining it: the schedule already says which of those days are
+         training, and each chip carries that mark, so choosing the day has
+         already answered the question. Offering both would let the two
+         disagree about the same day.
+
            no prep, split exists   -> toggle only
-           multi-day prep, split   -> both
+           multi-day prep, split   -> chips only
            single-day prep, split  -> toggle only
            no split                -> neither
       */
@@ -153,7 +159,7 @@
                 showSplit ? `<span class="kd">${ic(DAY_KIND_ICON[k])}</span>` : ''}</button>`;
             }).join('')}
           </div>` : ''}
-        ${showSplit ? `<label class="field-label" style="margin-top:${prepDays > 1 ? '14px' : '0'};">WAS THIS A REST OR TRAINING DAY?</label>
+        ${prepDays <= 1 ? `<label class="field-label">WAS THIS A REST OR TRAINING DAY?</label>
           <div class="seg jday-seg">
             ${['rest','train'].map(k=>
               `<button class="${dayKind === k ? 'on' : ''}" data-jkind="${k}">${ic(DAY_KIND_ICON[k])} ${DAY_KIND_LABEL[k]}</button>`).join('')}
@@ -194,6 +200,14 @@
     body.querySelectorAll('[data-jday]').forEach(b=>b.addEventListener('click', ()=>{
       writeBackActiveDay();
       applyDayToSelections(parseInt(b.getAttribute('data-jday'), 10));
+
+      /* Choosing the day answers the rest-or-training question too, since
+         the schedule already marks which prep days are training. Stamped
+         against the date here because on a multi-day prep the toggle is not
+         offered — without this the journal would forget what kind of day a
+         past date had been. */
+      log.dayKind = dayKindAt(dayIndex());
+
       renderJournal();
       refreshTargets();
       saveState();
