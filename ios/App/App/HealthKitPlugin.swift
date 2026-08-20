@@ -139,10 +139,20 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
 
         let calendar = Calendar.current
         let startOfToday = calendar.startOfDay(for: Date())
-        guard let windowStart = calendar.date(byAdding: .day, value: -6, to: startOfToday) else {
+        /* A month back, so the journal can show the step count for whichever
+           past day is being looked at, not only for today. */
+        guard let windowStart = calendar.date(byAdding: .day, value: -30, to: startOfToday) else {
             call.resolve([:])
             return
         }
+
+        /* Keys must match the journal's own day keys exactly. POSIX locale so
+           a non-Gregorian or non-Latin-digit device still produces 2026-08-20
+           rather than something the JS side cannot look up. */
+        let keyFormatter = DateFormatter()
+        keyFormatter.dateFormat = "yyyy-MM-dd"
+        keyFormatter.locale = Locale(identifier: "en_US_POSIX")
+        keyFormatter.timeZone = calendar.timeZone
 
         var oneDay = DateComponents()
         oneDay.day = 1
@@ -161,26 +171,38 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
                 return
             }
 
-            var dailyTotals: [Double] = []
+            var byDay = JSObject()
+            var recentTotals: [Double] = []      // the last 7 completed days
             var today: Double?
+
+            /* Newest first, so "the last seven completed days" can be taken
+               off the front rather than sorted afterwards. */
+            var completed: [(Date, Double)] = []
 
             collection.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
                 let steps = stat.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
+                byDay[keyFormatter.string(from: stat.startDate)] = Int(steps.rounded())
                 if calendar.isDate(stat.startDate, inSameDayAs: startOfToday) {
                     today = steps
                 } else {
-                    /* Today is excluded from the average: it is still being
-                       counted, and a part-finished day would drag the figure
-                       down for no reason. */
-                    dailyTotals.append(steps)
+                    completed.append((stat.startDate, steps))
                 }
             }
 
+            /* The average stays a SEVEN day figure even though a month of
+               days is returned: it is meant to describe "a usual day lately",
+               and a month is long enough to smooth away a genuine change in
+               how much someone is walking. Today is excluded because it is
+               still being counted, and a part-finished day would drag it
+               down for no reason. */
+            recentTotals = completed.sorted { $0.0 > $1.0 }.prefix(7).map { $0.1 }
+
+            out["byDay"] = byDay
             if let today = today { out["today"] = Int(today.rounded()) }
-            if !dailyTotals.isEmpty {
-                let mean = dailyTotals.reduce(0, +) / Double(dailyTotals.count)
+            if !recentTotals.isEmpty {
+                let mean = recentTotals.reduce(0, +) / Double(recentTotals.count)
                 out["average"] = Int(mean.rounded())
-                out["days"] = dailyTotals.count
+                out["days"] = recentTotals.count
             }
             DispatchQueue.main.async { call.resolve(out) }
         }

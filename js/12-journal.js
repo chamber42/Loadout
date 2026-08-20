@@ -50,7 +50,24 @@
        an open quest rather than four stacked totals panels is closer to
        what it actually is. */
     const done  = slots.filter(sl => (log.meals[sl.name] || []).length).length;
-    const pct   = tg.kcal ? Math.round(t.kcal / tg.kcal * 100) : 0;
+
+    /* STEP BUFF — walking beyond a usual day, credited to that day's
+       allowance. Scoped to the journal on purpose: the prep is built from the
+       plain plan targets, so a cook plan comes out the same however far
+       anyone walked.
+
+       Read for the day being VIEWED rather than for today, so an earlier
+       day's log is scored against the steps actually taken on it. A finished
+       day is the more trustworthy of the two — today is still being walked.
+
+       Null on the web, before Health is connected, outside the window Health
+       was asked for, and on training days where the session burn already
+       covers the movement. */
+    const daySteps   = (typeof stepsOn === 'function') ? stepsOn(key) : null;
+    const buff       = (typeof stepBuffFor === 'function') ? stepBuffFor(key) : null;
+    const dayAverage = (typeof stepAverage === 'function') ? stepAverage() : null;
+    const goal     = tg.kcal + (buff ? buff.kcal : 0);
+    const pct      = goal ? Math.round(t.kcal / goal * 100) : 0;
     const macro = (label, got, want, cls)=>{
       const p = want ? Math.min(100, Math.round(got / want * 100)) : 0;
       return `<div class="qbm">
@@ -69,10 +86,23 @@
         <div class="qb-title">${isToday ? 'Fuel today' : 'Fuel this day'}</div>
         ${fromPlan ? `<div class="qb-from">Following your prep — ${slots.length} ${slots.length === 1 ? 'sitting' : 'sittings'}
           (${escapeHtml(planFor(state.mealPlan).label)}). Change it in the Loadout tab and this follows.</div>` : ''}
-        <div class="qb-bar${tg.kcal && t.kcal > tg.kcal ? ' over' : ''}">
+        <div class="qb-bar${goal && t.kcal > goal ? ' over' : ''}">
           <i style="width:${Math.min(100, pct)}%"></i>
-          <span>${Math.round(t.kcal)}${tg.kcal ? ' / ' + tg.kcal : ''} kcal</span>
+          <span>${Math.round(t.kcal)}${goal ? ' / ' + goal : ''} kcal</span>
         </div>
+        ${daySteps != null ? `<div class="qb-buff${buff ? '' : ' flat'}">
+          <span class="qb-buff-icon"><svg class="px" aria-hidden="true"><use href="#i-run"></use></svg></span>
+          <span class="qb-buff-body">
+            <span class="qb-buff-head">${buff
+              ? `STEP BUFF <strong>+${buff.kcal} kcal</strong>`
+              : `STEPS <strong>${daySteps.toLocaleString()}</strong>`}</span>
+            <span class="qb-buff-sub">${buff
+              ? `${buff.extra.toLocaleString()} past your usual ${buff.average.toLocaleString()} — only the extra is credited`
+              : `${dayAverage ? `Your usual is about ${dayAverage.toLocaleString()}. ` : ''}${
+                  isToday ? 'Walk past that and today\'s target goes up.'
+                          : 'No further than usual, so no buff.'}`}</span>
+          </span>
+        </div>` : ''}
         <div class="qb-macros">
           ${macro('PROTEIN', t.protein, tg.protein, 'p')}
           ${macro('CARBS',   t.carbs,   tg.carbs,   'c')}

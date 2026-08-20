@@ -2412,6 +2412,35 @@
     color:var(--muted);
   }
 
+  /* STEP BUFF — reads as a status effect on the day rather than another
+     statistic, which is what it is: a thing that happened to the target.
+     Green while it is active, and the same row goes flat and muted on a day
+     that earned nothing, so the steps are still shown without pretending
+     something was won. */
+  .qb-buff{
+    display:flex; align-items:center; gap:10px;
+    margin:10px 14px 0; padding:9px 11px;
+    border:1px solid var(--green); border-radius:6px;
+    background:rgba(57,255,136,0.07);
+  }
+  .qb-buff.flat{
+    border-color:var(--line);
+    background:transparent;
+  }
+  .qb-buff-icon{ display:flex; color:var(--green); flex:0 0 auto; }
+  .qb-buff.flat .qb-buff-icon{ color:var(--muted); }
+  .qb-buff-body{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .qb-buff-head{
+    font-family:var(--font-display); font-size:var(--fs-7);
+    letter-spacing:1.5px; color:var(--green);
+  }
+  .qb-buff.flat .qb-buff-head{ color:var(--muted); }
+  .qb-buff-head strong{ color:var(--text); }
+  .qb-buff-sub{
+    font-family:var(--font-body); font-size:11px; line-height:1.5;
+    color:var(--muted);
+  }
+
   /* Primary objective bar — deep, so it reads as the headline, not a row */
   .qb-bar{
     position:relative; margin:12px 14px 0; height:26px; border-radius:3px;
