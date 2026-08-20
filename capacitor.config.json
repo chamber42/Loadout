@@ -1,0 +1,8 @@
+{
+  "appId": "com.chamber42.loadout",
+  "appName": "Loadout",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  }
+}

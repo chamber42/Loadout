@@ -948,7 +948,17 @@
 <script>
 (function(){
   if (!('serviceWorker' in navigator)) return;
-  if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+
+  /* Inside the native shell every asset is already on the device, so a
+     service worker adds a second cache with its own version to keep in
+     sync and nothing else. Capacitor serves from capacitor://localhost,
+     whose hostname IS localhost — so this has to be checked before the
+     dev-server test below, or the native build would register it. */
+  if (window.Capacitor) return;
+
+  const isLocalDev = location.protocol === 'http:' &&
+    (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+  if (location.protocol !== 'https:' && !isLocalDev) return;
 
   window.addEventListener('load', function(){
     navigator.serviceWorker.register('sw.js').catch(function(err){
