@@ -76,7 +76,7 @@
 	     rather than saying "health data", because this is the sentence the
 	     permission sheet shows and a vague one earns a refusal. -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>Loadout can fill in your height, weight, age and sex from the Health app so you don't have to type them. It only reads these four values, and they stay on your device.</string>
+	<string>Loadout can fill in your height, weight, age and sex from the Health app so you don't have to type them, and show your step count on your character sheet. It only reads those five things, never writes to Health, and everything stays on your device.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Loadout scans barcodes on food packaging to look up nutrition information. The picture is read on your device — only the barcode number is sent to Open Food Facts.</string>
 </dict>

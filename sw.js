@@ -23,7 +23,7 @@
    answer that looks live.
    ========================================================================== */
 
-const CACHE_VERSION = 'loadout-v5';
+const CACHE_VERSION = 'loadout-v6';
 
 /* Kept in the same order index.html loads them, so a missing file here is
    easy to spot against the <script> block there. */
@@ -74,7 +74,8 @@ const SHELL = [
   './js/31-journal-scan.js',
   './js/32-method-check.js',
   './js/33-native-backup.js',
-  './js/34-health-import.js'
+  './js/34-health-import.js',
+  './js/35-steps.js'
 ];
 
 /* Install: fill the new cache, then take over immediately rather than

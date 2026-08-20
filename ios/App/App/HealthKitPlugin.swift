@@ -24,7 +24,8 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestAuthorization", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "readProfile", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "readProfile", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "readSteps", returnType: CAPPluginReturnPromise)
     ]
 
     private let store = HKHealthStore()
@@ -35,6 +36,7 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         if let t = HKObjectType.characteristicType(forIdentifier: .dateOfBirth)   { types.insert(t) }
         if let t = HKObjectType.quantityType(forIdentifier: .height)              { types.insert(t) }
         if let t = HKObjectType.quantityType(forIdentifier: .bodyMass)            { types.insert(t) }
+        if let t = HKObjectType.quantityType(forIdentifier: .stepCount)           { types.insert(t) }
         return types
     }
 
@@ -111,6 +113,79 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         group.notify(queue: .main) { call.resolve(out) }
+    }
+
+    /* Today's step count, plus the daily average over the last seven days so
+       the sheet can say whether today is a normal day or not.
+
+       Resolves with nothing at all when steps are unreadable, for the same
+       reason readProfile does: a refused permission and a phone that
+       recorded no steps are indistinguishable, so the caller has to treat
+       an absent figure as "unknown" rather than as zero. Reporting zero
+       steps to someone who walked all day would be worse than saying
+       nothing.
+
+       One caveat worth knowing: cumulativeSum adds every matching sample,
+       and an iPhone and an Apple Watch worn together both record steps. For
+       a phone-only user this matches the Health app. For a Watch user it
+       can read high, because Health applies its own source-priority rules
+       when it shows a single number and this does not. */
+    @objc func readSteps(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable(),
+              let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
+            call.resolve([:])
+            return
+        }
+
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: Date())
+        guard let windowStart = calendar.date(byAdding: .day, value: -6, to: startOfToday) else {
+            call.resolve([:])
+            return
+        }
+
+        var oneDay = DateComponents()
+        oneDay.day = 1
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: type,
+            quantitySamplePredicate: HKQuery.predicateForSamples(withStart: windowStart, end: Date()),
+            options: .cumulativeSum,
+            anchorDate: startOfToday,
+            intervalComponents: oneDay)
+
+        query.initialResultsHandler = { _, collection, _ in
+            var out = JSObject()
+            guard let collection = collection else {
+                DispatchQueue.main.async { call.resolve(out) }
+                return
+            }
+
+            var dailyTotals: [Double] = []
+            var today: Double?
+
+            collection.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
+                let steps = stat.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
+                if calendar.isDate(stat.startDate, inSameDayAs: startOfToday) {
+                    today = steps
+                } else {
+                    /* Today is excluded from the average: it is still being
+                       counted, and a part-finished day would drag the figure
+                       down for no reason. */
+                    dailyTotals.append(steps)
+                }
+            }
+
+            if let today = today { out["today"] = Int(today.rounded()) }
+            if !dailyTotals.isEmpty {
+                let mean = dailyTotals.reduce(0, +) / Double(dailyTotals.count)
+                out["average"] = Int(mean.rounded())
+                out["days"] = dailyTotals.count
+            }
+            DispatchQueue.main.async { call.resolve(out) }
+        }
+
+        store.execute(query)
     }
 
     /* Most recent sample only. Health may hold years of weigh-ins from

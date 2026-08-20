@@ -559,8 +559,15 @@
       </p>
     </div>
 
+    <!-- Steps read from the Health app. Native builds only: the panel stays
+         hidden on the web, where nothing can fill it. -->
+    <div class="panel cs-mod" id="sheetActivityPanel" hidden>
+      <label class="field-label mod-head"><span class="mod-no">02</span>ACTIVITY</label>
+      <div id="sheetSteps"></div>
+    </div>
+
     <div class="panel cs-mod">
-      <label class="field-label mod-head"><span class="mod-no">02</span>ATTRIBUTES</label>
+      <label class="field-label mod-head"><span class="mod-no">03</span>ATTRIBUTES</label>
       <div class="seg" id="sheetDaySeg" hidden></div>
       <div class="cs-attr-split">
         <div class="cs-radar" id="sheetRadar"></div>
@@ -570,7 +577,7 @@
     </div>
 
     <div class="panel cs-mod">
-      <label class="field-label mod-head"><span class="mod-no">03</span>RESISTANCES</label>
+      <label class="field-label mod-head"><span class="mod-no">04</span>RESISTANCES</label>
       <div id="sheetMicros"></div>
       <button class="btn-ghost" id="btnFullStats" style="margin-top:14px;"><svg class="px" aria-hidden="true"><use href="#i-chart"></use></svg> VIEW FULL STATS</button>
     </div>
@@ -957,6 +964,7 @@
 <script src="js/32-method-check.js"></script>
 <script src="js/33-native-backup.js"></script>
 <script src="js/34-health-import.js"></script>
+<script src="js/35-steps.js"></script>
 
 <!-- ==========================================================================
      SERVICE WORKER REGISTRATION
