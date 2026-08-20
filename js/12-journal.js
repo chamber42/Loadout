@@ -132,7 +132,18 @@
           ${macro('FAT',     t.fat,     tg.fat,     'f')}
         </div>
       </div>` +
-      ((prepDays > 1 || showSplit) ? `<div class="panel jday">
+      /* Shown only where the answer changes the target, which means only
+         where a rest/training split exists at all. Without one every prep
+         day carries the same number, so picking between them here would be
+         a control that moves nothing — the loadout tab still has its day
+         strip for changing which dishes are on the plate.
+
+           no prep, split exists   -> toggle only
+           multi-day prep, split   -> both
+           single-day prep, split  -> toggle only
+           no split                -> neither
+      */
+      (showSplit ? `<div class="panel jday">
         ${prepDays > 1 ? `<label class="field-label">WHICH PREP DAY ARE YOU EATING?</label>
           <div class="day-strip jday-strip">
             ${Array.from({length:prepDays}, (_,i)=>i+1).map(n=>{
