@@ -4470,6 +4470,7 @@
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn .tag,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .seg,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .seg button,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .swatch,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .qb-chip,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .tier-row,
@@ -4491,6 +4492,27 @@
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn.selected{
     background:rgba(0,0,0,.11);
     box-shadow:inset 0 0 0 2px var(--pp-seal);
+  }
+  /* The chosen day is the one being read, so on paper it lifts off the stock
+     rather than sinking into it — sinking it darkened the ground under the
+     seal-red label until horror's stock left it at 3.5:1. */
+  /* The rest/training pair on the sheet took --cyan and --green straight:
+     on stock that is a 1.6:1 red and a green that lands just under AA. The
+     two rows still have to stay told apart, so one goes to the seal ink and
+     the other to a green dark enough to print. */
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .kcal-line.rest .n,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .kcal-line.rest .l{
+    color:var(--pp-seal-ink);
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .kcal-line.train .n,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .kcal-line.train .l{
+    color:#1c3a18;
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .seg button.on{
+    background:rgba(255,255,255,.38);
+    border-color:var(--pp-seal);
+    box-shadow:inset 0 0 0 1px var(--pp-seal);
+    color:var(--pp-seal-ink);
   }
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn::before,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn::after{
