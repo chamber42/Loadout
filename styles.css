@@ -1743,7 +1743,9 @@
     display:flex; flex-wrap:wrap; gap:6px 14px; margin-top:8px;
     letter-spacing:.3px;
   }
-  .attr-note span:first-child{ color:var(--c); opacity:.85; }
+  /* The share-of-calories figure is already set in the macro's own colour;
+     dimming it on top of that pushed several themes under 4.5:1. */
+  .attr-note span:first-child{ color:var(--c); }
 
   /* ---------- Resistances -------------------------------------------------*/
   .res-row{
@@ -1905,7 +1907,7 @@
      just harder to read. Body copy gets normal spacing and a longer measure,
      and the gap in size between title and body opens up so the eye lands on
      the title first. */
-  .subtitle{ letter-spacing:0; max-width:52ch; opacity:.92; }
+  .subtitle{ letter-spacing:0; max-width:52ch; }
   .panel p, .help, .hint, .note-text{ letter-spacing:0; }
   .title{ font-size:calc(var(--fs-18) + 3px); letter-spacing:var(--display-spacing); }
 
@@ -2571,7 +2573,10 @@
     display:block; margin-top:5px;
     font-family:var(--font-body); font-size:10px; color:var(--muted);
   }
-  .cal-cell.future{ opacity:.4; }
+  /* Future days are de-emphasised, not switched off: at .4 the date sat
+     around 2:1 and could not be read at all. These are the lowest values
+     that clear 4.5:1 in every theme while still reading as "not yet". */
+  .cal-cell.future{ opacity:.65; }
   .cal-cell.today{
     background:var(--accent-soft); color:var(--cyan);
     box-shadow:inset 0 0 0 1px var(--cyan);
@@ -2690,15 +2695,18 @@
      ========================================================================= */
   body[data-theme="fantasy"]{
     --pp-1:#f3e6c6; --pp-2:#dcc79c; --pp-ink:#3d2c17; --pp-soft:#6b5433;
-    --pp-rule:rgba(80,55,20,.32); --pp-stain:rgba(140,105,50,.11); --pp-seal:#9d2f24;
+    --pp-rule:rgba(80,55,20,.32); --pp-stain:rgba(140,105,50,.11); --pp-seal:#982d23;
+    --pp-seal-ink:#78241c;
   }
   body[data-theme="horror"]{
     --pp-1:#d5cfc3; --pp-2:#b3ada1; --pp-ink:#241d1d; --pp-soft:#544b4b;
     --pp-rule:rgba(40,30,30,.36); --pp-stain:rgba(70,45,40,.14); --pp-seal:#7d1f1f;
+    --pp-seal-ink:#781e1e;
   }
   body[data-theme="survival"]{
     --pp-1:#e5dfcd; --pp-2:#cabfa8; --pp-ink:#2e2b22; --pp-soft:#5d574a;
     --pp-rule:rgba(45,42,32,.34); --pp-stain:rgba(110,88,48,.12); --pp-seal:#b03a24;
+    --pp-seal-ink:#6a2316;
   }
 
   body[data-material="paper"] #screen-quest .panel,
@@ -2780,8 +2788,10 @@
   }
   body[data-material="paper"] .cal-cell.blank,
   body[data-material="salvage"] .cal-cell.blank{ background:rgba(0,0,0,.05); }
+  /* Ink on stock loses more to dimming than light on a dark screen does,
+     so the paper materials need to sit higher to reach the same legibility. */
   body[data-material="paper"] .cal-cell.future,
-  body[data-material="salvage"] .cal-cell.future{ opacity:.45; }
+  body[data-material="salvage"] .cal-cell.future{ opacity:.85; }
   body[data-material="paper"] .cal-cell.today,
   body[data-material="salvage"] .cal-cell.today{
     background:rgba(0,0,0,.05); color:var(--pp-ink);
@@ -4446,8 +4456,8 @@
     color:var(--pp-ink);
   }
   body[data-material="paper"] .screen:not(#screen-quest) .panel .rcount-n,
-  body[data-material="paper"] .screen:not(#screen-quest) .panel .n-green{ color:#2f5d2a; }
-  body[data-material="paper"] .screen:not(#screen-quest) .panel .n-amber{ color:#8a3d12; }
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .n-green{ color:#23461f; }
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .n-amber{ color:#632c0d; }
 
   /* the two running counts; paper restates them at ink weight */
   .n-green{ color:var(--green); }
@@ -4496,8 +4506,9 @@
   body[data-material="paper"] .screen:not(#screen-quest) .panel .stat-val,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .cs-band-you,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .cs-band-pct,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .res-val,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .photo-btn{
-    color:var(--pp-seal);
+    color:var(--pp-seal-ink);
   }
   /* The band carries a black wash that runs 28% at its head — on a screen
      that reads as a recess, on paper it just soaks the stock dark, and the
@@ -4525,7 +4536,7 @@
   /* The stock carries stain and vignette, so the background under a caption
      is darker than the swatch these were chosen against. */
   body[data-theme="fantasy"]{  --pp-soft:#4d381c; }
-  body[data-theme="horror"]{   --pp-soft:#3b3131; }
+  body[data-theme="horror"]{   --pp-soft:#2c2525; }
   body[data-theme="survival"]{ --pp-soft:#3d3830; }
 
 
