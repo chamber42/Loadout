@@ -554,9 +554,6 @@
     <div class="panel cs-mod">
       <label class="field-label mod-head"><span class="mod-no">01</span>VITALS</label>
       <div class="vitals-grid" id="sheetVitals"></div>
-      <p class="subtitle" style="font-size:11px; margin:12px 0 0;">
-        Tap any of these to change it — everything below updates as you type.
-      </p>
     </div>
 
     <!-- Steps read from the Health app. Native builds only: the panel stays
@@ -573,7 +570,6 @@
         <div class="cs-radar" id="sheetRadar"></div>
         <div id="sheetMacros"></div>
       </div>
-      <p class="subtitle" id="sheetMacroNote" style="font-size:11px; margin:12px 0 0;"></p>
     </div>
 
     <div class="panel cs-mod">
@@ -876,8 +872,7 @@
     </div>
     <div class="eyebrow" data-word="loadout">DAILY LOADOUT SETUP</div>
     <h1 class="title" data-word="meals">Assemble Your Meals</h1>
-    <p class="subtitle">Each slot auto-calculates gram weights from your Tier's macro targets. Fill your Health/Mana bar above by completing your loadout.</p>
-    <p class="subtitle" id="produceNote" style="margin-top:-14px; color:var(--green);"></p>
+    <p class="subtitle" id="produceNote" style="color:var(--green);"></p>
 
     <div class="panel eaten-panel">
       <div class="eaten-head">
@@ -901,11 +896,6 @@
              aria-label="Upload a picture of a barcode">
       <canvas id="barcodeCanvas" hidden></canvas>
       <div id="offResults"></div>
-      <p class="subtitle" style="font-size:11px; margin:8px 0 0; line-height:1.6;">
-        Enter the barcode from the packet, or upload a picture of one. Name search
-        isn't available — Open Food Facts blocks it from pages like this one.
-      </p>
-      <button class="text-link" id="btnOffTest" style="margin-top:6px; font-size:11px;">Test the connection</button>
       <div id="eatenList"></div>
       <button class="mini-btn add" id="btnAddEaten">+ ADD MANUALLY</button>
     </div>

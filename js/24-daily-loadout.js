@@ -547,11 +547,9 @@
 
     host.innerHTML = `
       <div style="font-family:var(--font-body); font-size:15px; color:var(--green); margin-bottom:4px;">${escapeHtml(food.name)}</div>
-      <div class="season-hint" style="margin-bottom:14px;">
-        ${unit
-          ? `Comes as ${escapeHtml(unit.many)} — about ${unit.g}g each. Change the count and the rest of the meal re-sizes around it.`
-          : 'Set the weight in grams. The rest of the meal re-sizes around it.'}
-      </div>
+      ${unit ? `<div class="season-hint" style="margin-bottom:14px;">
+        Comes as ${escapeHtml(unit.many)} — about ${unit.g}g each.
+      </div>` : ''}
 
       ${unit ? `
         <label class="field-label">HOW MANY ${escapeHtml(unit.many.toUpperCase())}?</label>
@@ -1113,7 +1111,7 @@
   function eatenRowsHtml(){
     const list = state.eaten || [];
     if (!list.length){
-      return `<div class="season-hint">Nothing logged yet. Add anything you've already eaten — a restaurant item, packaged meal, or your own recipe — and the day re-plans around it.</div>`;
+      return '';
     }
     const mealOpts = m => MEALS.map(x=>
       `<option value="${x.key}" ${m === x.key ? 'selected' : ''}>${x.label}</option>`).join('');
@@ -1228,10 +1226,7 @@
 
   function sauceHint(mealKey){
     const keys = (state.selections[mealKey].sauce || []).filter(Boolean);
-    const levels = (SAUCE_LEVELS[state.goal || 'maintain'] || SAUCE_LEVELS.maintain).join(' / ');
-    if (!keys.length){
-      return `<div class="season-hint">Optional — not every meal wants one. Showing <strong>${levels}</strong> sauces for your goal.</div>`;
-    }
+    if (!keys.length) return '';
     const lines = keys.map(k=>{
       const f = FOODS.sauce.find(x=>x.key===k);
       if (!f || !f.brands) return '';
@@ -1275,7 +1270,7 @@
 
     const produceNote = document.getElementById('produceNote');
     if (produceNote){
-      produceNote.innerHTML = `Tier ${tier.id} — ${tier.name}. <strong class="n-amber">All weights are raw or dry</strong> — meat before cooking, grains and beans before water. Veg, fruit and sauce are sides sized by calories, so they never become your carb or fat source.`;
+      produceNote.innerHTML = `Tier ${tier.id} — ${tier.name}. <strong class="n-amber">All weights are dry unless specified by packaging.</strong>`;
     }
 
     MEALS.forEach((meal, mealIdx)=>{
@@ -1316,9 +1311,7 @@
             <div class="slot-label">${def.label}</div>
             ${rows}
             <button class="mini-btn add" data-add="${meal.key}|${def.slot}">+ ADD ${def.label}</button>
-            ${def.slot === 'protein' ? '<div class="season-hint">Suggestions use one cut of meat per meal to keep cooking simple — beans, tofu, eggs and dairy are unrestricted. You can still add whatever you like here.</div>' : ''}
             ${def.slot === 'sauce' ? sauceHint(meal.key) + seasonHint(meal.key) : ''}
-            ${def.slot === 'fruit' ? '<div class="season-hint">Optional. Fruit and veg are sides here — they never get used to hit your carb or fat target.</div>' : ''}
           </div>`;
       });
 
@@ -1345,7 +1338,6 @@
         <div class="slot-group last">
           <div class="slot-label">SEASONINGS &amp; EXTRAS</div>
           <input type="text" class="season-input" data-notes="${meal.key}" value="${(sel.notes||'').replace(/"/g,'&quot;')}" placeholder="garlic, soy sauce, chili flakes, lime…">
-          <div class="season-hint">Free text — not counted. Herbs, spices, vinegar, hot sauce and the like are close enough to zero calories to ignore.</div>
         </div>
       `;
       mealTimeline.appendChild(quest);

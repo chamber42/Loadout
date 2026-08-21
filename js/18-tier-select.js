@@ -263,12 +263,6 @@
     }).join('');
     renderSheetRadar(tg);
 
-    const note = document.getElementById('sheetMacroNote');
-    if (note){
-      note.innerHTML = hasSplit()
-        ? `Showing your <strong style="color:${kind==='train'?'var(--green)':'var(--cyan)'}">${DAY_KIND_LABEL[kind].toLowerCase()}</strong> split (${tg.kcal} kcal). Both are live — you'll choose how many of each you're cooking for in the Loadout.`
-        : '';
-    }
   }
 
   /* ---------------------------------------------------------
@@ -385,10 +379,6 @@
         <span class="res-ico">${ic('season')}</span>
         <span class="res-name">Sodium<em>CEILING</em></span>
         <span class="res-val">&lt;${SODIUM_LIMIT}<i>mg / day</i></span>
-      </div>
-      <div class="season-hint" style="margin-top:12px;">
-        Tracked live on your loadout. Estimated from food class rather than
-        package labels, so treat them as a steer rather than a measurement.
       </div>`;
 
     /* ---- the working, behind the link ---- */

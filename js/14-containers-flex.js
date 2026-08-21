@@ -268,9 +268,7 @@
         p.snacks.map((d,i)=>line(d,{store:'snacks',index:i})).join('') : ''}
       <div class="season-hint" style="margin-top:10px;">
         ${tot.left
-          ? `Tap <strong>ATE ONE</strong> as you work through the fridge — or open a day and log
-             the serving straight to the journal. ${tot.left === 1 ? 'One serving' : tot.left + ' servings'}
-             still to eat.`
+          ? `${tot.left === 1 ? 'One serving' : tot.left + ' servings'} still to eat.`
           : `Everything you cooked is eaten. Time to reshuffle and cook again.`}
       </div>
       ${ateOutCount() ? `<div class="season-hint" style="margin-top:8px; color:var(--amber);">

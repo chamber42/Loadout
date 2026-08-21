@@ -222,9 +222,7 @@
     }
     targetPairPreview.innerHTML = `<div class="season-hint" style="margin-top:12px; line-height:1.8;">
       <svg class="px" aria-hidden="true"><use href="#i-sleep"></use></svg> Rest days — <strong style="color:var(--cyan)">${rest} kcal</strong><br>
-      <svg class="px" aria-hidden="true"><use href="#i-lift"></use></svg> Training days — <strong class="n-green">${train} kcal</strong><br>
-      <span style="opacity:.8">Both go on your character sheet. You'll say how many of each you're
-      prepping for when you build the meal prep.</span></div>`;
+      <svg class="px" aria-hidden="true"><use href="#i-lift"></use></svg> Training days — <strong class="n-green">${train} kcal</strong></div>`;
   }
 
   exerciseGrid.addEventListener('click', (e)=>{

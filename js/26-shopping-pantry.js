@@ -195,9 +195,6 @@
         <svg class="px" aria-hidden="true"><use href="#i-season"></use></svg> In the cupboard: <strong class="n-amber">${cup.map(escapeHtml).join(' · ')}</strong>
       </div>` : ''}
       ${items.length ? `<button class="mini-btn add" id="pantryCooked"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> I'VE COOKED THIS PREP — TAKE IT OUT OF THE PANTRY</button>` : ''}
-      <div class="season-hint" style="margin-top:10px;">
-        Kept between preps. The list below only asks you to buy the difference.
-      </div>
     </div>`;
 
     host.querySelectorAll('[data-pantry-del]').forEach(b=>b.addEventListener('click', ()=>{
@@ -282,9 +279,6 @@
               <span class="shop-qty">${hasCupboard(n) ? 'in the cupboard' : 'to taste'}</span>
             </label>
           </div>`).join('')}
-        <div class="season-hint" style="margin-top:10px;">
-          Tick what you already own — it stays ticked next time you shop.
-        </div>
       </div>`;
     }
 
@@ -358,8 +352,7 @@
       const n = state.prep.schedule.length;
       prepGrid.innerHTML = `<div style="grid-column:1/-1;">
         <div class="season-hint" style="margin:0;">
-          Totalled for the <strong class="n-green">${n} day${n===1?'':'s'}</strong>
-          in your prep. To cook for more or fewer days, change it in the Loadout and rebuild.
+          Totalled for the <strong class="n-green">${n} day${n===1?'':'s'}</strong> in your prep.
         </div></div>`;
       return;
     }

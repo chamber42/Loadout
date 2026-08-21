@@ -138,46 +138,6 @@
     }, 300);
   }
 
-  /* ---------------------------------------------------------
-     CONNECTION TEST
-     Whether a browser can reach these endpoints depends on CORS headers the
-     Open Food Facts servers send. This tries each and reports what happened,
-     so the app can be pointed at whichever one works.
-  --------------------------------------------------------- */
-  const OFF_CANDIDATES = [
-    {label:'Barcode lookup (v2 product)',
-     url:'https://world.openfoodfacts.org/api/v2/product/3017624010701.json?fields=code,product_name'},
-    {label:'Search-a-licious (text search)',
-     url:'https://search.openfoodfacts.org/search?q=water&page_size=1'},
-    {label:'Legacy search (deprecated)',
-     url:'https://world.openfoodfacts.org/cgi/search.pl?search_terms=water&search_simple=1&action=process&json=1&page_size=1'},
-  ];
-
-  async function offTestConnection(){
-    const results = document.getElementById('offResults');
-    results.innerHTML = '<div class="off-status">Testing connections…</div>';
-    const lines = [];
-    for (const c of OFF_CANDIDATES){
-      const started = Date.now();
-      let verdict;
-      try{
-        const ctrl = new AbortController();
-        const bail = setTimeout(()=>ctrl.abort(), 9000);
-        const res = await fetch(c.url, {signal: ctrl.signal});
-        clearTimeout(bail);
-        if (!res.ok) verdict = '<span style="color:var(--amber)">HTTP ' + res.status + '</span>';
-        else { await res.json(); verdict = '<span style="color:var(--green)">works</span> (' + (Date.now()-started) + 'ms)'; }
-      }catch(err){
-        verdict = (err && err.name === 'AbortError')
-          ? '<span style="color:var(--amber)">timed out</span>'
-          : '<span style="color:var(--red)">blocked or unreachable</span>';
-      }
-      lines.push('<div class="kv"><span>' + c.label + '</span><span>' + verdict + '</span></div>');
-    }
-    results.innerHTML = lines.join('') +
-      '<div class="off-credit">\u201CBlocked or unreachable\u201D means the server didn\u2019t send the header a browser needs to allow cross-site requests \u2014 that\u2019s on their end, and nothing in this app can change it.</div>';
-  }
-
   /* =========================================================
      BARCODE FROM AN UPLOADED PICTURE
      The app deliberately does not operate a camera. Live scanning is not
@@ -483,7 +443,6 @@
     foodPickSearchEl.focus();
   });
 
-  document.getElementById('btnOffTest').addEventListener('click', offTestConnection);
   offClearBtn.addEventListener('click', ()=>{
     offSearchInput.value = '';
     offClearBtn.style.display = 'none';
