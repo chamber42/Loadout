@@ -488,6 +488,7 @@
   .rgoal-hint{ display:block; font-family:var(--font-body); font-size:12px; color:var(--muted);
                line-height:1.55; margin:10px 0 0; }
   .photo-btn{ display:block; text-align:center; cursor:pointer; margin-bottom:10px;
+              -webkit-appearance:none; appearance:none; background:transparent;
               padding:14px 12px; border:1px dashed var(--accent-line); border-radius:10px;
               color:var(--cyan); font-family:var(--font-body); font-size:var(--fs-body); line-height:1.4; }
   .photo-btn:active{ background:var(--accent-soft); }
@@ -2688,16 +2689,16 @@
      brought back to ink explicitly.
      ========================================================================= */
   body[data-theme="fantasy"]{
-    --pp-1:#efdfb8; --pp-2:#cdb489; --pp-ink:#3d2c17; --pp-soft:#6b5433;
-    --pp-rule:rgba(80,55,20,.32); --pp-stain:rgba(140,105,50,.17); --pp-seal:#9d2f24;
+    --pp-1:#f3e6c6; --pp-2:#dcc79c; --pp-ink:#3d2c17; --pp-soft:#6b5433;
+    --pp-rule:rgba(80,55,20,.32); --pp-stain:rgba(140,105,50,.11); --pp-seal:#9d2f24;
   }
   body[data-theme="horror"]{
-    --pp-1:#cbc5b8; --pp-2:#9e968a; --pp-ink:#241d1d; --pp-soft:#544b4b;
-    --pp-rule:rgba(40,30,30,.36); --pp-stain:rgba(70,45,40,.22); --pp-seal:#7d1f1f;
+    --pp-1:#d5cfc3; --pp-2:#b3ada1; --pp-ink:#241d1d; --pp-soft:#544b4b;
+    --pp-rule:rgba(40,30,30,.36); --pp-stain:rgba(70,45,40,.14); --pp-seal:#7d1f1f;
   }
   body[data-theme="survival"]{
-    --pp-1:#ded7c3; --pp-2:#bcb29a; --pp-ink:#2e2b22; --pp-soft:#5d574a;
-    --pp-rule:rgba(45,42,32,.34); --pp-stain:rgba(110,88,48,.17); --pp-seal:#b03a24;
+    --pp-1:#e5dfcd; --pp-2:#cabfa8; --pp-ink:#2e2b22; --pp-soft:#5d574a;
+    --pp-rule:rgba(45,42,32,.34); --pp-stain:rgba(110,88,48,.12); --pp-seal:#b03a24;
   }
 
   body[data-material="paper"] #screen-quest .panel,
@@ -4177,7 +4178,7 @@
       repeating-linear-gradient(92deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
       linear-gradient(158deg, var(--pp-1), var(--pp-2));
     box-shadow:
-      inset 0 0 34px rgba(90,62,25,.28),
+      inset 0 0 26px rgba(90,62,25,.14),
       0 3px 10px rgba(0,0,0,.45);
   }
   /* brackets and accent hairlines belong on a screen, not on a sheet */
@@ -4492,8 +4493,17 @@
   body[data-material="paper"] .screen:not(#screen-quest) .panel .hero-rank,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .sheet-class,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .hero-name,
-  body[data-material="paper"] .screen:not(#screen-quest) .panel .stat-val{
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .stat-val,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .cs-band-you,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .cs-band-pct,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .photo-btn{
     color:var(--pp-seal);
+  }
+  /* The band carries a black wash that runs 28% at its head — on a screen
+     that reads as a recess, on paper it just soaks the stock dark, and the
+     label and percentage printed on it fell under 3:1. Wash it light instead. */
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .cs-band{
+    background:linear-gradient(180deg, rgba(255,255,255,.30), rgba(255,255,255,.06));
   }
 
   /* Rebind the palette itself inside a paper panel rather than chasing class
@@ -4504,8 +4514,8 @@
     --muted:var(--pp-soft);
     --line:var(--pp-rule);
     --accent-line:var(--pp-rule);
-    --green:#2f5d2a;
-    --amber:#8a3d12;
+    --green:#24491f;
+    --amber:#6e2f0d;
     /* --cyan is deliberately left alone: it is used as a *background* for
        primary buttons and badges with dark text over it, so darkening it to
        the seal colour put dark on dark. The few places it was wrong as a
@@ -4515,7 +4525,7 @@
   /* The stock carries stain and vignette, so the background under a caption
      is darker than the swatch these were chosen against. */
   body[data-theme="fantasy"]{  --pp-soft:#4d381c; }
-  body[data-theme="horror"]{   --pp-soft:#242020; }
+  body[data-theme="horror"]{   --pp-soft:#3b3131; }
   body[data-theme="survival"]{ --pp-soft:#3d3830; }
 
 

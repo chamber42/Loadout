@@ -36,7 +36,7 @@
     {name:"Chia Pudding", season:["vanilla","cinnamon","cocoapwd"], pattern:"{F} Chia Pudding", form:"Pudding", slots:["breakfast","snack"], crave:["sweet","creamy","nocook"],
      protein:["yogurt0","skyr","milk","whey","kefir"], carb:["honey","maple","granola"], fat:["chia","almondbutter","coconutflake"],
      fruit:["berries","mango","strawberry","bananamed","acai"], veg:[], sauce:[]},
-    {name:"Savoury Oats", season:["blackpepper","garlicpwd","nutyeast"], pattern:"Savoury Oats with {P}", form:"Bowl", slots:["breakfast"], crave:["savory","warmbowl","comfort"],
+    {name:"Savory Oats", season:["blackpepper","garlicpwd","nutyeast"], pattern:"Savory Oats with {P}", form:"Bowl", slots:["breakfast"], crave:["savory","warmbowl","comfort"],
      protein:["wholeegg","cheddar","eggwhites","turkbacon"], carb:["oats","steelcut","oatbran"], fat:["oil","butter","sesameoil"],
      veg:["spinach","mushrooms","scallion","kale"], fruit:[], sauce:["soy","hotsauce","chilicrisp"]},
     {name:"Yogurt Parfait", pattern:"{F} Parfait", form:"Parfait", slots:["breakfast","snack"], crave:["sweet","creamy","nocook","crunchy"],
@@ -1261,7 +1261,7 @@
        "Keep the crunchy layer on top and add it at eating if this is being carried.",
        "Dried fruit is dense — 30g goes a long way and 60g doubles the sugar without you noticing.",
        "Whole-milk yogurt and full nuts take this to 600 kcal for a bulk; nonfat yogurt and berries bring it to 220."]},
-    {name:"Savoury Cottage Cheese Bowl", goals:["extreme_loss","loss","maintain"], season:["everything","blackpepper","chiliflake","dill"], pattern:"Savoury Cottage Bowl", form:"Bowl", slots:["snack","lunch"], crave:["savory","creamy","nocook","light"],
+    {name:"Savory Cottage Cheese Bowl", goals:["extreme_loss","loss","maintain"], season:["everything","blackpepper","chiliflake","dill"], pattern:"Savory Cottage Bowl", form:"Bowl", slots:["snack","lunch"], crave:["savory","creamy","nocook","light"],
      protein:["cottage2","cottage1","cottage4","quarkcheese","labneh"], carb:["ricecakes","crackers","protbread","pitachips"], fat:["olives","avocado","seedmix","tapenade"],
      veg:["cherrytom","cucumber","redonion","peppers","microgreens"], fruit:[], sauce:["hotsauce","chilicrisp","zhoug","lemonjuice"],
      steps:[

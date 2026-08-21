@@ -75,7 +75,7 @@
       "Blitz or grate the pear into the marinade — the enzyme in it is what makes bulgogi tender, sugar alone will not.",
       "Marinate 30 minutes minimum, 4 hours is better. Longer than overnight and the texture goes mealy.",
       "Get the pan properly hot and cook in thin single layers. Piled-in beef boils in its own marinade.",
-      "Let each batch catch and caramelise before you turn it; those charred edges are the point.",
+      "Let each batch catch and caramelize before you turn it; those charred edges are the point.",
       "Onion and mushroom go in at the end so they keep some bite. Sesame oil and seeds off the heat."
     ],
     "Beef Chili": [
@@ -196,7 +196,7 @@
       "Onion, cilantro, lime. Salsa verde on the side, not on the meat."
     ],
     "Charcuterie Snack": [
-      "Take the cheese out 20 minutes ahead; cold cheese has almost no flavour.",
+      "Take the cheese out 20 minutes ahead; cold cheese has almost no flavor.",
       "Cut the cheese into pieces you can pick up without a knife.",
       "Fold the meat rather than laying it flat.",
       "Add something acidic — pickles, olives, mustard — to cut the fat.",
@@ -682,7 +682,7 @@
       "Build in layers if it is going in a container: grain at the bottom, dressing under that, leaves on top.",
       "Dill, lemon and pepper are the whole seasoning. It does not need more."
     ],
-    "Savoury Oats": [
+    "Savory Oats": [
       "Cook the oats in water or stock rather than milk — stock is the whole point here.",
       "Stir constantly for the last 2 minutes so they go creamy.",
       "Off the heat, stir in the cheese, nutritional yeast and pepper.",
@@ -820,10 +820,10 @@
     "Tofu Scramble": [
       "Press the tofu at least 20 minutes under something heavy. Unpressed tofu will not brown, it will only steam.",
       "Crumble it by hand into uneven pieces so it reads like egg rather than mince.",
-      "Turmeric goes in early for colour; nutritional yeast and black salt go in at the end for flavour.",
+      "Turmeric goes in early for color; nutritional yeast and black salt go in at the end for flavor.",
       "Get the pan hot and leave the tofu alone in between stirs so some faces catch and crisp.",
       "Cook the vegetables separately if they are watery — mushrooms and spinach will flood the pan otherwise.",
-      "Finish with hot sauce or chilli crisp; tofu takes far more seasoning than eggs do."
+      "Finish with hot sauce or chili crisp; tofu takes far more seasoning than eggs do."
     ],
     "Tofu Stir-Fry": [
       "Press the tofu 20 minutes under something heavy. This is the step that decides the dish.",
@@ -833,7 +833,7 @@
       "Return the tofu at the very end and toss for 20 seconds only."
     ],
     "Trail Mix": [
-      "Toast the nuts in a dry pan or a 180C/350F oven for 6–8 minutes; it doubles the flavour.",
+      "Toast the nuts in a dry pan or a 180C/350F oven for 6–8 minutes; it doubles the flavor.",
       "Cool them completely before mixing or they will sweat the dried fruit.",
       "Mix in roughly equal volumes of nut, dried fruit and the crunchy element.",
       "Add salt — unsalted trail mix tastes flat.",
