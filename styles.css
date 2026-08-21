@@ -174,7 +174,7 @@
   .ctn-btns{ display:flex; gap:6px; flex:0 0 auto; }
   .ctn-btns .mini-btn{ padding:7px 9px; }
   .ctn-row.spent .ctn-name{ text-decoration:line-through; }
-  .dish-chip.spent{ opacity:.4; text-decoration:line-through; }
+  .dish-chip.spent{ opacity:.8; text-decoration:line-through; }
   .dish-chip.ateout{ border-style:dashed; opacity:.6; }
   .pd-ateout{ font-family:var(--font-body); font-size:var(--fs-body); color:var(--amber);
               border:1px dashed rgba(255,190,90,.4); border-radius:10px;
@@ -755,7 +755,7 @@
   .shop-tick{ width:20px; height:20px; flex:0 0 auto; margin:0!important; accent-color:var(--green); }
   .shop-name{ flex:1; font-family:var(--font-body); font-size:var(--fs-body); line-height:1.4; }
   .shop-qty{ font-family:var(--font-body); font-size:var(--fs-body); color:var(--green); white-space:nowrap; }
-  .shop-tick:checked ~ .shop-name, .shop-tick:checked ~ .shop-qty{ opacity:.4; text-decoration:line-through; }
+  .shop-tick:checked ~ .shop-name, .shop-tick:checked ~ .shop-qty{ opacity:.6; text-decoration:line-through; }
   .shop-main{ display:flex; align-items:center; gap:10px; flex:1; min-width:0; cursor:pointer; }
   .shop-have{ display:block; font-size:11px; color:var(--amber); }
   .shop-row.covered .shop-qty{ color:var(--muted); }
