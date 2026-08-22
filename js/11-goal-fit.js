@@ -288,6 +288,17 @@
   function renderRecipeBook(){
     const q = (state.recipeQuery || '').trim().toLowerCase();
     const filter = state.recipeFilter || 'all';
+    const course = state.recipeCourse || 'all';
+
+    /* Course first: people arrive with a meal in mind before a dish. */
+    const courseHost = document.getElementById('recipeCourses');
+    if (courseHost){
+      courseHost.innerHTML = RECIPE_COURSES.map(c=>
+        `<button class="choice-btn${course===c.key?' selected':''}" data-rc="${c.key}"
+          style="min-height:42px; justify-content:center;"><span><strong>${c.label}</strong></span></button>`).join('');
+      courseHost.querySelectorAll('[data-rc]').forEach(b=>
+        b.addEventListener('click', ()=>{ state.recipeCourse = b.getAttribute('data-rc'); renderRecipeBook(); }));
+    }
 
     document.getElementById('recipeFilters').innerHTML = RECIPE_FILTERS.map(f=>
       `<button class="choice-btn${filter===f.key?' selected':''}" data-rf="${f.key}"
@@ -311,7 +322,8 @@
        falling back to the character's own. */
     const quoteGoal = (goal !== 'any') ? goal : (myGoal || 'maintain');
 
-    let list = (filter === 'sauce') ? [] : RECIPES
+    let list = (course === 'sauce') ? [] : RECIPES
+      .filter(r=>recipeInCourse(r, course))
       .filter(r=>recipeMatchesFilter(r, filter))
       .filter(r=>recipeFitsGoal(r, goal));
     if (goal !== 'any') list = list.slice().sort((a,b)=>goalFitScore(a,goal) - goalFitScore(b,goal));
@@ -333,9 +345,9 @@
     }
 
     /* Sauces are made in a batch and kept, so they live alongside the dishes
-       rather than inside them. They show under their own filter, and in "All"
-       below the dishes. */
-    const sauceHits = (filter === 'sauce' || filter === 'all')
+       rather than inside them. They are a course of their own, and also show
+       under "Everything" below the dishes. */
+    const sauceHits = (course === 'sauce' || course === 'all')
       ? SAUCE_RECIPES.filter(s=>{
           if (!q) return true;
           return matchesQuery(s.name, q)
@@ -353,12 +365,13 @@
                     : 'Calories below are quoted at maintenance portions. Pick a goal above to see the same dishes sized for it.')
           : escapeHtml(GOAL_NOTE[goal] || '') + ' Portions and calories below are sized for it.'}</span>`;
 
-    // one array behind both groups so the buttons keep pointing at the right dish
+    // one array behind every group so the buttons keep pointing at the right dish
     const shown = list.concat(swaps.map(s=>s.r));
     const swapNames = swaps.map(s=>s.names);
 
-    const host = document.getElementById('recipeList');
-    host.innerHTML = shown.map((r,i)=>{
+    /* One card. Shut, it is a name and the two numbers worth comparing;
+       open, it is the whole recipe. */
+    function cardHtml(r, i){
       const asSwap = i >= list.length ? swapNames[i - list.length] : null;
       const p = recipeProfileAt(r, quoteGoal);
       const fits = recipeGoals(r);
@@ -375,16 +388,18 @@
       if ((r.slots || []).includes('breakfast')) tags.push('breakfast');
       const light = lighterSwaps(r);
       const hearty = heartierSwaps(r);
-      const head = (asSwap && i === list.length)
-        ? `<div class="sauce-head">CAN BE MADE WITH ${escapeHtml((q || '').toUpperCase())}</div>` : '';
-      return head + `<div class="panel rcard">
-        <div class="rname">${escapeHtml(r.name)}</div>
+      const ct = cookTime(r, 1);
+      return `<details class="rcard">
+        <summary class="rsum">
+          <span class="rname">${escapeHtml(r.name)}</span>
+          <span class="rmeta rsum-meta">~${p.kcal} kcal · ${p.protein}g protein</span>
+        </summary>
+        <div class="rbody">
         <div class="rmeta">${escapeHtml(ings.join(' · '))}</div>
         ${asSwap ? `<div class="rmeta" style="color:var(--muted);">Not built on it — swap in ${escapeHtml(asSwap.join(' or '))}.</div>` : ''}
-        <div class="rmeta">~${p.kcal} kcal · ${p.protein}g protein at ${escapeHtml((GOAL_SHORT[quoteGoal] || 'maintenance').toLowerCase())} portions</div>
-        ${(()=>{ const ct = cookTime(r, 1); return ct ? `<div class="rmeta">
+        ${ct ? `<div class="rmeta">
           ${ic(GEAR[ct.gear].icon)} ${mins(ct.active)} hands-on${ct.total > ct.active
-            ? ` · ${mins(ct.total)} start to finish` : ''}</div>` : ''; })()}
+            ? ` · ${mins(ct.total)} start to finish` : ''}</div>` : ''}
         <div>${GOAL_ORDER.filter(g=>fits.includes(g)).map(g=>
             `<span class="rtag goal${g === myGoal ? ' mine' : ''}">${escapeHtml(GOAL_SHORT[g])}</span>`).join('')}</div>
         <div>${tags.map(t=>`<span class="rtag">${t}</span>`).join('')}</div>
@@ -403,15 +418,53 @@
         <button class="mini-btn add" data-rmake="${i}" style="margin-top:10px;"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> PUT THIS ON A MEAL</button>
         ${light.saving > 40 ? `<button class="mini-btn add" data-rlight="${i}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-feather"></use></svg> PUT ON A MEAL, LIGHTER</button>` : ''}
         ${hearty.added > 60 ? `<button class="mini-btn add" data-rhearty="${i}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-meat"></use></svg> PUT ON A MEAL, HEARTIER</button>` : ''}
-      </div>`;
+        </div>
+      </details>`;
+    }
+
+    /* Gather into families, keeping the flat index each card was given. */
+    const groups = new Map();
+    shown.forEach((r, i)=>{
+      const fam = (i >= list.length) ? `Can be made with ${q}` : recipeFamily(r);
+      if (!groups.has(fam)) groups.set(fam, []);
+      groups.get(fam).push(i);
+    });
+    const order = FAMILY_ORDER.concat(['Everything Else'])
+      .filter(f=>groups.has(f))
+      .concat([...groups.keys()].filter(f=>!FAMILY_ORDER.includes(f) && f !== 'Everything Else'));
+
+    /* A short book has nothing to hide behind, and a search has already
+       narrowed things, so both open on arrival. */
+    const openAll = !!q || shown.length <= 12 || order.length <= 1;
+
+    const sections = order.map(fam=>{
+      const idxs = groups.get(fam);
+      return `<details class="panel rfam"${openAll ? ' open' : ''}>
+        <summary>
+          <span class="rfam-name">${escapeHtml(fam)}</span>
+          <span class="rfam-count">${idxs.length}</span>
+        </summary>
+        <div class="rfam-body">${idxs.map(i=>cardHtml(shown[i], i)).join('')}</div>
+      </details>`;
     }).join('');
 
+    const host = document.getElementById('recipeList');
+    host.innerHTML = sections;
+
     document.getElementById('sauceList').innerHTML = sauceHits.length
-      ? `<div class="sauce-head">BATCH SAUCES</div>` + sauceHits.map(s=>{
+      ? `<details class="panel rfam"${(openAll || course === 'sauce') ? ' open' : ''}>
+          <summary>
+            <span class="rfam-name">Batch Sauces</span>
+            <span class="rfam-count">${sauceHits.length}</span>
+          </summary>
+          <div class="rfam-body">` + sauceHits.map(s=>{
           const food = FOODS.sauce.find(f=>f.key === s.key);
-          return `<div class="panel rcard">
-            <div class="rname">${escapeHtml(s.name)}</div>
-            <div class="rmeta">${escapeHtml(s.per)} · makes ${escapeHtml(s.yield)}</div>
+          return `<details class="rcard">
+            <summary class="rsum">
+              <span class="rname">${escapeHtml(s.name)}</span>
+              <span class="rmeta rsum-meta">${escapeHtml(s.per)} · makes ${escapeHtml(s.yield)}</span>
+            </summary>
+            <div class="rbody">
             <ul class="ringred">${s.ingredients.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>
             <details class="rsteps">
               <summary>METHOD — ${s.steps.length} steps</summary>
@@ -419,8 +472,9 @@
             </details>
             ${food ? `<div class="rmeta" style="margin-top:8px; color:var(--muted);">
               In the food list as <strong>${escapeHtml(food.name)}</strong> — pick it as a sauce on any meal.</div>` : ''}
-          </div>`;
-        }).join('')
+            </div>
+          </details>`;
+        }).join('') + `</div></details>`
       : '';
 
     host.querySelectorAll('[data-rmake]').forEach(b=>b.addEventListener('click', ()=>{

@@ -4547,8 +4547,11 @@
     --muted:var(--pp-soft);
     --line:var(--pp-rule);
     --accent-line:var(--pp-rule);
-    --green:#24491f;
-    --amber:#6e2f0d;
+    /* A dish used to be its own sheet, so every one of these started at the
+       light end of the stock. Now many share one sheet and the ones further
+       down sit on its darker end, so both tones carry margin for that. */
+    --green:#20401b;
+    --amber:#5f290b;
     /* --cyan is deliberately left alone: it is used as a *background* for
        primary buttons and badges with dark text over it, so darkening it to
        the seal colour put dark on dark. The few places it was wrong as a
@@ -5272,3 +5275,44 @@
      that quietly omitting it would be dishonest. */
   .mc-extra{ background:rgba(255,56,96,.08); border:1px solid var(--red); color:var(--text); }
   .mc-aid{ color:var(--muted); border:1px solid var(--line); }
+
+  /* ---- recipe families -------------------------------------------------
+     239 dishes will not fit on a screen, and a list that long is not really
+     browsable at all. The book gathers into families that stay shut until
+     asked for, and each dish inside is shut too — a name and the two numbers
+     worth comparing — so the page opens at a size you can actually read.
+     .rfam is a .panel so the paper themes redraw it as a sheet for free.
+     -------------------------------------------------------------------- */
+  .rfam{ padding:0; margin:14px 0 0; overflow:hidden; }
+  .rfam > summary{
+    list-style:none; cursor:pointer; display:flex; align-items:center; gap:12px;
+    min-height:54px; padding:12px 14px;
+    font-family:var(--font-display); font-size:var(--fs-12);
+    color:var(--text); letter-spacing:1px;
+  }
+  .rfam > summary::-webkit-details-marker{ display:none; }
+  .rfam > summary::before{
+    content:''; width:11px; height:11px; flex:0 0 auto; background:currentColor;
+    -webkit-mask:var(--px-chev) center/contain no-repeat;
+    mask:var(--px-chev) center/contain no-repeat;
+    transition:transform .15s ease;
+  }
+  .rfam[open] > summary::before{ transform:rotate(90deg); }
+  .rfam > summary:focus-visible{ outline:2px solid var(--cyan); outline-offset:-2px; }
+  .rfam-name{ flex:1 1 auto; line-height:1.3; }
+  .rfam-count{ flex:0 0 auto; font-family:var(--font-body); font-size:12px;
+               letter-spacing:.4px; color:var(--muted); }
+  .rfam-body{ padding:0 12px 12px; }
+
+  /* A dish inside a family is a row on the sheet, not a card stacked on a
+     card, so it carries a rule rather than a second panel. */
+  .rcard{ display:block; width:100%; border-top:1px solid var(--line); }
+  .rfam-body > .rcard:first-child{ border-top:none; }
+  .rcard > summary{
+    list-style:none; cursor:pointer; display:flex; flex-direction:column; gap:3px;
+    padding:12px 2px;
+  }
+  .rcard > summary::-webkit-details-marker{ display:none; }
+  .rcard > summary:focus-visible{ outline:2px solid var(--cyan); outline-offset:-2px; }
+  .rsum-meta{ margin-top:0; }
+  .rbody{ padding:0 2px 14px; }

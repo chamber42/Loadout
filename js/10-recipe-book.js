@@ -12,6 +12,8 @@
   /* =========================================================
      RECIPE BOOK
   ========================================================= */
+  /* Breakfast and sauces used to live here as well. They are now courses of
+     their own above the list, and one control per question beats two. */
   const RECIPE_FILTERS = [
     {key:'all',      label:'All'},
     {key:'highprot', label:'High protein'},
@@ -20,9 +22,53 @@
     {key:'treat',    label:'Sweet treat'},
     {key:'quick',    label:'No cooking'},
     {key:'veg',      label:'Meat-free'},
-    {key:'breakfast',label:'Breakfast'},
-    {key:'sauce',    label:'Sauces'},
   ];
+
+  /* ---------------------------------------------------------
+     COURSES AND FAMILIES
+     239 dishes is too many to meet all at once. People come to a recipe
+     book with a meal in mind before they have a dish in mind, so the
+     course comes first; inside it the dishes gather into families, and a
+     family stays shut until it is asked for. A dish can sit in more than
+     one course — a chili is lunch and dinner both.
+  --------------------------------------------------------- */
+  const RECIPE_COURSES = [
+    {key:'all',       label:'Everything'},
+    {key:'breakfast', label:'Breakfast'},
+    {key:'lunch',     label:'Lunch'},
+    {key:'dinner',    label:'Dinner'},
+    {key:'snack',     label:'Snacks'},
+    {key:'sauce',     label:'Sauces'},
+  ];
+
+  /* `form` carries 48 values with a long tail of ones — too fine to browse.
+     These gather them by how the dish is actually made and eaten, which is
+     what someone is choosing between when they are hungry. */
+  const RECIPE_FAMILIES = [
+    ['Bowls & Plates',         ['Plate','Bowl','Meal Prep','Jar','Cup','Board','Tray']],
+    ['Handhelds',              ['Sandwich','Sub','Wrap','Wraps','Burger','Melt','Toast','Bagel',
+                                'Quesadilla','Burrito','Tacos','Roll','Roll-Ups','Fajitas']],
+    ['Pan & Skillet',          ['Skillet','Stir-Fry','Hash','Noodles']],
+    ['Soups, Stews & Curries', ['Soup','Stew','Curry','Chili','Slow Cooker']],
+    ['From the Oven',          ['Bake','Roast','Air Fryer','Skewers']],
+    ['Pasta',                  ['Pasta']],
+    ['Salads',                 ['Salad']],
+    ['Sweet & Shakes',         ['Treat','Shake','Drink','Pudding','Parfait','Oats',
+                                'Pancakes','Waffles','Muffins']],
+    ['Snacks & Bites',         ['Snack','Bites','Frozen']],
+  ];
+  const FAMILY_ORDER = RECIPE_FAMILIES.map(f=>f[0]);
+  const FORM_FAMILY = {};
+  RECIPE_FAMILIES.forEach(([fam, forms])=>forms.forEach(f=>{ FORM_FAMILY[f] = fam; }));
+
+  /* Anything whose form is new or unlisted still has to appear somewhere,
+     so it gathers at the end rather than falling out of the book. */
+  function recipeFamily(r){ return FORM_FAMILY[r && r.form] || 'Everything Else'; }
+
+  function recipeInCourse(r, course){
+    if (course === 'all') return true;
+    return (r.slots || []).includes(course);
+  }
 
   /* Rough per-serving figures, using the middle option in each slot, so the
      book can be sorted and filtered without pretending to exact numbers. */
