@@ -94,9 +94,20 @@
      which is why several dishes read as bare macros. They are what makes a
      bowl of oats taste of anything. */
   function recipeSeasonings(r){
-    return ((r && r.season) || [])
-      .map(k=>{ const f = (FOODS.season || []).find(x=>x.key === k); return f ? f.name : null; })
-      .filter(Boolean);
+    return ((r && r.season) || []).map(seasonName).filter(Boolean);
+  }
+
+  /* Most seasonings live in FOODS.season, but a recipe seasons with lemon
+     juice, lime juice, rice vinegar, balsamic or nutritional yeast just as
+     readily — and those are filed under sauce, fat or protein because that
+     is where their calories belong. Looking only in FOODS.season dropped
+     them silently from 52 recipes. Search everywhere and name what is there. */
+  function seasonName(key){
+    for (const slot of Object.keys(FOODS)){
+      const f = (FOODS[slot] || []).find(x=>x.key === key);
+      if (f) return f.name;
+    }
+    return null;
   }
 
   function recipeInCourse(r, course){

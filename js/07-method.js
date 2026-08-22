@@ -326,10 +326,11 @@
       "A drop of hot sauce or a little olive brine lifts the whole thing."
     ],
     "Cottage Cheese & Fruit": [
-      "Spoon the cottage cheese into a bowl and season with a pinch of salt — it wakes it up.",
+      "Break the curds up with the back of a spoon if you want it to eat like yogurt rather than like cottage cheese.",
+      "Salt it first. It wakes the whole bowl up, and under-salted cottage cheese reads as bland rather than as unsweet.",
       "Add the fruit in wedges over the top.",
       "Add nuts or seeds for texture.",
-      "Sweet direction: honey and cinnamon. Savory direction: pepper, oil and tomato."
+      "Sweet direction: honey and cinnamon. Savory direction: black pepper, oil and tomato."
     ],
     "Cottage Cheese Ice Cream": [
       "Blend the cottage cheese completely smooth — 2 full minutes, scraping down twice.",
@@ -346,9 +347,10 @@
       "Eat straight away; it softens fast."
     ],
     "Edamame Bowl": [
-      "Boil the pods 4–5 minutes in heavily salted water, or steam from frozen.",
-      "Drain well and toss while still steaming so the salt sticks.",
-      "Season with flaky salt, chili and a little sesame oil.",
+      "Boil the pods 4–5 minutes in heavily salted water, or steam them from frozen.",
+      "Drain well and toss while still steaming so the seasoning sticks.",
+      "Salt the pods while they are still wet. The outside is the part your mouth actually touches.",
+      "Chili flakes, garlic powder and a little sesame oil cling to a damp pod and slide straight off a dry one.",
       "Serve with an empty bowl for the pods."
     ],
     "Egg & Cheese Snack Plate": [
@@ -459,7 +461,9 @@
       "Rest the chicken, serve with lime and the fruit salsa."
     ],
     "Jerky & Trail Mix": [
-      "Portion both into a container before you start eating. This snack is very easy to overrun.",
+      "Toast the nuts in a dry pan for three minutes if they are loose. It is the one thing separating a trail mix from a bag of nuts.",
+      "Season them while they are still warm — chili flakes for the savory side, cinnamon for the sweet. Cold nuts shed it.",
+      "Portion everything into a container before you start eating. This snack is very easy to overrun.",
       "Pair a salty item with a sweet one and a nut for texture.",
       "Drink water with it; jerky and nuts are both dehydrating."
     ],
@@ -617,14 +621,18 @@
     ],
     "Protein Shake": [
       "Liquid into the blender first, powder last — powder on the blades cakes on.",
+      "Cinnamon or cocoa goes in dry with the powder, or it sits on the surface in specks.",
+      "Salt it. A pinch takes the chalk off whey in a way no amount of sweetener manages.",
       "Add ice or frozen fruit for thickness rather than more powder.",
       "Blend 30 seconds, scrape down, blend 15 more.",
       "Drink within a few minutes; it separates and thickens on standing."
     ],
     "Protein Shake & Fruit": [
+      "Liquid into the blender before the powder, or the powder cakes onto the blades.",
       "Blend the shake with ice so it is cold and thick rather than lukewarm.",
+      "A pinch of salt does more for the taste of whey than sweetener does.",
       "Cut the fruit and eat it alongside rather than blending it in — it is more filling that way.",
-      "Add cinnamon or cocoa to the shake if it is fruit-free."
+      "Add cinnamon or cocoa to the shake if it is going without fruit."
     ],
     "Protein Waffles": [
       "Mix the batter and let it stand 5 minutes. Protein powder needs that time to hydrate or the waffles go rubbery.",
@@ -656,15 +664,18 @@
       "Top with the protein, soft egg, greens and corn. Assemble fast — ramen waits for nobody."
     ],
     "Rice Cake Stack": [
+      "Pick a direction before you build: cinnamon and fruit one way, black pepper and everything blend the other. Halfway between is where this goes wrong.",
       "Spread the wet topping right to the edges so every bite has some.",
-      "Heavier toppings go on rice cakes only just before eating — they soften within minutes.",
       "Layer soft first, crunchy second.",
-      "Finish with salt or cinnamon depending on which direction you have gone."
+      "Salt it whichever way you went — it is what stops peanut butter and banana tasting flat.",
+      "Heavier toppings go on rice cakes only just before eating; they soften within minutes."
     ],
     "Rice Cakes & Nut Butter": [
+      "Stir the jar before you take any. The oil that separates to the top is most of what makes it spread.",
       "Warm the nut butter 10–15 seconds so it spreads instead of tearing the rice cake.",
       "Spread thin and even, right to the edges.",
-      "Top with sliced fruit and a pinch of salt or cinnamon.",
+      "Top with sliced fruit.",
+      "Cinnamon and a pinch of salt go over the fruit rather than over the nut butter — they stick to a wet surface and slide off an oily one.",
       "Assemble immediately before eating."
     ],
     "Salmon & Rice": [
@@ -878,9 +889,11 @@
     ],
     "Yogurt Parfait": [
       "Stir the yogurt smooth first; straight from the tub it layers badly.",
+      "Flavor the yogurt itself — vanilla and cinnamon stirred through reach every spoonful, where the same amount spooned on top reaches two.",
+      "Frozen berries beat fresh here. They bleed into the yogurt as they thaw and sweeten it without anything added.",
       "Layer yogurt, fruit, granola, repeating and finishing with granola.",
       "Build it in a glass or jar so the layers are visible and stay separate.",
-      "If it is for tomorrow, keep the granola in a separate pot and add on eating."
+      "If it is for tomorrow, keep the granola in a separate pot and add it on eating."
     ],
   };
   RECIPES.forEach(r=>{ if (!r.steps && RECIPE_STEPS[r.name]) r.steps = RECIPE_STEPS[r.name]; });
