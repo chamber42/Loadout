@@ -5316,3 +5316,8 @@
   .rcard > summary:focus-visible{ outline:2px solid var(--cyan); outline-offset:-2px; }
   .rsum-meta{ margin-top:0; }
   .rbody{ padding:0 2px 14px; }
+
+  /* The ingredient list names what the dish is built from; the alternatives
+     under each line are the swaps that still make the same dish. */
+  .ringred li{ color:var(--text); margin:0 0 7px; }
+  .ralt{ display:block; color:var(--muted); font-size:12px; line-height:1.5; margin-top:2px; }

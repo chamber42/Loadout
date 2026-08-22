@@ -65,6 +65,40 @@
      so it gathers at the end rather than falling out of the book. */
   function recipeFamily(r){ return FORM_FAMILY[r && r.form] || 'Everything Else'; }
 
+  /* ---------------------------------------------------------
+     WHAT IS ACTUALLY IN IT
+     A dish is a template: every slot holds the alternatives that still make
+     the same dish. The book used to print the first choice from four of the
+     six slots and nothing else, so "Rice Cake Stack" read as cottage cheese
+     and rice cakes when it is really cottage cheese, rice cakes, peanut
+     butter and banana — and "Chocolate Protein Pudding" read as protein
+     powder and honey with the cocoa that makes it chocolate left unsaid.
+     List every slot that is filled, and the seasonings with them.
+  --------------------------------------------------------- */
+  const INGREDIENT_ORDER = ['protein','carb','fat','veg','fruit','sauce'];
+
+  function foodName(slot, key){
+    const f = (listFor(slot) || []).find(x=>x.key === key);
+    return f ? f.name : null;
+  }
+
+  function recipeIngredients(r){
+    if (!r) return [];
+    return INGREDIENT_ORDER.map(slot=>{
+      const names = (r[slot] || []).map(k=>foodName(slot, k)).filter(Boolean);
+      return names.length ? {slot:slot, primary:names[0], alts:names.slice(1)} : null;
+    }).filter(Boolean);
+  }
+
+  /* Seasonings live in their own list and have never been shown in the book,
+     which is why several dishes read as bare macros. They are what makes a
+     bowl of oats taste of anything. */
+  function recipeSeasonings(r){
+    return ((r && r.season) || [])
+      .map(k=>{ const f = (FOODS.season || []).find(x=>x.key === k); return f ? f.name : null; })
+      .filter(Boolean);
+  }
+
   function recipeInCourse(r, course){
     if (course === 'all') return true;
     return (r.slots || []).includes(course);
@@ -133,7 +167,8 @@
       const diff = (base.kcal - lean.kcal) * per[slot] / 100;
       if (diff < 15) return;
       saving += diff;
-      swaps.push({slot, from: shortName(base), to: shortName(lean), fromKey:base.key, toKey:lean.key});
+      const nm = swapNames(base, lean);
+      swaps.push({slot, from: nm.from, to: nm.to, fromKey:base.key, toKey:lean.key});
     });
 
     return {saving: Math.round(saving), swaps};

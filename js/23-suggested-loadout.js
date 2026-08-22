@@ -349,6 +349,18 @@
     return food.name.replace(/\s*\([^)]*\)/g, '').replace(/,.*$/, '').trim();
   }
 
+  /* Naming a swap needs the pair to be told apart, and shortName exists to
+     drop exactly the part that distinguishes two grades of one food —
+     "Cottage Cheese, 1%" and "Cottage Cheese, 4%" both shorten to "Cottage
+     Cheese", so the swap printed as "Cottage Cheese → Cottage Cheese". Fall
+     back to the full names whenever the short ones collide. */
+  function swapNames(from, to){
+    const a = shortName(from), b = shortName(to);
+    return (a && a === b)
+      ? {from:(from.name || a), to:(to.name || b)}
+      : {from:a, to:b};
+  }
+
   /* Build the dish title from what was actually chosen, so a "Stir-Fry"
      template that landed on shrimp and soba reads "Shrimp Soba Stir-Fry". */
   const PLURAL_OK = {wholeegg:"Eggs", eggwhites:"Egg Whites"};

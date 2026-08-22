@@ -216,7 +216,8 @@
       const diff = (rich.kcal - base.kcal) * per[slot] / 100;
       if (diff < 25) return;
       added += diff;
-      swaps.push({slot, from: shortName(base), to: shortName(rich), fromKey:base.key, toKey:rich.key});
+      const nm = swapNames(base, rich);
+      swaps.push({slot, from: nm.from, to: nm.to, fromKey:base.key, toKey:rich.key});
     });
 
     return {added: Math.round(added), swaps};
@@ -375,11 +376,8 @@
       const asSwap = i >= list.length ? swapNames[i - list.length] : null;
       const p = recipeProfileAt(r, quoteGoal);
       const fits = recipeGoals(r);
-      const ings = ['protein','carb','veg','sauce'].map(slot=>{
-        const k = (r[slot] || [])[0];
-        const f = k && listFor(slot).find(x=>x.key===k);
-        return f ? shortName(f) : null;
-      }).filter(Boolean);
+      const ings = recipeIngredients(r);
+      const seasons = recipeSeasonings(r);
       const tags = [];
       if (p.kcal && p.protein*4/p.kcal >= 0.32) tags.push('high protein');
       if (p.kcal && p.carbs*4/p.kcal >= 0.45) tags.push('high carb');
@@ -395,7 +393,10 @@
           <span class="rmeta rsum-meta">~${p.kcal} kcal · ${p.protein}g protein</span>
         </summary>
         <div class="rbody">
-        <div class="rmeta">${escapeHtml(ings.join(' · '))}</div>
+        <ul class="ringred">${ings.map(g=>
+          `<li>${escapeHtml(g.primary)}${g.alts.length
+            ? `<span class="ralt">or ${escapeHtml(g.alts.join(' · '))}</span>` : ''}</li>`).join('')}</ul>
+        ${seasons.length ? `<div class="rmeta">Season with ${escapeHtml(seasons.join(' · '))}.</div>` : ''}
         ${asSwap ? `<div class="rmeta" style="color:var(--muted);">Not built on it — swap in ${escapeHtml(asSwap.join(' or '))}.</div>` : ''}
         ${ct ? `<div class="rmeta">
           ${ic(GEAR[ct.gear].icon)} ${mins(ct.active)} hands-on${ct.total > ct.active

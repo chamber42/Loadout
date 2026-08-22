@@ -200,7 +200,7 @@
      fruit:["grapes","honeycrisp","dates","bartlett"], veg:["cherrytom","babycarrot"], sauce:["hummus"]},
     {name:"Edamame Bowl", pattern:"Edamame with {F}", form:"Snack", slots:["snack"], crave:["savory","light","crunchy"],
      protein:["edamame","tofu"], carb:["ricecakes","proteinchips"], fat:["sesameoil","sesameseeds"],
-     veg:["edamamepod","cucumber","carrots"], fruit:[], sauce:["soy","chilicrisp","ponzu"]},
+     veg:["cucumber","carrots","edamamepod"], fruit:[], sauce:["soy","chilicrisp","ponzu"]},
 
     // ---------- BREAKFAST ----------
     {name:"Greek Yogurt Bowl", season:["cinnamon","vanilla"], pattern:"{P} & {F} Bowl", form:"Bowl", slots:["breakfast","snack"], crave:["sweet","creamy","nocook"],
@@ -309,7 +309,7 @@
     // ---------- SNACKS ----------
     {name:"Protein Shake & Fruit", pattern:"{F} Protein Shake", form:"Shake", slots:["snack"], crave:["sweet","nocook"],
      protein:["whey"], carb:["banana","oats","ricecakes"], fat:["pb","almondbutter","almonds"],
-     fruit:["bananamed","berries","strawberry","mango"], veg:[], sauce:[]},
+     fruit:["berries","strawberry","mango","bananamed"], veg:[], sauce:[]},
     {name:"Jerky & Trail Mix", pattern:"{P} & Trail Mix", form:"Snack", slots:["snack"], crave:["savory","crunchy","nocook"],
      protein:["jerky","cheddar","edamame"], carb:["ricecakes","granola"], fat:["almonds","cashews","pistachios","peanuts","darkchoc"],
      fruit:["raisins","honeycrisp","grapes"], veg:[], sauce:[]},
