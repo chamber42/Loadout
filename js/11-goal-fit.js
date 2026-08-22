@@ -40,6 +40,48 @@
   };
   const SPAN_SLOTS = ['protein','carb','fat','fruit','sauce'];
 
+  /* ---------------------------------------------------------
+     SNACK-SIZED DISHES
+     GOAL_PORTION is a main-meal serving, and it was being applied to
+     everything. A trail mix came out at 1519 kcal and a protein shake at
+     148g of protein — a whole day's eating quoted as a snack, which is
+     exactly the error that wrecks a deficit for anyone who believes it.
+
+     Worse, the quote and the goal tags were describing different servings:
+     recipeLeanBuild sizes the protein down to 15g but still loaded a main
+     meal's carb, fat and fruit, so Protein Shake carried an "extreme cut"
+     tag while the card beside it read 1151 kcal.
+
+     The app already prices a snack at 0.4 of a main when it builds a prep
+     (SNACK_WEIGHT), so that is the factor used here rather than a new one
+     invented for the book. A dish counts as snack-sized when snack is the
+     only substantial role it claims — breakfast counts as light company,
+     lunch and dinner do not.
+  --------------------------------------------------------- */
+  const SNACK_PORTION = 0.4;
+
+  function isSnackDish(r){
+    const slots = (r && r.slots) || [];
+    return slots.includes('snack')
+        && !slots.includes('lunch')
+        && !slots.includes('dinner');
+  }
+
+  const SCALED_PORTIONS = {};
+  function scalePortions(portions, f){
+    const out = {};
+    Object.keys(portions).forEach(k=>{ out[k] = portions[k] * f; });
+    return out;
+  }
+
+  /* The serving this dish is actually eaten at, for the goal being browsed. */
+  function portionsFor(r, portions){
+    if (!isSnackDish(r)) return portions;
+    const id = Object.keys(portions).map(k=>k + portions[k]).join('|');
+    if (!SCALED_PORTIONS[id]) SCALED_PORTIONS[id] = scalePortions(portions, SNACK_PORTION);
+    return SCALED_PORTIONS[id];
+  }
+
   /* Only what the recipe itself lists. Family expansion is right when the
      builder is hunting a substitute and wrong here: it would let every dish
      claim every goal because some cousin of some ingredient is dense enough.
@@ -52,6 +94,7 @@
 
   /* Leanest and richest the dish can be built, at one goal's portions */
   function recipeSpan(r, portions){
+    portions = portionsFor(r, portions);
     let lo = 0, hi = 0, loProt = 0, hiProt = 0;
     SPAN_SLOTS.forEach(slot=>{
       const o = recipeSlotFoods(r, slot);
@@ -75,6 +118,7 @@
      Carbs and fats are largely fixed cost — a plate of fries is a plate of
      fries — so this is the floor the protein has to fit above. */
   function recipeBaseLoad(r, portions){
+    portions = portionsFor(r, portions);
     let kcal = 0;
     ['carb','fat','fruit','sauce'].forEach(slot=>{
       const o = recipeSlotFoods(r, slot);
@@ -108,6 +152,7 @@
 
   /* The dish as written, at a gaining phase's portions */
   function recipeDefaultAt(r, portions){
+    portions = portionsFor(r, portions);
     let kcal = 0;
     SPAN_SLOTS.forEach(slot=>{
       const o = recipeSlotFoods(r, slot);
@@ -119,7 +164,7 @@
   const GOAL_FIT_CACHE = {};
 
   function derivedGoals(r){
-    const snackOnly = (r.slots || []).length === 1 && r.slots[0] === 'snack';
+    const snackOnly = isSnackDish(r);
     const mid = recipeSpan(r, GOAL_PORTION.maintain);
     const big = recipeSpan(r, GOAL_PORTION.gain);
     // a bulk needs somewhere for the calories to go
@@ -127,10 +172,16 @@
     const bigDefault = recipeDefaultAt(r, GOAL_PORTION.gain);
     const out = [];
     if (snackOnly){
-      if (recipeLeanBuild(r, GOAL_PORTION.extreme_loss, 15) <= 240) out.push('extreme_loss');
-      if (recipeLeanBuild(r, GOAL_PORTION.loss, 15) <= 330)         out.push('loss');
-      if (mid.lo <= 520 && mid.hi >= 180)                           out.push('maintain');
-      if (big.hi >= 560 && carries && bigDefault >= 330)            out.push('gain');
+      /* These are a snack's budget, not a meal's. goalFitScore holds what a
+         main meal is worth at each goal — 420, 520, 640, 900 — and a snack
+         is priced at SNACK_PORTION of a main when the prep is built, so its
+         budget is around 170, 210, 260 and 360 kcal. The tests sit just
+         above those, which is what stops a 600 kcal trail mix from being
+         offered to someone on a hard cut as though it were a snack. */
+      if (recipeLeanBuild(r, GOAL_PORTION.extreme_loss, 15) <= 190) out.push('extreme_loss');
+      if (recipeLeanBuild(r, GOAL_PORTION.loss, 15) <= 250)         out.push('loss');
+      if (mid.lo <= 340 && mid.hi >= 150)                           out.push('maintain');
+      if (big.hi >= 460 && carries && bigDefault >= 240)            out.push('gain');
     } else {
       if (recipeLeanBuild(r, GOAL_PORTION.extreme_loss, 32) <= 470) out.push('extreme_loss');
       if (recipeLeanBuild(r, GOAL_PORTION.loss, 30) <= 620)         out.push('loss');
@@ -155,7 +206,7 @@
      made the book feel like a cutting book: the number was a fixed portion,
      not the reader's portion. Quote it at the goal being browsed. */
   function recipeProfileAt(r, goal){
-    const portions = GOAL_PORTION[goal] || GOAL_PORTION.maintain;
+    const portions = portionsFor(r, GOAL_PORTION[goal] || GOAL_PORTION.maintain);
     let kcal = 0, protein = 0, carbs = 0;
     SPAN_SLOTS.forEach(slot=>{
       const o = recipeSlotFoods(r, slot);
