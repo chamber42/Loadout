@@ -49,7 +49,12 @@
          servings and opens on a portion instead of a flat 100g. */
       unit: offServingUnit(h),
       key: null,
-      _off: true
+      _off: true,
+      /* Carried so the journal row can repeat what the results list said
+         about this label, rather than the warning vanishing on the tap. */
+      _partial: h.partial || undefined,
+      _suspect: h.suspect || undefined,
+      _impliedKcal: h.suspect ? h.impliedKcal : undefined
     };
   }
 

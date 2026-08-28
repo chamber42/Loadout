@@ -55,6 +55,27 @@ module.exports = () => suite('scanned products in the journal', t => {
     t.equal('unbranded names are left alone', food.name, 'Mystery Snack');
   }
 
+  t.section('what the label got wrong travels with the food');
+  {
+    const flagged = jfFoodFromHit({
+      name:'Odd Bar', kcal:100, protein:5, carbs:10, fat:2,
+      fibre:null, sodium:null, servingG:50,
+      partial:true, suspect:true, impliedKcal:238,
+    });
+    t.equal('incompleteness is carried', flagged._partial, true);
+    t.equal('so is the contradiction', flagged._suspect, true);
+    t.equal('along with what the macros work out to', flagged._impliedKcal, 238);
+
+    const clean = jfFoodFromHit({
+      name:'Good Bar', kcal:200, protein:20, carbs:20, fat:5,
+      fibre:2, sodium:100, servingG:60,
+      partial:false, suspect:false,
+    });
+    t.equal('a sound label carries no flag', clean._partial, undefined);
+    t.equal('and no contradiction', clean._suspect, undefined);
+    t.equal('nor a figure it does not need', clean._impliedKcal, undefined);
+  }
+
   t.section('a real zero is still a zero');
   {
     const food = jfFoodFromHit({

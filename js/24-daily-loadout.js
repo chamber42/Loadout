@@ -1477,6 +1477,8 @@
                  inputmode="numeric" min="1" max="5000" aria-label="Grams eaten">
           <span class="onhand-unit">g</span>
         </div>`) : ''}
+        ${c.partial ? `<div class="label-warn">Label was incomplete — a missing macro is counted as zero here.</div>` : ''}
+        ${c.suspect ? `<div class="label-warn">Label disagrees with itself — its macros work out to ${Math.round(c.impliedKcal)} kcal.</div>` : ''}
         <div class="covers-row">
           <span class="covers-label">THIS WAS MY</span>
           <select data-ef="${i}|covers">

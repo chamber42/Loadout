@@ -193,7 +193,9 @@
             ? items.map((it,i)=>`<div class="jrow">
                 <span class="jname">${escapeHtml(it.name)}
                   <small style="display:block;color:var(--muted);font-size:11px;">P${Math.round(+it.protein||0)} C${Math.round(+it.carbs||0)} F${Math.round(+it.fat||0)}${
-                    (it._food || it._foodData) ? ` · <button class="amt-tap tiny" data-jamtedit="${escapeHtml(sl.name)}|${i}">change amount <svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg></button>` : ''}</small>
+                    (it._food || it._foodData) ? ` · <button class="amt-tap tiny" data-jamtedit="${escapeHtml(sl.name)}|${i}">change amount <svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg></button>` : ''}${
+                    it._partial ? ` · <span class="label-warn-inline">a missing macro counts as zero</span>` : ''}${
+                    it._suspect ? ` · <span class="label-warn-inline">label works out to ${Math.round(it._impliedKcal)} kcal</span>` : ''}</small>
                 </span>
                 <span class="jkcal">${Math.round(+it.kcal||0)}</span>
                 <button class="mini-btn remove" data-jdel="${escapeHtml(sl.name)}|${i}" aria-label="Remove"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
@@ -472,6 +474,9 @@
          amount editor below bails out and a logged product can never be
          corrected — the one thing every other logged food allows. */
       _foodData: food.key ? undefined : food,
+      _partial: food._partial || undefined,
+      _suspect: food._suspect || undefined,
+      _impliedKcal: food._suspect ? food._impliedKcal : undefined,
     };
     if (replaceIndex != null && log.meals[mealName][replaceIndex]) log.meals[mealName][replaceIndex] = entry;
     else log.meals[mealName].push(entry);

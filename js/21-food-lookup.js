@@ -538,6 +538,14 @@
       /* With a unit the amount box counts servings; without one it stays in
          grams, which is the honest reading when no serving was published. */
       unit,
+      /* What was wrong with the label travels with the entry. These used to be
+         shown once in the results list and then dropped, so a product missing
+         its protein figure was logged as containing none and nothing on the
+         screen ever said so again. undefined rather than false keeps the saved
+         state small for the ordinary case. */
+      partial: h.partial || undefined,
+      suspect: h.suspect || undefined,
+      impliedKcal: h.suspect ? h.impliedKcal : undefined,
     });
     document.getElementById('offSearch').value = '';
     document.getElementById('offClear').style.display = 'none';

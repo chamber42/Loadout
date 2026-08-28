@@ -6,6 +6,7 @@ const SUITES = [
   './custom-food.test.js',
   './serving-size.test.js',
   './journal-scan.test.js',
+  './label-quality.test.js',
   './barcode-decode.test.js',
 ];
 

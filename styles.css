@@ -574,6 +574,15 @@
   .covers-row{ display:flex; align-items:center; gap:8px; margin-top:8px; }
   .covers-label{ font-family:var(--font-display); font-size:var(--fs-6); color:var(--muted); letter-spacing:0.5px; white-space:nowrap; }
   .covers-row select{ flex:1; margin-bottom:0!important; font-size:16px; padding:8px; }
+  /* What a scanned label failed to say, repeated wherever its numbers are
+     shown. Amber rather than red: the figure is usable, it is just not the
+     whole truth, and the person is the one who can judge. */
+  .label-warn{
+    font-family:var(--font-body); font-size:11px; line-height:1.6;
+    color:var(--amber); margin-top:8px;
+  }
+  .label-warn-inline{ color:var(--amber); }
+
   .custom-banner{ border:1px solid rgba(255,176,0,0.35); background:rgba(255,176,0,0.06);
                   border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:11px; line-height:1.6; }
   .custom-card{ border:1px solid rgba(255,176,0,0.3); border-radius:8px; padding:10px; margin-bottom:8px;

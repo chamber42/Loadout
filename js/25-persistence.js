@@ -49,12 +49,21 @@
         SAVE_FIELDS.forEach(k => { if (state[k] !== undefined) out[k] = state[k]; });
         out._savedAt = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(out));
+        if (saveBroken && typeof toast === 'function'){
+          toast('Saving again.', 'check');
+        }
         saveBroken = false;
       }catch(e){
         /* Genuinely unable to store: private browsing, a blocked embedded
            viewer, or a full quota. Logged rather than swallowed, because the
            alternative is a person who thinks their day is saved and finds it
            gone. */
+        /* Said once, on the transition into failure. Saving is attempted on
+           every change, so warning each time would be a wall of toasts; not
+           warning at all leaves someone logging a day into nothing. */
+        if (!saveBroken && typeof toast === 'function'){
+          toast('Not saving — this device is out of storage or blocking it.', 'warn');
+        }
         saveBroken = true;
         console.error('Loadout: could not save state', e);
       }
