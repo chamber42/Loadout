@@ -467,6 +467,11 @@
       carbs: +(food.carbs * mult).toFixed(1),
       fat: +(food.fat * mult).toFixed(1),
       _food: food.key, _grams: grams,
+      /* A scanned or searched product is not in the library and has no key to
+         look one up by, so the food travels with the entry. Without this the
+         amount editor below bails out and a logged product can never be
+         corrected — the one thing every other logged food allows. */
+      _foodData: food.key ? undefined : food,
     };
     if (replaceIndex != null && log.meals[mealName][replaceIndex]) log.meals[mealName][replaceIndex] = entry;
     else log.meals[mealName].push(entry);
@@ -506,10 +511,15 @@
   function openJournalAmountEditor(mealName, idx){
     const log = dayLog(state.journalDate || todayKey());
     const it = (log.meals[mealName] || [])[idx];
-    if (!it || !it._food) return;
-    const entry = foodIndex().find(x=>x.food.key === it._food);
+    if (!it) return;
+    /* Library foods resolve through the index, so a corrected table reaches
+       an old entry. A scanned one carries its own copy instead. */
+    const entry = it._food
+      ? foodIndex().find(x=>x.food.key === it._food)
+      : (it._foodData ? {food: it._foodData, slot: 'protein'} : null);
     if (!entry) return;
-    jfoodTarget = {mealName, pick:entry, grams: +it._grams || 100, editIndex: idx};
+    jfoodTarget = {mealName, pick:entry, grams: +it._grams || 100, editIndex: idx,
+                   freeGrams: !entry.food.unit};
     document.getElementById('jfoodTitle').textContent = 'CHANGE AMOUNT';
     document.getElementById('jfoodSearch').value = '';
     document.getElementById('jfoodClear').style.display = 'none';

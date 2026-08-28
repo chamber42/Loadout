@@ -5,6 +5,7 @@
 const SUITES = [
   './custom-food.test.js',
   './serving-size.test.js',
+  './journal-scan.test.js',
   './barcode-decode.test.js',
 ];
 

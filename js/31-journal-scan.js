@@ -38,11 +38,13 @@
       protein: h.protein,
       carbs: h.carbs,
       fat: h.fat,
-      /* Straight off the label where it carried them. These used to be
-         hard zeros, which quietly told the journal a packaged product
-         contains no fibre and no salt. */
-      fibre: h.fibre == null ? 0 : h.fibre,
-      sodium: h.sodium == null ? 0 : h.sodium,
+      /* null where the label was silent, so fibreOf() and sodiumOf() fall
+         back to their own estimate rather than being told the product
+         contains none. These were hard zeros, which is what the comment here
+         used to warn against while the code did it anyway — the slot scanner
+         in 36-slot-scan.js has always had this right. */
+      fibre: h.fibre == null ? null : h.fibre,
+      sodium: h.sodium == null ? null : h.sodium,
       /* A serving where the label published one, so the stepper counts
          servings and opens on a portion instead of a flat 100g. */
       unit: offServingUnit(h),
