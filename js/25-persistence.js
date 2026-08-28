@@ -25,17 +25,39 @@
     'eaten','prepServings','pantry','cupboard','customFoods'];
 
   let saveTimer = null;
+  /* Whether the last attempt to write to storage failed. Read by nothing yet;
+     the honest next step is telling the person, rather than letting them
+     believe a day was recorded when it was not. */
+  let saveBroken = false;
   function saveState(){
     clearTimeout(saveTimer);
     saveTimer = setTimeout(()=>{
+      /* Deliberately outside the storage try/catch below. This used to sit
+         inside it, so any bug in the write-back — or in any of the day and
+         portion maths it calls — threw before localStorage was ever reached
+         and silently disabled saving for the rest of the session, reported by
+         that catch as "storage unavailable". A failure here should cost the
+         active day's edits, not the entire save. */
       try{
         // whatever the loadout screen is showing belongs to a dish, not a day
         writeBackActiveDay();
+      }catch(e){
+        console.error('Loadout: writing back the active day failed; saving the rest anyway', e);
+      }
+      try{
         const out = {};
         SAVE_FIELDS.forEach(k => { if (state[k] !== undefined) out[k] = state[k]; });
         out._savedAt = Date.now();
         localStorage.setItem(SAVE_KEY, JSON.stringify(out));
-      }catch(e){ /* storage unavailable — carry on without saving */ }
+        saveBroken = false;
+      }catch(e){
+        /* Genuinely unable to store: private browsing, a blocked embedded
+           viewer, or a full quota. Logged rather than swallowed, because the
+           alternative is a person who thinks their day is saved and finds it
+           gone. */
+        saveBroken = true;
+        console.error('Loadout: could not save state', e);
+      }
     }, 400);
   }
 
