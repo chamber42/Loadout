@@ -7,6 +7,7 @@ const SUITES = [
   './serving-size.test.js',
   './journal-scan.test.js',
   './label-quality.test.js',
+  './icon-names.test.js',
   './barcode-decode.test.js',
 ];
 
