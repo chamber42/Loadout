@@ -62,6 +62,7 @@
     box.value = '';
     document.getElementById('foodPickClear').style.display = 'none';
     renderFoodPickList('');
+    if (typeof resetSlotScanRow === 'function') resetSlotScanRow();
     openModal('modalFoodPick');
     // a keyboard springing up on a phone hides the list, so don't autofocus
     if (window.matchMedia && window.matchMedia('(min-width:640px)').matches && box.focus) box.focus();
@@ -89,33 +90,83 @@
         <span class="kc">${f.kcal} kcal/100g</span>
       </button>`;
 
+    /* A scanned product carries a delete control the library foods don't:
+       it came from this person's kitchen, so it is theirs to throw away
+       once the packet is gone. */
+    const scanRow = f => `<div class="fp-scanned">${row(f)}<button class="mini-btn remove"
+        data-fp-rm="${f.key}" aria-label="Forget ${escapeHtml(f.name)}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button></div>`;
+
+    const isScan = f => !!f._scanned;
+
     let html = `<button class="fp-row${current?'':' on'}" data-fp=""><span class="nm">— None —</span></button>`;
 
     if (!q){
       // unsearched, keep the grouping that made browsing useful
+      const scanned = list.filter(isScan);
+      const shelf   = list.filter(f=>!isScan(f));
       const fav = favKeys(slot);
-      const starred = list.filter(f=>fav.includes(f.key));
-      const craved  = list.filter(f=>!fav.includes(f.key) && state.cravings.length && matchesCraving(f));
-      const rest    = list.filter(f=>!fav.includes(f.key) && !(state.cravings.length && matchesCraving(f)));
+      const starred = shelf.filter(f=>fav.includes(f.key));
+      const craved  = shelf.filter(f=>!fav.includes(f.key) && state.cravings.length && matchesCraving(f));
+      const rest    = shelf.filter(f=>!fav.includes(f.key) && !(state.cravings.length && matchesCraving(f)));
+      if (scanned.length) html += `<div class="fp-group"><svg class="px" aria-hidden="true"><use href="#i-barcode"></use></svg> SCANNED</div>` + scanned.map(scanRow).join('');
       if (starred.length) html += `<div class="fp-group"><svg class="px" aria-hidden="true"><use href="#i-star"></use></svg> YOUR FAVORITES</div>` + starred.map(row).join('');
       if (craved.length)  html += `<div class="fp-group">MATCHES YOUR CRAVINGS</div>` + craved.map(row).join('');
-      html += `<div class="fp-group">${starred.length || craved.length ? 'EVERYTHING ELSE' : 'ALL ' + def.label}</div>` + rest.map(row).join('');
+      html += `<div class="fp-group">${starred.length || craved.length || scanned.length ? 'EVERYTHING ELSE' : 'ALL ' + def.label}</div>` + rest.map(row).join('');
     } else {
-      html += `<div class="fp-group">${list.length} MATCH${list.length===1?'':'ES'}</div>` + list.map(row).join('');
+      html += `<div class="fp-group">${list.length} MATCH${list.length===1?'':'ES'}</div>` +
+              list.map(f=>isScan(f) ? scanRow(f) : row(f)).join('');
     }
 
     host.innerHTML = html;
     host.querySelectorAll('[data-fp]').forEach(b=>b.addEventListener('click', ()=>{
-      const key = b.getAttribute('data-fp');
-      state.selections[mealKey][slot][index] = key;
-      // a hand-set amount belonged to the food that was there before
-      setOverride(mealKey, slot, index, null);
+      commitFoodPick(b.getAttribute('data-fp'));
+    }));
+    /* This forgets the product outright — out of the library, and out of every
+       meal on every prepped day, not just this slot. It also sits a thumb's
+       width from the row you tap to CHOOSE that food, so it arms first and
+       acts second, the way the wipe-everything button does. Taking the food
+       out of just this slot is what "— None —" at the top of the list is for. */
+    const disarm = b => {
+      if (!b.isConnected) return;
+      b.dataset.armed = '';
+      b.classList.remove('on');
+      b.setAttribute('aria-label', b.dataset.rmLabel || 'Forget this scanned product');
+      b.innerHTML = '<svg class="px" aria-hidden="true"><use href="#i-close"></use></svg>';
+    };
+    host.querySelectorAll('[data-fp-rm]').forEach(b=>b.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      if (b.dataset.armed !== '1'){
+        b.dataset.rmLabel = b.getAttribute('aria-label');
+        b.dataset.armed = '1';
+        b.classList.add('on');
+        b.textContent = 'FORGET EVERYWHERE?';
+        b.setAttribute('aria-label', b.dataset.rmLabel + ' from every meal — tap again to confirm');
+        setTimeout(()=>disarm(b), 4000);
+        return;
+      }
+      removeScannedFood(slot, b.getAttribute('data-fp-rm'));
       writeBackActiveDay();
-      closeModal('modalFoodPick');
+      renderFoodPickList(document.getElementById('foodPickSearch').value);
       renderMealTimeline();
       refreshTargets();
       saveState();
     }));
+  }
+
+  /* Seat a food in whichever slot the picker was opened for. A scanned
+     product lands here too, so it is committed by exactly the same steps as
+     one chosen off the list — including dropping any hand-set amount, which
+     belonged to the food being replaced. */
+  function commitFoodPick(key){
+    if (!pickTarget) return;
+    const {mealKey, slot, index} = pickTarget;
+    state.selections[mealKey][slot][index] = key;
+    setOverride(mealKey, slot, index, null);
+    writeBackActiveDay();
+    closeModal('modalFoodPick');
+    renderMealTimeline();
+    refreshTargets();
+    saveState();
   }
 
   function foodOptions(list, selectedKey){
@@ -194,6 +245,89 @@
     {slot:'fruit',   icon:'fruit', label:'FRUIT',      list:()=>FOODS.fruit},
     {slot:'sauce',   icon:'sauce', label:'SAUCE',      list:()=>FOODS.sauce},
   ];
+
+  /* ---------------------------------------------------------
+     SCANNED FOODS
+     A barcode scanned into a slot becomes a food in that slot's list rather
+     than a special case bolted on beside it. Everything downstream — portion
+     sizing, the cook plan, the shopping list, the HUD, the journal — already
+     resolves a slot key through listFor(), so a merged food is picked up by
+     all of it without a single extra branch.
+
+     They are kept in state.customFoods rather than written into FOODS
+     directly, because FOODS is rebuilt from source on every load and only
+     what is in state survives a restart.
+  --------------------------------------------------------- */
+  function customSlotList(slot){
+    if (!state.customFoods || typeof state.customFoods !== 'object') state.customFoods = {};
+    if (!Array.isArray(state.customFoods[slot])) state.customFoods[slot] = [];
+    return state.customFoods[slot];
+  }
+
+  /* Put every saved scanned food back into its slot's list. Idempotent, so
+     it is safe to call again after a restore or a native backup import. */
+  function mergeCustomFoods(){
+    SLOT_DEFS.forEach(def=>{
+      const live = def.list();
+      customSlotList(def.slot).forEach(f=>{
+        if (!f || !f.key) return;
+        const i = live.findIndex(x=>x.key === f.key);
+        if (i >= 0) live[i] = f; else live.push(f);
+      });
+    });
+  }
+
+  /* Keyed by slot as well as barcode: the same product scanned as a fat and
+     as a protein has to stay two distinct entries, or findFoodAnySlot() picks
+     whichever it meets first and the portion is sized against the wrong
+     macro. */
+  function scannedKeyFor(slot, code){
+    return 'scan-' + slot + '-' + String(code || '').replace(/\D/g,'');
+  }
+
+  /* Add a scanned product to a slot, or refresh one already there. Re-scanning
+     a barcode updates the existing entry in place, so a product already sitting
+     in a meal picks up corrected numbers instead of spawning a duplicate the
+     person then has to choose between. */
+  function addScannedFood(slot, food){
+    const saved = customSlotList(slot);
+    const live  = listFor(slot);
+    const i = saved.findIndex(f=>f.key === food.key);
+    if (i >= 0) saved[i] = food; else saved.push(food);
+    const j = live.findIndex(f=>f.key === food.key);
+    if (j >= 0) live[j] = food; else live.push(food);
+    return food.key;
+  }
+
+  /* A key left behind in a selection resolves to nothing and silently empties
+     that slot's readout, so removing a scanned food has to clear it out of
+     every day, every prepped dish and every list that names food by key. */
+  function forgetFoodKey(slot, key){
+    const strip = sel => {
+      if (!sel || !Array.isArray(sel[slot])) return;
+      sel[slot] = sel[slot].map(k => k === key ? "" : k);
+    };
+    Object.values(state.selections || {}).forEach(strip);
+    const prep = state.prep || {};
+    [].concat(prep.meals || [], prep.snacks || []).forEach(strip);
+    ['dislikes','mustUse'].forEach(f=>{
+      if (Array.isArray(state[f])) state[f] = state[f].filter(k=>k !== key);
+    });
+    if (state.favorites && Array.isArray(state.favorites[slot])){
+      state.favorites[slot] = state.favorites[slot].filter(k=>k !== key);
+    }
+    if (state.mustQty) delete state.mustQty[key];
+  }
+
+  function removeScannedFood(slot, key){
+    const saved = customSlotList(slot);
+    const i = saved.findIndex(f=>f.key === key);
+    if (i >= 0) saved.splice(i, 1);
+    const live = listFor(slot);
+    const j = live.findIndex(f=>f.key === key);
+    if (j >= 0) live.splice(j, 1);
+    forgetFoodKey(slot, key);
+  }
 
   /* ---------------------------------------------------------
      MANUAL ENTRIES
@@ -457,12 +591,13 @@
     const floors = buildFloors(sel, mealKcal);
     capOnHandPortions(grams, sel);
     capAbsurdPortions(grams, sel);
-    snapToUnits(grams, sel, floors);
-    enforceMinimums(grams, sel, mealKcal, floors);
-    snapToUnits(grams, sel, floors);
-    /* Snapping and the minimum-portion floor would happily "correct" an
-       amount somebody typed in themselves. Put those back last — if you
-       said one slice of bread, you get one slice of bread. */
+    snapToUnits(grams, sel, floors, isFixed);
+    enforceMinimums(grams, sel, mealKcal, floors, isFixed);
+    snapToUnits(grams, sel, floors, isFixed);
+    /* A belt-and-braces re-assert. Snapping and the minimum-portion floor
+       both skip pinned items now, so this should already be a no-op — it
+       stays because "if you said one slice of bread, you get one slice of
+       bread" is worth guaranteeing outright rather than by inspection. */
     SLOT_DEFS.forEach(d=>{
       sel[d.slot].forEach((k,i)=>{
         if (k && isFixed(d.slot, i)) grams[d.slot][i] = Math.max(0, fixed[d.slot][i]);
@@ -486,9 +621,40 @@
      Overrides are keyed by the dish itself rather than the meal slot, so an
      amount set on Tuesday's lunch holds every day that dish is served.
   --------------------------------------------------------- */
+  /* Hand-set amounts are filed against the DISH and the KIND of day.
+
+     The dish part is what makes an amount stick: set two slices of bread on
+     Tuesday's lunch and you get two slices every day that lunch is served.
+     The kind part is what keeps rest and training days apart. A training day
+     is the same food in a bigger portion — that split is the whole point of
+     having one — so a single key for both meant pinning an amount on a rest
+     day dragged the training days down onto the same number, and fixing it
+     on a training day dragged the rest days up. Neither could be set without
+     destroying the other.
+
+     Preps with no training split keep the plain key, so nothing has to be
+     migrated for them. */
   function overrideKeyFor(mealKey){
+    const suffix = hasSplit() ? '@' + dayKindAt(dayIndex()) : '';
     const ref = dishRefFor(mealKey, dayIndex());
-    return ref ? `${ref.store}#${ref.index}` : `meal#${mealKey}`;
+    return (ref ? `${ref.store}#${ref.index}` : `meal#${mealKey}`) + suffix;
+  }
+
+  /* Amounts saved before the split existed carry the plain key. Both kinds of
+     day were showing that one number, so it is handed to both — the person
+     sees exactly what they saw before, and can now change either on its own. */
+  function migratePortionOverrides(){
+    if (!hasSplit()) return;
+    const bag = state.portionOverrides;
+    if (!bag) return;
+    Object.keys(bag).forEach(k=>{
+      if (k.indexOf('@') >= 0) return;               // already scoped
+      ['rest','train'].forEach(kind=>{
+        const to = k + '@' + kind;
+        if (!bag[to]) bag[to] = JSON.parse(JSON.stringify(bag[k]));
+      });
+      delete bag[k];
+    });
   }
 
   function overridesFor(mealKey){
@@ -512,6 +678,132 @@
   function clearOverrides(mealKey, slot){
     const bag = state.portionOverrides && state.portionOverrides[overrideKeyFor(mealKey)];
     if (bag && slot) delete bag[slot];
+  }
+
+  /* What the rest of the plate becomes if this amount is committed.
+
+     computeMealPlan() reads the override straight out of state, so the only
+     way to ask "what if" is to put the value in, read the answer and take it
+     back out. That is safe precisely because it is synchronous: nothing
+     renders, saves or yields between the three steps. */
+  function planIfSetTo(mealKey, slot, index, grams){
+    const bag = (state.portionOverrides || {})[overrideKeyFor(mealKey)];
+    const had = (bag && bag[slot] && bag[slot][index] != null) ? bag[slot][index] : null;
+    setOverride(mealKey, slot, index, grams);
+    const plan = computeMealPlan(mealKey);
+    setOverride(mealKey, slot, index, had);
+    return plan;
+  }
+
+  /* Total calories a plan puts on the plate, for the "still lands on" line. */
+  function planKcal(mealKey, plan){
+    const sel = state.selections[mealKey];
+    let kcal = 0;
+    SLOT_DEFS.forEach(d=>{
+      (sel[d.slot] || []).forEach((k,i)=>{
+        const g = plan[d.slot][i];
+        if (!k || g == null) return;
+        const food = listFor(d.slot).find(f=>f.key === k);
+        if (food) kcal += food.kcal * g / 100;
+      });
+    });
+    return kcal;
+  }
+
+  /* The other foods in this same slot, and where they land once this one is
+     pinned. This is the whole point of setting an amount by hand: asking for
+     fewer nuggets is really asking for more of whatever is next to them, and
+     until you can see that happen there is no reason to believe the tap did
+     anything at all. */
+  function knockOnRows(mealKey, slot, index, grams){
+    const sel = state.selections[mealKey];
+    const arr = (sel && sel[slot]) || [];
+    const others = arr.map((k,i)=>({k,i})).filter(x => x.k && x.i !== index);
+    if (!others.length) return [];
+    const before = computeMealPlan(mealKey);
+    const after  = planIfSetTo(mealKey, slot, index, grams);
+    const fixed  = overridesFor(mealKey);
+    return others.map(({k,i})=>{
+      const food = listFor(slot).find(f=>f.key === k);
+      if (!food) return null;
+      return {
+        name: food.name,
+        food,
+        before: before[slot][i],
+        after:  after[slot][i],
+        pinned: !!(fixed[slot] && fixed[slot][i] != null),
+      };
+    }).filter(Boolean);
+  }
+
+  /* The moving half of a knock-on row, kept apart from its label because the
+     grams field rewrites just this much in place — re-rendering the panel
+     would take the field out from under the cursor mid-number. */
+  function knockOnValueHtml(r){
+    const fmt = g => {
+      if (g == null) return '—';
+      const u = unitLabel(r.food, g);
+      return u ? `${u} (${g.toFixed(0)}g)` : `${g.toFixed(0)}g`;
+    };
+    const moved = r.before != null && r.after != null && Math.abs(r.after - r.before) >= 1;
+    if (r.pinned || !moved) return fmt(r.after);
+    return `<span style="color:var(--muted)">${fmt(r.before)}</span> → ` +
+           `<strong class="${r.after > r.before ? 'n-green' : 'n-amber'}">${fmt(r.after)}</strong>`;
+  }
+
+  /* Anything that falls off the plate entirely if this amount is committed.
+     A big enough hand-set portion can leave no room to serve a side properly,
+     and the app drops it rather than plating a sliver — which is defensible,
+     but only if you are told it is about to happen instead of noticing the
+     fruit missing later. */
+  function knockDrops(mealKey, slot, index, grams){
+    const sel = state.selections[mealKey];
+    const before = computeMealPlan(mealKey);
+    const after  = planIfSetTo(mealKey, slot, index, grams);
+    const gone = [];
+    SLOT_DEFS.forEach(d=>{
+      (sel[d.slot] || []).forEach((k,i)=>{
+        if (!k) return;
+        if (before[d.slot][i] != null && after[d.slot][i] == null){
+          const food = listFor(d.slot).find(f=>f.key === k);
+          if (food) gone.push(food.name);
+        }
+      });
+    });
+    return gone;
+  }
+
+  function knockDropLine(mealKey, slot, index, grams){
+    const gone = knockDrops(mealKey, slot, index, grams);
+    if (!gone.length) return '';
+    return '<div style="color:var(--red); margin-top:4px;">No room left for ' +
+      gone.map(escapeHtml).join(' or ') + ' — ' +
+      (gone.length > 1 ? 'they come' : 'it comes') + ' off the plate.</div>';
+  }
+
+  /* Whether the meal still lands where it was aimed. Pinning one amount is
+     absorbed by the carb and fat slots, so most of the time the answer is
+     "yes" and saying so is what makes it safe to keep nudging. When every
+     item in a slot has been pinned there is nothing left to flex, and the
+     meal really does drift — which the person should be told, not left to
+     discover from the day's totals later. */
+  function knockKcalLine(mealKey, grams, slot, index){
+    const bud = mealBudget(mealKey).kcal;
+    if (!(bud > 0)) return '';
+    const got = planKcal(mealKey, planIfSetTo(mealKey, slot, index, grams));
+    const off = got - bud;
+    if (Math.abs(off) < Math.max(15, bud * 0.02)){
+      return 'Meal still lands on ' + Math.round(bud) + ' kcal.';
+    }
+    return 'Meal comes to <strong class="' + (off > 0 ? 'n-amber' : 'n-green') + '">' +
+           Math.round(got) + ' kcal</strong> against a ' + Math.round(bud) + ' target — ' +
+           (off > 0 ? 'over' : 'under') + ' by ' + Math.abs(Math.round(off)) + '.';
+  }
+
+  function knockOnRowHtml(r, i){
+    return `<div class="kv"><span>${escapeHtml(r.name)}${
+      r.pinned ? ' <small style="color:var(--muted)">set by hand</small>' : ''}</span>` +
+      `<span id="knock-${i}">${knockOnValueHtml(r)}</span></div>`;
   }
 
   let portionTarget = null;
@@ -544,6 +836,11 @@
     const macro = k => (food[k] * grams / 100);
     const overridden = overridesFor(mealKey)[slot] &&
                        overridesFor(mealKey)[slot][index] != null;
+    /* Where the other foods in this slot land once this amount is pinned —
+       the trade the person is actually making. */
+    const knock = knockOnRows(mealKey, slot, index, grams);
+    const drops = knockDrops(mealKey, slot, index, grams);
+    const slotLabel = (SLOT_DEFS.find(d=>d.slot === slot) || {label:'SLOT'}).label;
 
     host.innerHTML = `
       <div style="font-family:var(--font-body); font-size:15px; color:var(--green); margin-bottom:4px;">${escapeHtml(food.name)}</div>
@@ -576,6 +873,15 @@
         <div class="kv"><span>Carbs</span><span>${macro('carbs').toFixed(1)}g</span></div>
         <div class="kv"><span>Fat</span><span>${macro('fat').toFixed(1)}g</span></div>
       </div>
+
+      ${(knock.length || drops.length) ? `
+        <div class="panel" style="margin-top:12px;">
+          <div class="field-label" style="margin-bottom:2px;">${
+            knock.length ? 'THE REST OF THE ' + escapeHtml(slotLabel) : 'EFFECT ON THE MEAL'}</div>
+          ${knock.map(knockOnRowHtml).join('')}
+          <div class="season-hint" id="knockKcal">${knockKcalLine(mealKey, grams, slot, index)}${
+            knockDropLine(mealKey, slot, index, grams)}</div>
+        </div>` : ''}
 
       <button class="btn-primary" id="amtSave" style="margin-top:14px;">SET THIS AMOUNT</button>
       ${overridden ? '<button class="btn-ghost" id="amtReset"><svg class="px" aria-hidden="true"><use href="#i-reset"></use></svg> Back to the calculated amount</button>' : ''}
@@ -611,6 +917,15 @@
         vals[2].textContent = m('carbs').toFixed(1) + 'g';
         vals[3].textContent = m('fat').toFixed(1) + 'g';
       }
+      /* Patched in place for the same reason the macros are: re-rendering
+         would take the field out from under the cursor mid-number. */
+      knockOnRows(mealKey, slot, index, v).forEach((r, i)=>{
+        const cell = document.getElementById('knock-' + i);
+        if (cell) cell.innerHTML = knockOnValueHtml(r);
+      });
+      const kl = document.getElementById('knockKcal');
+      if (kl) kl.innerHTML = knockKcalLine(mealKey, v, slot, index) +
+                             knockDropLine(mealKey, slot, index, v);
     });
 
     document.getElementById('amtSave').addEventListener('click', ()=>{
@@ -897,10 +1212,12 @@
     });
   }
 
-  function snapToUnits(grams, sel, floors){
+  function snapToUnits(grams, sel, floors, isFixed){
     SLOT_DEFS.forEach(def=>{
       sel[def.slot].forEach((key, i)=>{
         if (!key || grams[def.slot][i] == null) return;
+        // an amount set by hand is a fact, not a portion to be tidied up
+        if (isFixed && isFixed(def.slot, i)) return;
         const food = def.list().find(f=>f.key === key);
         if (!food || !food.unit || food.unit.soft) return;   // produce portions freely
         const per = food.unit.g;
@@ -938,6 +1255,17 @@
     return `${food.unit.soft ? '~' : ''}${txt} ${word}`;
   }
 
+  /* How an amount reads in a log line. A unit food reads as its units with the
+     gram weight alongside as a check, except where that weight is abstract —
+     a food entered as "1 sandwich" has no real weight (see 37-custom-food.js),
+     and printing the internal basis would state a measurement nobody made. */
+  function amountText(food, g){
+    const ul = unitLabel(food, g);
+    if (!ul) return `${g.toFixed(0)}g`;
+    if (food.unit && food.unit.abstract) return ul;
+    return `${ul} (${g.toFixed(0)}g)`;
+  }
+
   /* Rounding up to whole units can push a small meal over its calorie budget.
      Where a food has more than one unit, give one back. */
   function trimUnitOvershoot(grams, sel, mealKcal, floors){
@@ -972,13 +1300,21 @@
     }
   }
 
-  function enforceMinimums(grams, sel, mealKcal, floors){
+  function enforceMinimums(grams, sel, mealKcal, floors, isFixed){
     const items = [];
+    /* Amounts the person set by hand. They are treated exactly like a hard
+       unit food below — their calories come off the budget up front and they
+       never join the flex pool — because the alternative is what used to
+       happen: the rebalance shrank a pinned portion to fund somebody else's
+       floor, and the re-assert at the end of computeMealPlan put it back
+       without re-balancing, leaving the meal over its target. */
+    const pinned = [];
     SLOT_DEFS.forEach(def=>{
       sel[def.slot].forEach((key, i)=>{
         if (!key || grams[def.slot][i] == null) return;
         const food = def.list().find(f=>f.key === key);
         if (!food || !food.kcal) return;
+        if (isFixed && isFixed(def.slot, i)){ pinned.push({slot:def.slot, i, food}); return; }
         // a hard unit food (tortilla, slice of bread) is already at a sensible
         // whole portion — leave it fixed and let everything else flex around it
         if (food.unit && !food.unit.soft) return;
@@ -993,6 +1329,7 @@
     SLOT_DEFS.forEach(def=>{
       sel[def.slot].forEach((key, i)=>{
         if (!key || grams[def.slot][i] == null) return;
+        if (isFixed && isFixed(def.slot, i)) return;   // pinned: not ours to trim
         const food = def.list().find(f=>f.key === key);
         if (food && food.unit && !food.unit.soft) unitItems.push({slot:def.slot, i, food});
       });
@@ -1016,7 +1353,8 @@
       const step = unitStep(trim.food);
       grams[trim.slot][trim.i] -= per * step;
     }
-    mealKcal = Math.max(mealKcal - unitKcal(), 0);
+    const pinnedKcal = pinned.reduce((a,u)=> a + u.food.kcal * grams[u.slot][u.i] / 100, 0);
+    mealKcal = Math.max(mealKcal - unitKcal() - pinnedKcal, 0);
     if (!items.length) return;
     if (mealKcal <= 0){
       // Budget fully spent by unit foods — still give everything else a real
@@ -1127,12 +1465,18 @@
           <label>CARB<input type="number" inputmode="numeric" data-ef="${i}|carbs"   value="${c.carbs ?? ''}"   placeholder="0"></label>
           <label>FAT<input type="number" inputmode="numeric" data-ef="${i}|fat"      value="${c.fat ?? ''}"     placeholder="0"></label>
         </div>
-        ${c.per100 ? `<div class="covers-row">
+        ${c.per100 ? (c.unit ? `<div class="covers-row">
+          <span class="covers-label">AMOUNT</span>
+          <input type="number" class="onhand-qty" data-ef="${i}|units"
+                 value="${+((c.grams ?? c.unit.g) / c.unit.g).toFixed(2)}"
+                 inputmode="decimal" min="0" step="0.5" aria-label="Amount eaten">
+          <span class="onhand-unit">${escapeHtml((c.grams ?? c.unit.g) / c.unit.g <= 1 ? c.unit.one : c.unit.many)}</span>
+        </div>` : `<div class="covers-row">
           <span class="covers-label">AMOUNT</span>
           <input type="number" class="onhand-qty" data-ef="${i}|grams" value="${c.grams ?? 100}"
                  inputmode="numeric" min="1" max="5000" aria-label="Grams eaten">
           <span class="onhand-unit">g</span>
-        </div>` : ''}
+        </div>`) : ''}
         <div class="covers-row">
           <span class="covers-label">THIS WAS MY</span>
           <select data-ef="${i}|covers">
@@ -1158,12 +1502,18 @@
       const [idx, field] = inp.getAttribute('data-ef').split('|');
       const handler = ()=>{
         const row = state.eaten[parseInt(idx,10)];
-        row[field] = inp.value;
+        /* 'units' is the box's own reading, not a field of the row — the row
+           only ever stores grams, so it is converted rather than stored. */
+        if (field !== 'units') row[field] = inp.value;
         // a looked-up product knows its per-100g values, so changing the
         // amount rescales the macros instead of making you redo the maths
-        if (field === 'grams' && row.per100){
-          const g = parseFloat(inp.value);
+        if ((field === 'grams' || field === 'units') && row.per100){
+          const typed = parseFloat(inp.value);
+          const g = field === 'units'
+            ? (row.unit ? typed * row.unit.g : NaN)
+            : typed;
           if (g > 0){
+            row.grams = g;
             const f = g / 100;
             row.kcal    = Math.round(row.per100.kcal * f);
             row.protein = Math.round(row.per100.protein * f);
@@ -1191,9 +1541,9 @@
           if (!el) return;
           const g = plan[def.slot][i];
           const food = key ? def.list().find(f=>f.key===key) : null;
-          const ul = (food && g != null) ? unitLabel(food, g) : null;
-          el.innerHTML = (food && g != null)
-            ? `→ <span class="val">${ul ? ul : g.toFixed(0)+'g'}</span> ${food.name}${ul ? ` <span style="color:var(--muted)">(${g.toFixed(0)}g)</span>` : ''}` : '';
+          const ov = overridesFor(meal.key)[def.slot];
+          el.innerHTML = slotReadoutHtml(meal.key, def.slot, i, food, g, !!(ov && ov[i] != null));
+          bindAmountEditors(el);
         });
       });
     });
@@ -1262,6 +1612,58 @@
       }));
   }
 
+  /* The amount line under a slot, and the click that opens its editor.
+
+     Both live in one place because TWO callers draw this line — the full
+     render and refreshTargets()'s in-place update — and they used to draw it
+     differently. refreshTargets() emitted a plain <span>, so every time it
+     ran it quietly replaced the edit button with dead text: after choosing a
+     food the amount could not be tapped at all, and the only way to get the
+     button back was an action that re-rendered without refreshing, like
+     "+ ADD PROTEIN". Sharing the markup is what keeps them honest.
+
+     Names are escaped because a scanned product's name comes from Open Food
+     Facts, which is to say from the public. */
+  function slotReadoutHtml(mealKey, slot, i, food, g, isSet){
+    if (!food || g == null) return '';
+    const ulab = unitLabel(food, g);
+    return `→ <button class="amt-tap${isSet ? ' set' : ''}" data-amt-edit="${mealKey}|${slot}|${i}"
+        aria-label="Change the amount of ${escapeHtml(food.name)}">${
+        ulab ? escapeHtml(ulab) : g.toFixed(0) + 'g'} <svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg></button>
+      ${escapeHtml(food.name)}${ulab ? ` <span style="color:var(--muted)">(${g.toFixed(0)}g)</span>` : ''}`;
+  }
+
+  function bindAmountEditors(root){
+    if (!root) return;
+    root.querySelectorAll('[data-amt-edit]').forEach(btn=>{
+      if (btn.dataset.bound === '1') return;      // survives repeated refreshes
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', ()=>{
+        const [mealKey, slot, idx] = btn.getAttribute('data-amt-edit').split('|');
+        openPortionEditor(mealKey, slot, parseInt(idx, 10), ()=>{
+          renderMealTimeline(); updateHUD();
+        });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------
+     WHICH MEALS ARE OPEN
+     Six slots per sitting across four sittings is roughly thirty controls,
+     and showing them all at once is the first thing a person sees on this
+     screen. Collapsed, a meal is one row that still says what matters — the
+     lamp, the component pips and the calorie line — and opens to the full
+     bench when it is the one being worked on.
+
+     Held in memory, not saved: this is where you are in a session, not part
+     of the plan. Everything starts closed, so nothing is hidden that the
+     person had chosen to see.
+  --------------------------------------------------------- */
+  const openMeals = new Set();
+  function isMealOpen(key){ return openMeals.has(key); }
+  function setMealOpen(key, on){ if (on) openMeals.add(key); else openMeals.delete(key); }
+  function collapseAllMeals(){ openMeals.clear(); }
+
   function renderMealTimeline(){
     const tier = currentTier();
     const tg = currentTargets();
@@ -1288,10 +1690,7 @@
           const ulab = (food && g != null) ? unitLabel(food, g) : null;
           const ov = overridesFor(meal.key)[def.slot];
           const isSet = !!(ov && ov[i] != null);
-          const readout = (food && g != null)
-            ? `→ <button class="amt-tap${isSet ? ' set' : ''}" data-amt-edit="${meal.key}|${def.slot}|${i}"
-                 aria-label="Change the amount of ${escapeHtml(food.name)}">${ulab ? ulab : g.toFixed(0) + 'g'} <svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg></button>
-               ${food.name}${ulab ? ` <span style="color:var(--muted)">(${g.toFixed(0)}g)</span>` : ''}` : "";
+          const readout = slotReadoutHtml(meal.key, def.slot, i, food, g, isSet);
           rows += `
             <div class="socket${val && food ? ' seated' : ''}">
             <div class="slot-row">
@@ -1321,23 +1720,28 @@
       const pips = SLOT_DEFS.map(d=>
         `<i class="${(sel[d.slot] || []).some(Boolean) ? 'on' : ''}"></i>`).join('');
 
+      const open = isMealOpen(meal.key);
       const quest = document.createElement('div');
-      quest.className = 'quest';
+      quest.className = 'quest' + (open ? ' open' : '');
       quest.innerHTML = `
-        <div class="bench-head">
+        <button type="button" class="bench-head" data-meal-toggle="${meal.key}"
+                aria-expanded="${open}" aria-controls="body-${meal.key}">
           <span class="bench-no">${String(mealIdx + 1).padStart(2,'0')}</span>
           <div class="quest-node" id="node-${meal.key}"></div>
           <div class="quest-title">${meal.label}${meal.required ? '' : ' <span class="opt">optional</span>'}</div>
           <span class="bench-pips">${pips}</span>
-        </div>
+          <span class="bench-chev"><svg class="px" aria-hidden="true"><use href="#i-chevron-d"></use></svg></span>
+        </button>
         <div class="bench-req">
           <div class="quest-sub" id="sub-${meal.key}">${mealSubText(meal.key)}</div>
           ${sel.dish ? `<div class="bench-dish"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> ${sel.dish}</div>` : ''}
         </div>
-        ${slotsHtml}
-        <div class="slot-group last">
-          <div class="slot-label">SEASONINGS &amp; EXTRAS</div>
-          <input type="text" class="season-input" data-notes="${meal.key}" value="${(sel.notes||'').replace(/"/g,'&quot;')}" placeholder="garlic, soy sauce, chili flakes, lime…">
+        <div class="quest-body" id="body-${meal.key}"${open ? '' : ' hidden'}>
+          ${slotsHtml}
+          <div class="slot-group last">
+            <div class="slot-label">SEASONINGS &amp; EXTRAS</div>
+            <input type="text" class="season-input" data-notes="${meal.key}" value="${(sel.notes||'').replace(/"/g,'&quot;')}" placeholder="garlic, soy sauce, chili flakes, lime…">
+          </div>
         </div>
       `;
       mealTimeline.appendChild(quest);
@@ -1353,12 +1757,20 @@
     mealTimeline.querySelectorAll('select').forEach(sel=>{
       sel.addEventListener('change', onSlotChange);
     });
-    mealTimeline.querySelectorAll('[data-amt-edit]').forEach(btn=>{
+    bindAmountEditors(mealTimeline);
+
+    /* Toggled by hand rather than by re-rendering: a full render would throw
+       away the scroll position and any field the person was typing in. */
+    mealTimeline.querySelectorAll('[data-meal-toggle]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        const [mealKey, slot, idx] = btn.getAttribute('data-amt-edit').split('|');
-        openPortionEditor(mealKey, slot, parseInt(idx,10), ()=>{
-          renderMealTimeline(); updateHUD();
-        });
+        const key = btn.getAttribute('data-meal-toggle');
+        const on  = !isMealOpen(key);
+        setMealOpen(key, on);
+        const body  = document.getElementById('body-' + key);
+        const card  = btn.parentElement;
+        if (body) body.hidden = !on;
+        if (card) card.classList.toggle('open', on);
+        btn.setAttribute('aria-expanded', String(on));
       });
     });
     mealTimeline.querySelectorAll('[data-add]').forEach(btn=>{

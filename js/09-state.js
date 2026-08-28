@@ -59,6 +59,10 @@
     portionOverrides:{},// mealKey -> slot -> index -> grams the person set by hand
     variety:{protein:2, carb:2, fat:2, veg:3},
     eaten:[],         // day-level manual entries: {name,kcal,protein,carbs,fat,covers}
+    /* Packaged products scanned into a loadout slot. Same shape as a library
+       food, kept per slot, and merged into FOODS on load so every lookup,
+       portion calculation and shopping list treats them like anything else. */
+    customFoods:{protein:[], carb:[], fat:[], veg:[], fruit:[], sauce:[]},
     eatingStyle:null, // 'consistent' | 'balanced' | 'variety'
     // selections[mealKey] = {protein:[keys], carb:[], fat:[], veg:[], fruit:[], sauce:[], notes:""}
     selections:{}

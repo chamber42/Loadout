@@ -890,7 +890,7 @@
 
     enforceOnHand();
     pruneUnservedItems();
-    writeBackActiveDay();
+    writeBackActiveDay({noFork:true});
     recordOnHandOutcome();
     rememberDraw(
       [...usedNames],
@@ -962,21 +962,83 @@
     });
   }
 
-  /* Push the working copy back onto the unique dishes it came from. Where
-     two sittings share a dish only the first one writes, so editing lunch
-     doesn't get clobbered by dinner's untouched copy. */
-  function writeBackActiveDay(){
+  /* ---- keeping rest days and training days apart --------------------
+     Sharing a dish across days is the whole premise of prepping: cook one
+     batch of chilli, eat it Monday and Thursday. Training days share it too
+     and simply get a bigger portion, which is right — until somebody wants a
+     training day to hold different FOOD. Because every day pointed at the
+     same stored dish, editing any one day rewrote it for all of them, so
+     taking the chicken off a rest day silently stripped it from both
+     training days as well.
+
+     The split is copy-on-write. Nothing forks until an edit actually lands
+     and the dish is genuinely shared with the other kind of day, so a prep
+     nobody has hand-edited still cooks exactly as many dishes as it says it
+     does. Once forked, the two lines stay independent: editing a training
+     day changes every training day and leaves the rest days alone. */
+  function forkDishForKind(ref, kind){
+    const p = state.prep;
+    const rows = p.schedule || [];
+    const lane = ref.store === 'snacks' ? 'snacks' : 'mains';
+    const servedByOtherKind = rows.some((row, d)=>
+      dayKindAt(d) !== kind && (row[lane] || []).some(ix => ix === ref.index));
+    if (!servedByOtherKind) return ref.index;      // nobody else to protect
+
+    const copy = JSON.parse(JSON.stringify(toStoredMeal(p[ref.store][ref.index])));
+    const next = p[ref.store].push(copy) - 1;
+    rows.forEach((row, d)=>{
+      if (dayKindAt(d) !== kind) return;
+      (row[lane] || []).forEach((ix, i)=>{ if (ix === ref.index) row[lane][i] = next; });
+    });
+
+    /* Hand-set amounts are filed under the dish, so they have to come along
+       or every portion the person pinned on this day is orphaned by the fork. */
+    const bag = state.portionOverrides || {};
+    const suffix = hasSplit() ? '@' + kind : '';
+    const from = ref.store + '#' + ref.index + suffix;
+    const to   = ref.store + '#' + next      + suffix;
+    /* Moved, not copied: after the repointing above no day of this kind still
+       serves the old dish, so that bag has nothing left pointing at it. */
+    if (bag[from]){ bag[to] = bag[from]; delete bag[from]; }
+    return next;
+  }
+
+  /* Push the working copy back onto the unique dishes it came from.
+
+     Two sittings can deliberately share one dish — that is exactly what
+     asking for fewer unique meals buys you. Only one of them can write it
+     back, and it has to be whichever one actually CHANGED: writing the first
+     sitting unconditionally meant an edit made to dinner was thrown away in
+     favour of lunch's untouched copy of the same dish. */
+  /* opts.noFork is for the generator tidying its own freshly-built output.
+     That pass is not somebody editing a day, and letting it fork would split
+     every dish the moment a prep was created — doubling the cook list before
+     the person had touched anything. */
+  function writeBackActiveDay(opts){
     if (!prepReady()) return;
+    const mayFork = !(opts && opts.noFork);
     const di = dayIndex();
-    const done = new Set();
+    const kind = dayKindAt(di);
+    /* This runs on every interaction, not just real edits — saveState()
+       calls it on any click. Writing an unchanged dish is harmless, but
+       FORKING one is not, so nothing moves unless something really changed. */
+    const byDish = new Map();
     MEALS.forEach(m=>{
       const ref = dishRefFor(m.key, di);
-      if (!ref) return;
-      const tag = ref.store + ':' + ref.index;
-      if (done.has(tag)) return;
-      done.add(tag);
       const sel = state.selections[m.key];
-      if (sel) state.prep[ref.store][ref.index] = toStoredMeal(sel);
+      if (!ref || !sel) return;
+      const tag  = ref.store + ':' + ref.index;
+      const next = toStoredMeal(sel);
+      const cur  = state.prep[ref.store][ref.index];
+      const changed = !cur || JSON.stringify(cur) !== JSON.stringify(next);
+      const held = byDish.get(tag);
+      if (!held || (changed && !held.changed)) byDish.set(tag, {ref, next, changed});
+    });
+
+    byDish.forEach(entry=>{
+      if (!entry.changed) return;
+      const idx = (mayFork && hasSplit()) ? forkDishForKind(entry.ref, kind) : entry.ref.index;
+      state.prep[entry.ref.store][idx] = entry.next;
     });
   }
 

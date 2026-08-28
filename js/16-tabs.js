@@ -105,7 +105,13 @@
 
   document.getElementById('tabBar').addEventListener('click', (e)=>{
     const b = e.target.closest('.tab');
-    if (b) goTab(b.getAttribute('data-tab'));
+    if (!b) return;
+    const name = b.getAttribute('data-tab');
+    /* Reaching the journal from the tab bar always lands on today. Done here
+       rather than inside goTab() on purpose: the calendar opens a chosen day
+       by calling goTab('journal') directly, and that date has to survive. */
+    if (name === 'journal' && typeof resetJournalToToday === 'function') resetJournalToToday();
+    goTab(name);
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=> showScreen(btn.getAttribute('data-back')));

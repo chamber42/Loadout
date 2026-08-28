@@ -98,7 +98,27 @@
       <button class="modal-x" data-close="modalFoodPick" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
     </div>
     <div class="modal-body">
-      <div class="fav-search-wrap">
+      <!-- Scanning straight into a slot. A packaged product picked here is
+           portioned by the same maths as a library food, so the bag of chicken
+           tenders in the freezer can BE the protein rather than being logged
+           afterwards as something already eaten. -->
+      <button class="photo-btn" id="fpScanCam" type="button" hidden>
+        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
+      </button>
+      <label class="photo-btn" for="fpBarcodePhoto">
+        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Use a picture of a barcode
+      </label>
+      <input type="file" id="fpBarcodePhoto" accept="image/*"
+             style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
+             aria-label="Upload a picture of a barcode">
+      <div class="fav-search-wrap" style="margin-top:8px;">
+        <input type="text" id="fpBarcode" class="fav-search" placeholder="&hellip;or type a barcode"
+               inputmode="numeric" autocomplete="off" aria-label="Barcode number">
+        <button class="fav-clear" id="fpBarcodeClear" aria-label="Clear barcode" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="fpScanResults"></div>
+
+      <div class="fav-search-wrap" style="margin-top:14px;">
         <input type="text" id="foodPickSearch" class="fav-search" placeholder="Type to search" autocomplete="off" aria-label="Search foods">
         <button class="fav-clear" id="foodPickClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
@@ -167,9 +187,9 @@
              style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
              aria-label="Upload a picture of a barcode">
       <div class="fav-search-wrap" style="margin-top:8px;">
-        <input type="text" id="jfBarcode" class="fav-search" placeholder="…or type a barcode"
-               inputmode="numeric" autocomplete="off" aria-label="Barcode number">
-        <button class="fav-clear" id="jfBarcodeClear" aria-label="Clear barcode" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+        <input type="text" id="jfBarcode" class="fav-search" placeholder="…or search a food, or type a barcode"
+               inputmode="text" autocomplete="off" aria-label="Search packaged foods or enter a barcode">
+        <button class="fav-clear" id="jfBarcodeClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
       <div id="jfScanResults"></div>
 
@@ -180,7 +200,67 @@
       </div>
       <div id="jfoodPanel"></div>
       <div id="jfoodList"></div>
-      <button class="mini-btn add" id="jfoodManual" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Not in the library — enter it by hand</button>
+      <button class="mini-btn add" id="jfoodManual" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Not in the library — add a food</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hand-entered food. Reached from the loadout tab's ALREADY EATEN panel and
+     from a meal in the journal; the macros are typed as the packet states them,
+     for one serving, and the amount row converts that into what was eaten. -->
+<div class="modal-wrap" id="modalCustomFood" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cfoodTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="cfoodTitle">ADD A FOOD</span>
+      <button class="modal-x" data-close="modalCustomFood" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <label class="field-label" for="cfName">NAME</label>
+      <input type="text" id="cfName" autocomplete="off" placeholder="Chicken bake">
+
+      <label class="field-label" for="cfBrand">BRAND</label>
+      <input type="text" id="cfBrand" autocomplete="off" placeholder="Optional">
+
+      <label class="field-label" for="cfServing">SERVING SIZE ON THE PACKET</label>
+      <div class="cf-unit-row">
+        <input type="number" id="cfServing" inputmode="decimal"
+               min="0" max="5000" placeholder="1" aria-label="Serving size">
+        <select id="cfServingUnit" aria-label="Serving size unit">
+          <option value="g">grams</option>
+          <option value="oz">ounces</option>
+          <option value="ml">millilitres</option>
+          <option value="tsp">teaspoons</option>
+          <option value="tbsp">tablespoons</option>
+          <option value="cup">cups</option>
+          <option value="item">item — a whole one</option>
+        </select>
+      </div>
+      <!-- Only for the "item" case. The examples in the placeholder say what
+           the field wants far better than a label describing it can. -->
+      <div id="cfItemNameRow" hidden>
+        <label class="field-label" for="cfItemName">WHAT IS ONE CALLED?</label>
+        <input type="text" id="cfItemName" autocomplete="off"
+               placeholder="sandwich, bar, slice…" aria-label="What one of them is called">
+      </div>
+
+      <label class="field-label">PER SERVING</label>
+      <div class="custom-grid">
+        <label>KCAL<input type="number" id="cfKcal" inputmode="numeric" placeholder="0"></label>
+        <label>PROT<input type="number" id="cfProtein" inputmode="decimal" placeholder="0"></label>
+        <label>CARB<input type="number" id="cfCarbs" inputmode="decimal" placeholder="0"></label>
+        <label>FAT<input type="number" id="cfFat" inputmode="decimal" placeholder="0"></label>
+      </div>
+
+      <label class="field-label" for="cfAmount">HOW MUCH DID YOU EAT?</label>
+      <div class="cf-unit-row">
+        <input type="number" id="cfAmount" inputmode="decimal"
+               min="0" max="5000" aria-label="Amount eaten">
+        <span class="onhand-unit" id="cfAmountUnit">g</span>
+      </div>
+
+      <div id="cfReadout" style="margin-top:12px;"></div>
+      <div id="cfStatus"></div>
+      <button class="btn-primary" id="cfSave" style="margin-top:12px;" disabled>ADD IT</button>
     </div>
   </div>
 </div>
@@ -256,8 +336,11 @@
         <div class="scan-reticle" aria-hidden="true"></div>
       </div>
       <div class="off-status" id="scanStatus" aria-live="polite">Starting the camera&hellip;</div>
+      <!-- The aiming advice is gone: the scanner no longer needs it, and a
+           standing instruction telling people to be careful would undo the
+           work of making it forgiving. The privacy line stays, being the one
+           thing the camera cannot demonstrate about itself. -->
       <p class="subtitle" style="font-size:11px; margin:8px 0 0; line-height:1.6;">
-        Hold the barcode inside the frame. Good light and a steady hand help.
         Nothing is recorded or uploaded &mdash; the picture is read on this device.
       </p>
       <button class="btn-ghost" id="scanCancel" style="margin-top:12px;">Cancel</button>
@@ -622,8 +705,18 @@
   <!-- JOURNAL -->
   <section class="screen" id="screen-journal">
     <div class="eyebrow">JOURNAL</div>
-    <h1 class="title">Log Today</h1>
+    <!-- Text is set by renderJournal(): "Log Today" on today, the date
+         otherwise, so the heading never claims to be today when it isn't. -->
+    <h1 class="title" id="journalTitle">Log Today</h1>
     <p class="subtitle" id="journalDateLbl"></p>
+    <!-- Day picker. Arrows step one day; the strip scrolls to whatever is
+         selected. Both routes go through selectJournalDay() so the calendar
+         and the journal can never disagree about which day is open. -->
+    <div class="date-nav" id="journalDateNav">
+      <button class="mini-btn date-arrow" id="jDatePrev" aria-label="Previous day"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg></button>
+      <div class="date-strip day-strip" id="journalDateStrip"></div>
+      <button class="mini-btn date-arrow" id="jDateNext" aria-label="Next day"><svg class="px" aria-hidden="true"><use href="#i-arrow"></use></svg></button>
+    </div>
     <div id="journalSetup" class="panel" hidden>
       <label class="field-label">HOW MANY TIMES WILL YOU EAT TODAY?</label>
       <div class="choice-grid" id="journalCountGrid" style="grid-template-columns:repeat(3,1fr);"></div>
@@ -882,8 +975,8 @@
       </div>
       <div class="fav-search-wrap">
         <input type="text" id="offSearch" class="fav-search" aria-label="Search packaged foods"
-               placeholder="Type or paste a barcode — e.g. 3017624010701"
-               inputmode="numeric" autocomplete="off">
+               placeholder="Search a food, or paste a barcode"
+               inputmode="text" autocomplete="off">
         <button class="fav-clear" id="offClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
       <button class="photo-btn" id="btnScanCam" type="button" hidden>
@@ -898,7 +991,7 @@
       <canvas id="barcodeCanvas" hidden></canvas>
       <div id="offResults"></div>
       <div id="eatenList"></div>
-      <button class="mini-btn add" id="btnAddEaten">+ ADD MANUALLY</button>
+      <button class="mini-btn add" id="btnAddEaten">+ ADD A FOOD</button>
     </div>
     <div id="customBanner" class="custom-banner" style="display:none;"></div>
     <div class="panel" id="loadoutDayPanel" hidden>
@@ -956,6 +1049,8 @@
 <script src="js/33-native-backup.js"></script>
 <script src="js/34-health-import.js"></script>
 <script src="js/35-steps.js"></script>
+<script src="js/36-slot-scan.js"></script>
+<script src="js/37-custom-food.js"></script>
 
 <!-- ==========================================================================
      SERVICE WORKER REGISTRATION

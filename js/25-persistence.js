@@ -22,7 +22,7 @@
     'mealPlan','mealWeights','skipBreakfast','breakfastForDinner','breakfastAllDay',
     'uniqueMeals','uniqueSnacks','prep','activeDay','portionOverrides','variety',
     'log','journalMeals','calMode','calSel','calDate',
-    'eaten','prepServings','pantry','cupboard'];
+    'eaten','prepServings','pantry','cupboard','customFoods'];
 
   let saveTimer = null;
   function saveState(){
@@ -100,8 +100,14 @@
       if (!raw) return false;
       const data = JSON.parse(raw);
       SAVE_FIELDS.forEach(k => { if (data[k] !== undefined) state[k] = data[k]; });
+      /* Before anything reads a selection: a saved day can name a scanned
+         product, and until it is back in its slot's list that key resolves
+         to nothing and the slot renders empty. */
+      mergeCustomFoods();
       migrateDayType(data);
       migrateSeasonings();
+      // after migrateDayType: it is what decides whether this prep has a split
+      migratePortionOverrides();
       // meal flags have to be restored before the meals are rebuilt
       MEAL_FLAGS.skipBreakfast = !!state.skipBreakfast;
       MEAL_FLAGS.mealWeights = state.mealWeights || {};

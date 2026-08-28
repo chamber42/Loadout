@@ -141,7 +141,10 @@
     </div>`;
 
     document.getElementById('calOpenJournal').addEventListener('click', ()=>{
-      state.journalDate = key;
+      /* Through the journal's own day-select rather than setting the date
+         here, so the calendar and the strip cannot drift apart about which
+         day is open. Declared in 12-journal.js, resolved at click time. */
+      selectJournalDay(key);
       goTab('journal');
     });
   }

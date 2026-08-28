@@ -35,7 +35,65 @@
      having a bad day, typing the barcode off the packet still works. */
   const OFF_SEARCH   = 'https://search.openfoodfacts.org/search';
   const OFF_PRODUCT  = 'https://world.openfoodfacts.org/api/v2/product/';
-  const OFF_FIELDS   = 'code,product_name,brands,quantity,serving_size,nutriments';
+  const OFF_FIELDS   = 'code,product_name,brands,quantity,serving_size,serving_quantity,serving_quantity_unit,nutriments';
+
+  /* Open Food Facts asks every caller to identify itself, and bans the ones
+     that don't. Browsers forbid scripts from setting User-Agent and drop this
+     silently; the native bridge sends it, which is where the searching
+     happens anyway. */
+  const OFF_UA = 'Loadout/1.0 (https://github.com/chamber42/Loadout)';
+
+  /* Name search reaches a host that sends no access-control-allow-origin, so
+     a WebView fetch of it is blocked before it leaves the page. Capacitor's
+     native HTTP bridge does the request in Swift, where the same-origin
+     policy does not exist, and hands back the body. Checked at call time
+     rather than on load, because the Capacitor global is injected by the
+     native shell and a module-level read can lose the race. */
+  const offNative = () => !!(window.Capacitor &&
+    typeof window.Capacitor.isNativePlatform === 'function' &&
+    window.Capacitor.isNativePlatform());
+
+  /* What one serving weighs, or null when the label never said.
+
+     Open Food Facts computes serving_quantity for most products, so that is
+     trusted first. Where it is missing the label text is read instead, which
+     comes in shapes like "30 g", "125 ml" and "1 bar (55 g)" — hence matching
+     a number that is followed by a unit rather than the first number present,
+     so a bar count is not mistaken for its weight.
+
+     Volumes are taken at face value because Open Food Facts states its
+     nutriments per 100g and pairs them with millilitre servings itself; the
+     two are the same basis in their data, whatever a density table says. */
+  function offServingGrams(p){
+    const q = parseFloat(p.serving_quantity);
+    if (isFinite(q) && q > 0 && q <= 2000) return q;
+    const m = String(p.serving_size || '').match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
+    if (m){
+      const n = parseFloat(m[1].replace(',', '.'));
+      if (isFinite(n) && n > 0 && n <= 2000) return n;
+    }
+    /* Last resort: some records name no serving anywhere but still carry
+       per-serving nutriments beside the per-100g ones. The ratio of the two
+       energy figures is the serving weight the contributor was working from,
+       so the record implies what it never states. */
+    const nut = p.nutriments || {};
+    const per = parseFloat(nut['energy-kcal_serving']);
+    const hundred = parseFloat(nut['energy-kcal_100g']);
+    if (isFinite(per) && per > 0 && isFinite(hundred) && hundred > 0){
+      const g = per / hundred * 100;
+      if (g >= 1 && g <= 2000) return Math.round(g * 10) / 10;
+    }
+    return null;
+  }
+
+  /* The two endpoints disagree on this one field: the product endpoint sends
+     'Chobani,Danone', the search endpoint sends ['Chobani','Danone']. Both
+     mean the same thing, and only the first name is ever shown. */
+  function brandOf(p){
+    const b = p.brands;
+    if (Array.isArray(b)) return (b[0] || '').trim();
+    return (b || '').split(',')[0].trim();
+  }
 
   /* Pull a usable per-100g profile out of a product record, or null */
   function offParseProduct(p){
@@ -53,23 +111,55 @@
     const protein = num(n['proteins_100g']);
     const carbs   = num(n['carbohydrates_100g']);
     const fat     = num(n['fat_100g']);
+    const fibre   = num(n['fiber_100g']);
+    /* Open Food Facts records sodium in GRAMS per 100g, and many entries
+       carry only salt. The app works in milligrams, and salt is 39.34%
+       sodium by mass — the same conversion the packet itself uses. */
+    let sodium = num(n['sodium_100g']);
+    if (sodium == null){
+      const salt = num(n['salt_100g']);
+      if (salt != null) sodium = salt * 0.3934;
+    }
     const name    = (p.product_name || '').trim();
+    const partialMacros = (protein == null || carbs == null || fat == null);
 
     // without a name or calories there's nothing worth showing
     if (!name || kcal == null) return null;
     // obviously wrong records: nothing edible exceeds ~900 kcal per 100g
     if (kcal > 950) return null;
 
+    /* Atwater cross-check: protein and carbohydrate carry 4 kcal a gram, fat
+       9, so the macros imply a calorie figure of their own. A sound label
+       agrees with itself to within a few percent — this product's stated
+       237.9 kcal/100g against an implied 239.2 is what a good record looks
+       like. A wide gap means someone mistyped a number, and since there is no
+       way to tell which number, the honest move is to show both and say so
+       rather than quietly trust either. Fibre and sugar alcohols legitimately
+       shift the sum, hence a tolerance wide enough not to cry wolf. */
+    const implied = (protein == null ? 0 : protein) * 4
+                  + (carbs   == null ? 0 : carbs)   * 4
+                  + (fat     == null ? 0 : fat)     * 9;
+    const gap = Math.abs(implied - kcal);
+    const suspect = !partialMacros && implied > 0 && gap > 30 && gap / kcal > 0.25;
+
     return {
       code: p.code || '',
       name,
-      brand: (p.brands || '').split(',')[0].trim(),
+      brand: brandOf(p),
       serving: (p.serving_size || '').trim(),
+      servingG: offServingGrams(p),
       kcal,
       protein: protein == null ? 0 : protein,
       carbs:   carbs   == null ? 0 : carbs,
       fat:     fat     == null ? 0 : fat,
-      partial: (protein == null || carbs == null || fat == null),
+      /* null, not 0, when the label is silent: a missing figure must fall
+         back to the app's own estimate rather than claim the product has
+         none of it. */
+      fibre:   fibre,
+      sodium:  sodium == null ? null : sodium * 1000,
+      partial: partialMacros,
+      suspect,
+      impliedKcal: implied,
     };
   }
 
@@ -81,7 +171,8 @@
     const ctrl = new AbortController();
     const bail = setTimeout(()=>ctrl.abort(), 12000);
     try{
-      const res = await fetch(url, {signal: ctrl.signal, headers:{'Accept':'application/json'}});
+      const res = await fetch(url, {signal: ctrl.signal,
+        headers:{'Accept':'application/json', 'User-Agent':OFF_UA}});
       clearTimeout(bail);
       if (seq !== offSeq) return {stale:true};
       if (!res.ok) return {httpError:res.status};
@@ -101,12 +192,15 @@
 
     if (!raw){ results.innerHTML = ''; return; }
 
-    /* Only barcodes can be looked up. Open Food Facts' text-search endpoints
-       don't send the header a browser needs to read a cross-site response,
-       so a name search from a page like this one can't work at all — better
-       to say so than to spin and fail. */
+    /* Digits go to the product endpoint, anything else is a name. The web
+       build can still only do barcodes — see offNative above. */
     if (!/^\d+$/.test(q)){
-      results.innerHTML = `<div class="off-status">That looks like a name rather than a barcode. Name search isn't available here — enter the barcode digits from the packet, or add the item manually below.</div>`;
+      if (!offNative()){
+        results.innerHTML = `<div class="off-status">Searching by name needs the installed app. Enter the barcode digits from the packet, or add the item manually below.</div>`;
+        return;
+      }
+      if (raw.length < 3) { results.innerHTML = ''; return; }
+      offSearchByName(raw, results);
       return;
     }
     if (q.length < 8){
@@ -136,6 +230,34 @@
       }
       offRenderHits([hit]);
     }, 300);
+  }
+
+  /* Open Food Facts allows ten searches a minute per address and bans
+     callers that overrun it, so the keystroke debounce here is far longer
+     than the barcode path's: a fast typist would otherwise spend the whole
+     minute's budget before finishing a single word.
+
+     The endpoint ranks by relevance and returns plenty of chaff, so the
+     usual filter does the real work — anything with no name or no calories
+     is dropped before display, and what survives is capped at a screenful. */
+  function offSearchByName(term, results){
+    results.innerHTML = '<div class="off-status">Searching…</div>';
+    const seq = ++offSeq;
+    offTimer = setTimeout(async ()=>{
+      const url = `${OFF_SEARCH}?q=${encodeURIComponent(term)}`
+                + `&page_size=25&fields=${OFF_FIELDS}`;
+      const r = await offFetchJson(url, seq);
+      if (r.stale) return;
+      if (r.netError || r.httpError){ offShowFailure(r, results); return; }
+      const hits = (r.data && Array.isArray(r.data.hits)) ? r.data.hits : [];
+      const usable = hits.map(offParseProduct).filter(Boolean).slice(0, 12)
+        .map(h => Object.assign(h, {_fromSearch: true}));
+      if (!usable.length){
+        results.innerHTML = `<div class="off-status">Nothing usable for “${escapeHtml(term)}”. Try the brand name, or fewer words — or add the item manually below.</div>`;
+        return;
+      }
+      offRenderHits(usable);
+    }, 650);
   }
 
   /* =========================================================
@@ -200,23 +322,51 @@
     return out;
   }
 
-  function tryDecode(reader, ZX, source){
+  /* Turn a luminance buffer a quarter turn.
+
+     RGBLuminanceSource reports isRotateSupported() === false and throws if
+     asked, so ZXing's own rotation retry never fires and neither did the
+     guarded call this used to sit beside. Rotating the pixels by hand is the
+     only way to read a barcode held sideways, which is how people hold a
+     tall packet. */
+  function rotateLuminance(lum, w, h){
+    const out = new Uint8ClampedArray(w * h);
+    for (let y = 0; y < h; y++){
+      const row = y * w;
+      for (let x = 0; x < w; x++){
+        out[x * h + (h - 1 - y)] = lum[row + x];
+      }
+    }
+    return out;
+  }
+
+  /* hints MUST be passed to decode(), not merely set on the reader beforehand.
+     MultiFormatReader.decode(image, hints) calls setHints(hints) on the way
+     in, so decode(image) with no second argument overwrites whatever was
+     configured with undefined — silently discarding POSSIBLE_FORMATS and
+     TRY_HARDER. With TRY_HARDER lost, ZXing samples only fifteen rows around
+     the middle of the frame, which is exactly why scanning used to demand the
+     barcode be placed dead centre. */
+  function tryDecode(reader, ZX, source, hints){
     try{
       const bitmap = new ZX.BinaryBitmap(new ZX.HybridBinarizer(source));
-      const res = reader.decode(bitmap);
+      const res = hints ? reader.decode(bitmap, hints) : reader.decode(bitmap);
       return res ? res.getText() : '';
     }catch(e){ return ''; }
   }
 
-  /* Where a decoded barcode should land. The same scanner and the same photo
-     decoder serve the loadout tab and the journal, so the caller says which
+  /* Where a decoded barcode should land. One scanner and one photo decoder
+     serve three destinations — the loadout tab's "already eaten" list, the
+     journal, and a food slot on the loadout page — so the caller says which
      one it is rather than each growing its own copy of the pipeline.
      Set by whichever control started the scan; journalScanLookup() lives in
-     31-journal-scan.js and is resolved at call time, after every file loads. */
+     31-journal-scan.js and slotScanLookup() in 36-slot-scan.js, both resolved
+     at call time, after every file loads. */
   let scanTarget = 'eaten';
 
   function useScannedCode(code){
     if (scanTarget === 'journal'){ journalScanLookup(code); return; }
+    if (scanTarget === 'slot'){ slotScanLookup(code); return; }
     const input = document.getElementById('offSearch');
     input.value = code;
     document.getElementById('offClear').style.display = '';
@@ -273,12 +423,16 @@
       reader.setHints(hints);
 
       const px = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
-      const lum = new ZX.RGBLuminanceSource(toLuminance(px), canvas.width, canvas.height);
+      const gray = toLuminance(px);
+      const lum = new ZX.RGBLuminanceSource(gray, canvas.width, canvas.height);
 
-      let text = tryDecode(reader, ZX, lum);
+      let text = tryDecode(reader, ZX, lum, hints);
       // barcodes photographed sideways are common
-      if (!text && lum.isRotateSupported && lum.isRotateSupported()){
-        try{ reader.reset(); text = tryDecode(reader, ZX, lum.rotateCounterClockwise()); }catch(e){}
+      if (!text){
+        reader.reset();
+        const turned = rotateLuminance(gray, canvas.width, canvas.height);
+        text = tryDecode(reader, ZX,
+          new ZX.RGBLuminanceSource(turned, canvas.height, canvas.width), hints);
       }
       const code = (text || '').replace(/\D/g,'');
       if (code.length >= 8){ useScannedCode(code); return; }
@@ -298,25 +452,65 @@
     results.innerHTML = `<div class="off-status">${msg}${offerBarcode ? ' Barcode lookups usually still work — try pasting the number from the packet.' : ''} You can always add the item manually below.</div>`;
   }
 
-  function offRenderHits(hits){
-    const results = document.getElementById('offResults');
-    window.__offHits = hits;
-    results.innerHTML = hits.map((h,i)=>`
+  /* Built here rather than in each caller so the loadout panel and the
+     journal sheet show the same list, and so the attribution the ODbL
+     requires cannot go missing from one of them. */
+  function offHitsHtml(hits){
+    return hits.map((h,i)=>`
       <button class="off-hit" data-off="${i}">
         <span class="nm">${escapeHtml(h.name)}
-          <small>${escapeHtml(h.brand || 'unbranded')}${h.serving ? ' · serving ' + escapeHtml(h.serving) : ''}${h.partial ? ' · macros incomplete' : ''}</small>
+          <small>${escapeHtml(h.brand || 'unbranded')}${h.serving ? ' · serving ' + escapeHtml(h.serving) : ''}${h.partial ? ' · macros incomplete' : ''}${h.suspect ? ` · macros suggest ${Math.round(h.impliedKcal)} kcal` : ''}</small>
         </span>
         <span class="kc">${Math.round(h.kcal)} kcal<br>/100g</span>
       </button>`).join('')
-      + `<div class="off-credit">Results from Open Food Facts, a volunteer-built open database.
-           Entries are contributed by the public and are often incomplete or wrong —
-           check against the packet before you rely on them.</div>`;
+      /* The ODbL requires the source be named and linked wherever its data is
+         shown. target=_blank matters: a bare external link would navigate the
+         WebView away from the app with no way back, whereas Capacitor hands
+         _blank to the system browser. */
+      + `<div class="off-credit">Data from <a href="https://openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>, ODbL.
+           Contributed by the public and often incomplete — check the packet.</div>`;
+  }
+
+  /* Search results never carry serving data — search-a-licious does not index
+     it, even for products whose own record has it — so the full record is
+     fetched at the moment one is picked. One request, and only for the single
+     product someone actually chose. If it fails the hit is used as it stands
+     and the amount simply falls back to 100g. */
+  async function offEnrichHit(h){
+    /* Only search results are short of data. A barcode hit already came from
+       the product record, so if it has no serving there is none to find and
+       a second request would just cost the person their rate limit. */
+    if (!h || h.servingG || !h.code || !h._fromSearch) return h;
+    const seq = ++offSeq;   // this fetch now owns the sequence
+    const r = await offFetchJson(`${OFF_PRODUCT}${h.code}.json?fields=${OFF_FIELDS}`, seq);
+    if (r && r.data && r.data.product){
+      const full = offParseProduct(r.data.product);
+      if (full && full.servingG){
+        return Object.assign({}, h, {servingG: full.servingG, serving: full.serving || h.serving});
+      }
+    }
+    return h;
+  }
+
+  /* One serving is the amount a label describes and very nearly always the
+     amount a person means, so it is what both tabs open on. Counting in
+     servings rather than grams is also the only way to log a Costco chicken
+     bake without putting it on a scale. */
+  function offServingUnit(h){
+    return h.servingG ? {g: h.servingG, one: 'serving', many: 'servings'} : null;
+  }
+
+  function offRenderHits(hits){
+    const results = document.getElementById('offResults');
+    window.__offHits = hits;
+    results.innerHTML = offHitsHtml(hits);
 
     results.querySelectorAll('[data-off]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
+      btn.addEventListener('click', async ()=>{
         const h = window.__offHits[parseInt(btn.getAttribute('data-off'),10)];
         if (!h) return;
-        offAddToEaten(h);
+        btn.disabled = true;
+        offAddToEaten(await offEnrichHit(h));
       });
     });
   }
@@ -326,10 +520,11 @@
       ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  /* Values arrive per 100g. Default to 100g so the numbers shown are the
-     numbers stored, and let the person edit the amount afterwards. */
+  /* Values arrive per 100g, but 100g is nobody's portion. Open on one serving
+     where the label gave one, and fall back to 100g only when it did not. */
   function offAddToEaten(h){
-    const grams = 100;
+    const unit = offServingUnit(h);
+    const grams = h.servingG || 100;
     const f = grams / 100;
     state.eaten.push({
       name: h.brand ? `${h.name} (${h.brand})` : h.name,
@@ -340,11 +535,16 @@
       covers: '',
       grams,
       per100: {kcal:h.kcal, protein:h.protein, carbs:h.carbs, fat:h.fat},
+      /* With a unit the amount box counts servings; without one it stays in
+         grams, which is the honest reading when no serving was published. */
+      unit,
     });
     document.getElementById('offSearch').value = '';
     document.getElementById('offClear').style.display = 'none';
     document.getElementById('offResults').innerHTML =
-      '<div class="off-status">Added below — set the amount you actually ate.</div>';
+      `<div class="off-status">${unit
+        ? `Added below as one serving (${Math.round(grams)}g) — change it if you had more or less.`
+        : 'Added below at 100g — no serving size was published for this one, so set the amount you actually ate.'}</div>`;
     renderEatenPanel();
     refreshTargets();
     saveState();
@@ -450,15 +650,19 @@
     offSearchInput.focus();
   });
 
+  /* openCustomFood lives in 37-custom-food.js, which loads after this file.
+     Only the click reaches for it, by which time every script has run. */
   btnAddEaten.addEventListener('click', ()=>{
-    state.eaten.push({name:"", kcal:"", protein:"", carbs:"", fat:"", covers:""});
-    renderEatenPanel();
-    refreshTargets();
+    openCustomFood({mode:'eaten'});
   });
 
   function proceedToLoadout(reset){
     if (reset !== false){
       MEALS.forEach(m => state.selections[m.key] = blankMeal());
+      /* Building from scratch starts with everything folded away, so the
+         screen opens as a short list of sittings rather than every slot of
+         every meal at once. */
+      if (typeof collapseAllMeals === 'function') collapseAllMeals();
     }
     renderEatenPanel();
     renderMealTimeline();

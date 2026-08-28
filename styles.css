@@ -215,6 +215,35 @@
              background:var(--panel-2); color:var(--muted); font-family:var(--font-body);
              font-size:var(--fs-body); cursor:pointer; }
   .day-chip.on{ border-color:var(--cyan); color:var(--cyan); background:var(--accent-soft); }
+
+  /* ---- Journal day picker -------------------------------------------
+     The same chips the loadout strip uses, but scrolling sideways instead of
+     wrapping: a date range has no natural end, so it must not grow the page
+     downwards as you walk back through the week. */
+  .date-nav{ display:flex; align-items:center; gap:8px; margin:10px 0 4px; }
+  .date-strip{ flex:1; min-width:0; display:flex; flex-wrap:nowrap; gap:6px;
+               overflow-x:auto; overflow-y:hidden; scroll-behavior:smooth;
+               margin:0; padding:2px 0; -webkit-overflow-scrolling:touch;
+               scrollbar-width:none; }
+  .date-strip::-webkit-scrollbar{ display:none; }
+  .date-strip .day-chip{ flex:0 0 auto; display:flex; flex-direction:column;
+                         align-items:center; justify-content:center; padding:4px 8px; }
+  .date-arrow{ flex:0 0 auto; min-width:38px; min-height:44px; }
+  .date-chip-dw{ font-size:9px; letter-spacing:1px; opacity:.8; }
+  .date-chip-dn{ font-size:var(--fs-body); line-height:1.1; }
+  /* Today is marked whether or not it is the day being looked at, so the two
+     never have to be told apart by memory. */
+  .day-chip.today{ border-style:dashed; border-color:var(--muted); color:var(--text); }
+  .day-chip.today.on{ border-style:solid; border-color:var(--cyan); color:var(--cyan); }
+  /* Days that have not happened yet: still selectable — planning tomorrow is
+     a normal thing to want — but visibly ahead of the present. */
+  .day-chip.ahead{ opacity:.72; }
+  .day-chip.ahead.on{ opacity:1; }
+  /* A dot means something was logged that day. */
+  .date-chip-dot{ width:4px; height:4px; border-radius:50%; margin-top:3px;
+                  background:transparent; }
+  .day-chip.has .date-chip-dot{ background:var(--green); }
+  .day-chip.on.has .date-chip-dot{ background:var(--cyan); }
   .pd-row{ display:flex; align-items:center; gap:10px; justify-content:space-between;
            padding:6px 0; border-bottom:1px solid rgba(255,255,255,.05); }
   .pd-name{ flex:1; font-family:var(--font-body); font-size:var(--fs-body); }
@@ -532,6 +561,16 @@
   .eaten-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; }
   .eaten-title{ min-height:14px; font-family:var(--font-display); font-size:var(--fs-8); color:var(--amber); letter-spacing:1px; line-height:1.6; }
   .eaten-total{ font-family:var(--font-body); font-size:13px; color:var(--amber); white-space:nowrap; }
+  /* A short number beside a wide unit menu. Needed because the global
+     input[type=number] rule sets width:100% and out-specifies .onhand-qty
+     (0,1,1 against 0,1,0), so without this the number box eats the row and
+     the flex:1 select next to it collapses to nothing. */
+  .cf-unit-row{ display:flex; align-items:center; gap:8px; margin-top:8px; }
+  .cf-unit-row input[type=number]{ flex:0 0 96px; width:96px; min-width:0; margin-bottom:0!important; }
+  .cf-unit-row select{ flex:1 1 auto; min-width:0; min-height:52px;
+                       margin-bottom:0!important; font-size:16px; padding:8px 10px; }
+  .cf-unit-row .onhand-unit{ flex:0 0 auto; }
+
   .covers-row{ display:flex; align-items:center; gap:8px; margin-top:8px; }
   .covers-label{ font-family:var(--font-display); font-size:var(--fs-6); color:var(--muted); letter-spacing:0.5px; white-space:nowrap; }
   .covers-row select{ flex:1; margin-bottom:0!important; font-size:16px; padding:8px; }
@@ -746,6 +785,15 @@
   .fp-row.on{ border-color:var(--cyan); background:var(--accent-soft); color:var(--cyan); }
   .fp-row .nm{ flex:1; line-height:1.35; }
   .fp-row .kc{ font-size:11px; color:var(--muted); white-space:nowrap; }
+  /* A scanned product sits in a row with its own delete control, so the
+     pick button can no longer own the full width. */
+  .fp-scanned{ display:flex; align-items:stretch; gap:6px; }
+  .fp-scanned .fp-row{ width:auto; flex:1; min-width:0; }
+  /* the delete control grows when it is armed, so the name gives way */
+  .fp-scanned .fp-row .nm{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fp-scanned .mini-btn.remove{ white-space:nowrap; }
+  .fp-scanned .mini-btn.remove{ margin:0 0 5px; }
+  .fp-row .nm small{ display:block; font-size:11px; color:var(--muted); letter-spacing:0; }
   .fp-group{ font-family:var(--font-display); font-size:var(--fs-7); color:var(--muted);
              letter-spacing:1.5px; margin:14px 0 7px; }
   .fp-group:first-child{ margin-top:0; }
@@ -2222,6 +2270,10 @@
   .bench-head{
     display:flex; align-items:center; gap:9px;
     padding:9px 11px;
+    /* It is a <button> so the whole strip toggles the meal open — these undo
+       the control's own chrome without disturbing the plate above. */
+    width:100%; margin:0; border:0; font:inherit; color:inherit;
+    text-align:left; cursor:pointer; -webkit-appearance:none; appearance:none;
     border-bottom:1px solid var(--steel-2);
     background:
       var(--hatch),
@@ -2260,6 +2312,14 @@
     letter-spacing:.5px; color:var(--muted); text-transform:none;
   }
   .bench-pips{ flex:0 0 auto; display:flex; gap:3px; }
+  .bench-chev{
+    flex:0 0 auto; display:flex; align-items:center; color:var(--muted);
+    transition:transform .18s;
+  }
+  .quest.open .bench-chev{ transform:rotate(180deg); }
+  .bench-head:active{ background:var(--accent-soft); }
+  /* A closed meal keeps its head and its calorie line; only the bench folds. */
+  .quest-body[hidden]{ display:none; }
   .bench-pips i{
     width:5px; height:11px; border-radius:1px;
     background:rgba(0,0,0,.4);
@@ -5182,9 +5242,12 @@
   .scan-stage video{
     width:100%; height:100%; object-fit:cover; display:block;
   }
-  /* Cut-out framing guide: a bright rectangle with the rest dimmed behind it. */
+  /* Cut-out framing guide: a bright rectangle with the rest dimmed behind it.
+     Kept generous on purpose. The decoder reads the whole frame and, since
+     TRY_HARDER went on, the full height of it — a tight reticle would teach
+     people to aim far more carefully than the scanner actually needs. */
   .scan-reticle{
-    position:absolute; left:8%; right:8%; top:28%; bottom:28%;
+    position:absolute; left:5%; right:5%; top:17%; bottom:17%;
     border:2px solid var(--green); border-radius:4px;
     box-shadow:0 0 0 9999px rgba(0,0,0,.42);
     pointer-events:none;

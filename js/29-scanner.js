@@ -18,8 +18,12 @@
    ============================================================ */
 
   const SCAN_FORMATS = ['ean_13','ean_8','upc_a','upc_e','code_128','itf'];
-  const SCAN_INTERVAL_MS = 250;   // decoding every frame pegs the CPU for no gain
-  const SCAN_MAX_EDGE = 800;      // downscale before decoding; full sensor res is wasteful
+  const SCAN_INTERVAL_MS = 150;   // decoding every frame pegs the CPU for no gain
+  /* Was 800, which blurred the narrow bars of an EAN-13 unless the packet was
+     held close enough to fill the frame. A barcode needs roughly two pixels
+     per narrow bar to survive binarisation, and 1280 buys that back at a
+     comfortable arm's length. */
+  const SCAN_MAX_EDGE = 1280;
   const CAMERA_TIMEOUT_MS = 12000; // getUserMedia can hang forever instead of rejecting
 
   let scanStream = null;
@@ -28,7 +32,9 @@
   let scanDetector = null;
   let scanZX = null;
   let scanReader = null;
+  let scanHints = null;
   let scanBusy = false;
+  let scanTick = 0;
 
   const scanStage  = () => document.querySelector('#modalScan .scan-stage');
   const scanVideo  = () => document.getElementById('scanVideo');
@@ -72,7 +78,12 @@
     stopScan();
     const el = document.getElementById('modalScan');
     if (el) el.hidden = true;
-    document.body.style.overflow = '';
+    /* The scanner can be opened from on top of another modal — the food
+       picker, or the journal's add-food sheet. Releasing the scroll lock
+       unconditionally would let the page behind that modal scroll away
+       under it, so it is only released once nothing is left open. */
+    const stillOpen = document.querySelector('.modal-wrap:not([hidden])');
+    document.body.style.overflow = stillOpen ? 'hidden' : '';
   }
 
   /* ---- decoding ------------------------------------------------------ */
@@ -113,9 +124,24 @@
         try{
           const ctx = cv.getContext('2d');
           const px  = ctx.getImageData(0, 0, cv.width, cv.height);
-          const lum = new scanZX.RGBLuminanceSource(toLuminance(px), cv.width, cv.height);
+          const gray = toLuminance(px);
+          const lum = new scanZX.RGBLuminanceSource(gray, cv.width, cv.height);
+
           scanReader.reset();
-          const text = tryDecode(scanReader, scanZX, lum);
+          let text = tryDecode(scanReader, scanZX, lum, scanHints);
+
+          /* A barcode held vertically is a quarter turn away from readable,
+             and people hold packets whichever way the packet is shaped.
+             Rotating costs a full copy of the luminance buffer, so it runs on
+             every other tick rather than every one — at 150ms that still
+             covers both orientations three times a second. */
+          if (!text && (scanTick % 2)){
+            scanReader.reset();
+            const turned = rotateLuminance(gray, cv.width, cv.height);
+            text = tryDecode(scanReader, scanZX,
+              new scanZX.RGBLuminanceSource(turned, cv.height, cv.width), scanHints);
+          }
+
           const code = (text || '').replace(/\D/g,'');
           if (code.length >= 8) return code;
         }catch(e){ /* no barcode in this frame - normal */ }
@@ -157,12 +183,18 @@
             ZX.BarcodeFormat.UPC_A,  ZX.BarcodeFormat.UPC_E,
             ZX.BarcodeFormat.CODE_128, ZX.BarcodeFormat.ITF
           ]);
-          /* TRY_HARDER is deliberately off here. On a live stream the next
-             frame arrives in milliseconds, so speed beats squeezing one
-             difficult frame -- the opposite of the single-photo case. */
+          /* TRY_HARDER was off here on the reasoning that a live stream can
+             afford to wait for an easy frame. That was wrong in a way that
+             showed: with it off, ZXing's 1D reader samples only a handful of
+             rows through the middle of the image, so a barcode even slightly
+             above or below centre was never looked at, and the scanner felt
+             like it demanded the code be placed exactly in the box. On is the
+             right setting — it scans the full height, which is what makes
+             aiming casual instead of surgical. */
+          hints.set(ZX.DecodeHintType.TRY_HARDER, true);
           const reader = new ZX.MultiFormatReader();
           reader.setHints(hints);
-          scanZX = ZX; scanReader = reader;
+          scanZX = ZX; scanReader = reader; scanHints = hints;
         }
       }catch(e){ /* reported by the caller */ }
     }
@@ -185,8 +217,18 @@
     try{
       /* 'environment' asks for the rear camera; ideal rather than exact so a
          laptop with only a front camera still works instead of throwing. */
+      /* Every constraint here is 'ideal' or 'advanced', which are best-effort:
+         a camera that cannot meet them delivers what it can instead of
+         throwing OverconstrainedError and killing the scanner. The default
+         stream can be as coarse as 640x480, which leaves an EAN-13's narrow
+         bars barely a pixel wide once binarised. */
       const gum = navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: 'environment' } },
+        video: {
+          facingMode: { ideal: 'environment' },
+          width:  { ideal: 1920 },
+          height: { ideal: 1080 },
+          advanced: [{ focusMode: 'continuous' }]
+        },
         audio: false
       });
 
@@ -253,6 +295,7 @@
     if (!scanStream) return;
 
     scanTimer = setInterval(async function(){
+      scanTick++;
       const code = await decodeFrame();
       if (code) onHit(code);
     }, SCAN_INTERVAL_MS);

@@ -17,6 +17,16 @@
     const isToday = key === todayKey();
     document.getElementById('journalDateLbl').innerHTML =
       `${isToday ? 'Today · ' : ''}${DOW[mondayIndex(dt)]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
+    /* Now that any day can be opened, a fixed "Log Today" would be a plain
+       lie on every other one. Shortened month: the heading is set in the
+       display face at title size, where "Log September 24" wraps badly. */
+    const jTitle = document.getElementById('journalTitle');
+    if (jTitle){
+      jTitle.textContent = isToday
+        ? 'Log Today'
+        : `Log ${MONTHS[dt.getMonth()].slice(0,3)} ${dt.getDate()}`;
+    }
+    renderJournalDateStrip();
 
     const slots = journalSlots();
     const setup = document.getElementById('journalSetup');
@@ -373,9 +383,9 @@
               <small>${escapeHtml(units <= 1 ? unit.one : unit.many)}</small></div>
             <button class="amt-btn" data-jamt="up" aria-label="More">+</button>
           </div>
-          <div class="amt-grams">= <strong>${g.toFixed(0)}</strong>g
+          ${unit.abstract ? '' : `<div class="amt-grams">= <strong>${g.toFixed(0)}</strong>g
             <button class="text-link" id="jfSwitchG" style="display:inline; width:auto; margin:0 0 0 8px; padding:0; font-size:12px;">set grams instead</button>
-          </div>
+          </div>`}
         ` : `
           <label class="field-label">GRAMS</label>
           <div class="amt-stepper">
@@ -450,9 +460,8 @@
     const log = dayLog(key);
     log.meals[mealName] = log.meals[mealName] || [];
     const mult = grams / 100;
-    const ul = unitLabel(food, grams);
     const entry = {
-      name: `${food.name} — ${ul ? ul + ' (' + grams.toFixed(0) + 'g)' : grams.toFixed(0) + 'g'}`,
+      name: `${food.name} — ${amountText(food, grams)}`,
       kcal: Math.round(food.kcal * mult),
       protein: +(food.protein * mult).toFixed(1),
       carbs: +(food.carbs * mult).toFixed(1),
@@ -485,7 +494,11 @@
     document.getElementById('jfoodManual').addEventListener('click', ()=>{
       const mealName = jfoodTarget && jfoodTarget.mealName;
       closeModal('modalJournalFood');
-      if (mealName) journalAddRow(mealName);
+      /* Falls back to the bare row if the form is somehow not loaded, so the
+         button can never become a dead end. */
+      if (!mealName) return;
+      if (typeof openCustomFood === 'function') openCustomFood({mode:'journal', mealName});
+      else journalAddRow(mealName);
     });
   })();
 
@@ -536,9 +549,8 @@
         const f = d.list().find(x=>x.key === k);
         if (!f) return;
         const mult = g / 100;
-        const ul = unitLabel(f, g);
         log.meals[mealName].push({
-          name: `${f.name} — ${ul ? ul + ' (' + g.toFixed(0) + 'g)' : g.toFixed(0) + 'g'}`,
+          name: `${f.name} — ${amountText(f, g)}`,
           kcal: Math.round(f.kcal * mult),
           protein: Math.round(f.protein * mult),
           carbs: Math.round(f.carbs * mult),
@@ -552,9 +564,38 @@
     renderJournal(); saveState();
   }
 
+  /* Which hand-entry editor is open, and on which day. The editor pushes a
+     blank row into the log and then fills it in from the DOM, so an editor
+     left open when the date changes is the one thing that can write onto the
+     wrong day — state.log itself is already keyed by date and cannot leak. */
+  let jEditing = null;
+
+  /* Called before any day change. Anything actually typed is kept, on the day
+     it was typed on; an untouched blank row is dropped the way CANCEL drops
+     it, so swiping away from an empty editor does not litter the log. */
+  function commitOrDiscardJournalEditor(){
+    if (!jEditing) return;
+    const {mealName, idx, key} = jEditing;
+    jEditing = null;
+    const day = (state.log || {})[key];
+    const row = day && day.meals && day.meals[mealName] && day.meals[mealName][idx];
+    if (!row) return;
+    const val = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+    const num = id => parseFloat(val(id)) || 0;
+    const name = (val('jeName') || '').trim();
+    const k = num('jeK'), pr = num('jeP'), c = num('jeC'), f = num('jeF');
+    if (!name && !k && !pr && !c && !f){
+      day.meals[mealName].splice(idx, 1);       // nothing was entered
+      return;
+    }
+    row.name = name || 'Unnamed item';
+    row.kcal = k; row.protein = pr; row.carbs = c; row.fat = f;
+  }
+
   /* Inline editor for a hand-entered item */
   function renderJournalEditor(mealName, idx){
     const key = state.journalDate || todayKey();
+    jEditing = {mealName, idx, key};
     const log = dayLog(key);
     const it = log.meals[mealName][idx];
     const wrap = document.getElementById('journalBody');
@@ -577,14 +618,185 @@
     if (nameEl && nameEl.focus) nameEl.focus();
 
     document.getElementById('jeSave').addEventListener('click', ()=>{
+      jEditing = null;
       const g = id => parseFloat((document.getElementById(id)||{}).value) || 0;
       it.name = (document.getElementById('jeName').value || '').trim() || 'Unnamed item';
       it.kcal = g('jeK'); it.protein = g('jeP'); it.carbs = g('jeC'); it.fat = g('jeF');
       renderJournal(); saveState();
     });
     document.getElementById('jeCancel').addEventListener('click', ()=>{
+      jEditing = null;
       log.meals[mealName].splice(idx, 1);
       renderJournal();
     });
   }
 
+
+  /* ---------------------------------------------------------
+     THE DAY PICKER
+     One function selects a day. The strip, the arrows, the swipe and the
+     quest-log calendar all go through it, because the failure mode of two
+     doors is that they drift: one sets state.journalDate, the other also
+     moves the calendar's cursor, and after a while the two screens disagree
+     about which day you are looking at.
+  --------------------------------------------------------- */
+  function journalDayHasEntries(key){
+    /* Reads state.log directly rather than through dayLog(), which CREATES a
+       day when asked about one — building the strip through it would seed an
+       empty record for every date on screen. */
+    const day = (state.log || {})[key];
+    if (!day || !day.meals) return false;
+    return Object.keys(day.meals).some(m => (day.meals[m] || []).length);
+  }
+
+  function journalShiftKey(key, delta){
+    const [y, m, d] = key.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setDate(dt.getDate() + delta);     // handles month and year ends itself
+    return todayKey(dt);
+  }
+
+  /* THE door. Everything that changes the journal's day comes through here. */
+  /* Any date, forwards or backwards. The journal is not only a record of what
+     was eaten — planning tomorrow, or logging a meal you have already decided
+     on, is a normal thing to want, so there is no wall at today. Today is
+     still marked in the strip so it never gets lost. */
+  function selectJournalDay(key){
+    if (!key) return;
+    commitOrDiscardJournalEditor();       // before the date moves, never after
+    state.journalDate = key;
+    /* Kept in step so the calendar opens on the day the journal is showing. */
+    state.calSel  = key;
+    state.calDate = key;
+    renderJournal();
+    if (typeof renderCalendar === 'function') renderCalendar();
+    saveState();
+  }
+
+  function journalDayShift(delta){
+    selectJournalDay(journalShiftKey(state.journalDate || todayKey(), delta));
+  }
+
+  /* The journal opens on today whenever it is reached from the tab bar. It is
+     the day you are almost always logging, and coming back to find it still
+     parked on whatever you were reading last week is a trap — you start typing
+     breakfast onto the wrong date. The calendar's "open this day" route goes
+     straight to goTab() instead, so it keeps the date it was asked for. */
+  function resetJournalToToday(){
+    selectJournalDay(todayKey());
+  }
+
+  /* A window around the selected day rather than a fixed range: the strip has
+     to contain whatever is selected however far back you have walked, without
+     growing a chip for every day since. */
+  const JSTRIP_BACK = 10, JSTRIP_FWD = 10;
+
+  function renderJournalDateStrip(){
+    const strip = document.getElementById('journalDateStrip');
+    if (!strip) return;
+    const sel = state.journalDate || todayKey();
+    const today = todayKey();
+
+    let cursor = journalShiftKey(sel, -JSTRIP_BACK);
+    const last = journalShiftKey(sel, JSTRIP_FWD);
+
+    let html = '';
+    for (let guard = 0; guard < 64 && cursor <= last; guard++){
+      const [y, m, d] = cursor.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      const cls = 'day-chip'
+        + (cursor === sel ? ' on' : '')
+        + (cursor === today ? ' today' : '')
+        + (journalDayHasEntries(cursor) ? ' has' : '');
+      html += `<button class="${cls}${cursor > today ? ' ahead' : ''}" data-jdate="${cursor}"
+          aria-label="${DOW[mondayIndex(dt)]} ${MONTHS[dt.getMonth()]} ${dt.getDate()}"
+          aria-current="${cursor === sel ? 'date' : 'false'}">
+          <span class="date-chip-dw">${DOW[mondayIndex(dt)].slice(0,3).toUpperCase()}</span>
+          <span class="date-chip-dn">${dt.getDate()}</span>
+          <span class="date-chip-dot" aria-hidden="true"></span>
+        </button>`;
+      cursor = journalShiftKey(cursor, 1);
+    }
+    strip.innerHTML = html;
+
+    strip.querySelectorAll('[data-jdate]').forEach(b=>b.addEventListener('click', ()=>{
+      selectJournalDay(b.getAttribute('data-jdate'));
+    }));
+
+    /* Centre the selection by setting scrollLeft rather than calling
+       scrollIntoView, which would also scroll the PAGE to reach it. */
+    const on = strip.querySelector('.day-chip.on');
+    if (on) strip.scrollLeft = on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2;
+
+  }
+
+  (function(){
+    const prev = document.getElementById('jDatePrev');
+    const next = document.getElementById('jDateNext');
+    if (prev) prev.addEventListener('click', ()=> journalDayShift(-1));
+    if (next) next.addEventListener('click', ()=> journalDayShift(1));
+  })();
+
+  /* ---------------------------------------------------------
+     SWIPING BETWEEN DAYS
+     The journal's date could only be changed from the calendar, which is a
+     long way round for "what did I eat yesterday". A horizontal swipe moves
+     it, following the direction the page itself would move: dragging RIGHT
+     pulls yesterday in from the left, dragging LEFT brings tomorrow in from
+     the right.
+
+     Exactly one day per gesture, whatever the distance. A fling and a flick
+     both move a single day, so you can never overshoot the date you were
+     aiming for — and because the step is taken on touchend, a long drag
+     cannot ratchet through a week on the way past.
+  --------------------------------------------------------- */
+  const JSWIPE_MIN_X   = 55;   // shorter than this is a tap or a jitter
+  const JSWIPE_MAX_Y   = 45;   // drifted too far vertically to be a sideways swipe
+  const JSWIPE_RATIO   = 1.4;  // and must be clearly more sideways than up-down
+
+  (function(){
+    const screen = document.getElementById('screen-journal');
+    if (!screen) return;
+
+    let sx = 0, sy = 0, tracking = false;
+
+    /* A gesture that starts on something the person is aiming at — a field,
+       a button, a strip that scrolls sideways on its own — belongs to that
+       control, not to the date. */
+    function startsOnItsOwnControl(target){
+      return !!(target.closest &&
+        target.closest('input, textarea, select, button, a, [contenteditable], .day-strip'));
+    }
+
+    screen.addEventListener('touchstart', function(e){
+      // a second finger means a pinch or a scroll, never a day change
+      if (!e.touches || e.touches.length !== 1){ tracking = false; return; }
+      if (startsOnItsOwnControl(e.target)){ tracking = false; return; }
+      sx = e.touches[0].clientX;
+      sy = e.touches[0].clientY;
+      tracking = true;
+    }, {passive: true});
+
+    screen.addEventListener('touchmove', function(e){
+      // a finger that became two mid-drag is no longer a swipe
+      if (e.touches && e.touches.length > 1) tracking = false;
+    }, {passive: true});
+
+    screen.addEventListener('touchcancel', function(){ tracking = false; }, {passive: true});
+
+    screen.addEventListener('touchend', function(e){
+      if (!tracking) return;
+      tracking = false;
+      if (!screen.classList.contains('active')) return;
+      const t = e.changedTouches && e.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - sx;
+      const dy = t.clientY - sy;
+      if (Math.abs(dx) < JSWIPE_MIN_X) return;
+      if (Math.abs(dy) > JSWIPE_MAX_Y) return;
+      if (Math.abs(dx) < Math.abs(dy) * JSWIPE_RATIO) return;
+      /* Math.sign, not the distance: one swipe is one day. Through the same
+         door as the arrows and the calendar, so it obeys the same clamp. */
+      journalDayShift(dx > 0 ? -1 : 1);
+    }, {passive: true});
+  })();

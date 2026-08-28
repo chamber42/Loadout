@@ -111,8 +111,12 @@
   function nutriFam(key){
     return FAMILY[key] || NUTRI_FAMILY[key] || null;
   }
+  /* A scanned product brought its own label with it. Those figures beat every
+     table and family average below, which exist precisely because the library
+     foods have no label to read. */
   function fibreOf(food){
     if (!food) return 0;
+    if (food.fibre != null) return food.fibre;
     if (typeof USDA_FF_FIBRE !== 'undefined' && USDA_FF_FIBRE[food.key] != null) return USDA_FF_FIBRE[food.key];
     if (typeof USDA_FIBRE !== 'undefined' && USDA_FIBRE[food.key] != null) return USDA_FIBRE[food.key];
     if (FIBRE_OVERRIDE[food.key] != null) return FIBRE_OVERRIDE[food.key];
@@ -121,6 +125,7 @@
   }
   function sodiumOf(food){
     if (!food) return 0;
+    if (food.sodium != null) return food.sodium;
     if (typeof USDA_FF_SODIUM !== 'undefined' && USDA_FF_SODIUM[food.key] != null) return USDA_FF_SODIUM[food.key];
     if (typeof USDA_SODIUM !== 'undefined' && USDA_SODIUM[food.key] != null) return USDA_SODIUM[food.key];
     if (SODIUM_OVERRIDE[food.key] != null) return SODIUM_OVERRIDE[food.key];

@@ -4,5 +4,10 @@
   "webDir": "www",
   "ios": {
     "contentInset": "never"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
   }
 }

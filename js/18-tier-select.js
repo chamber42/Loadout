@@ -466,7 +466,13 @@
     if (el) el.addEventListener('click', e=>{ if (e.target === el) closeModal(id); });
   });
   document.addEventListener('keydown', e=>{
-    if (e.key === 'Escape'){ ALL_MODALS.forEach(closeModal); }
+    if (e.key !== 'Escape') return;
+    /* The scanner sits on top of whichever modal opened it and closes itself
+       on Escape. Closing everything underneath at the same time would throw
+       the person out of the picker they were halfway through. */
+    const scan = document.getElementById('modalScan');
+    if (scan && !scan.hidden) return;
+    ALL_MODALS.forEach(closeModal);
   });
   document.getElementById('btnHowWorked').addEventListener('click', ()=> openModal('modalHow'));
   document.getElementById('btnFullStats').addEventListener('click', ()=> openModal('modalStats'));

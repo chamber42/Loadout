@@ -38,9 +38,14 @@
       protein: h.protein,
       carbs: h.carbs,
       fat: h.fat,
-      fibre: 0,
-      sodium: 0,
-      unit: null,
+      /* Straight off the label where it carried them. These used to be
+         hard zeros, which quietly told the journal a packaged product
+         contains no fibre and no salt. */
+      fibre: h.fibre == null ? 0 : h.fibre,
+      sodium: h.sodium == null ? 0 : h.sodium,
+      /* A serving where the label published one, so the stepper counts
+         servings and opens on a portion instead of a flat 100g. */
+      unit: offServingUnit(h),
       key: null,
       _off: true
     };
@@ -55,21 +60,67 @@
       return;
     }
     jfoodTarget.pick = { food: jfFoodFromHit(h), slot: 'protein' };
-    jfoodTarget.freeGrams = true;
-    jfoodTarget.grams = 100;
+    /* Grams only where there is no serving to count in. */
+    jfoodTarget.freeGrams = !h.servingG;
+    jfoodTarget.grams = h.servingG || 100;
     if (jfScanResults) jfScanResults.innerHTML = '';
     if (jfBarcodeInput) jfBarcodeInput.value = '';
     if (jfBarcodeClear) jfBarcodeClear.style.display = 'none';
     renderJournalFoodAmount();
   }
 
+  /* A barcode has exactly one answer, so jfUseHit takes it straight to the
+     amount step. A name has many, so they are listed first and the person
+     picks. Both end in the same place. */
+  function jfShowHits(hits){
+    if (!jfScanResults) return;
+    jfScanResults.innerHTML = offHitsHtml(hits);
+    jfScanResults.querySelectorAll('[data-off]').forEach(function(btn){
+      btn.addEventListener('click', async function(){
+        const h = hits[parseInt(btn.getAttribute('data-off'), 10)];
+        if (!h) return;
+        btn.disabled = true;
+        jfUseHit(await offEnrichHit(h));
+      });
+    });
+  }
+
+  function journalNameSearch(term){
+    jfStatus('Searching…');
+    const seq = ++offSeq;
+    const url = OFF_SEARCH + '?q=' + encodeURIComponent(term)
+              + '&page_size=25&fields=' + OFF_FIELDS;
+    offFetchJson(url, seq).then(function(r){
+      if (r.stale) return;
+      if (r.netError || r.httpError){ offShowFailure(r, jfScanResults); return; }
+      const raw = (r.data && Array.isArray(r.data.hits)) ? r.data.hits : [];
+      const usable = raw.map(offParseProduct).filter(Boolean).slice(0, 12)
+        .map(function(h){ return Object.assign(h, {_fromSearch: true}); });
+      if (!usable.length){
+        jfStatus('Nothing usable for “' + escapeHtml(term) + '”. Try the brand name, or add the food by hand.');
+        return;
+      }
+      jfShowHits(usable);
+    }).catch(function(){
+      jfStatus('That search failed. Check your connection, or add the food by hand.');
+    });
+  }
+
   /* ---- lookup ----
      Called by useScannedCode() in 21-food-lookup.js when scanTarget is
      'journal', and directly by the barcode text field. */
   function journalScanLookup(code){
-    const q = String(code || '').replace(/[\s-]/g, '');
+    const raw = String(code || '').trim();
+    const q = raw.replace(/[\s-]/g, '');
     if (!/^\d+$/.test(q)){
-      jfStatus('That looks like a name rather than a barcode. Name search isn’t available — use the library search below.');
+      /* Same split as the loadout panel: a name goes to Open Food Facts'
+         full-text search, which only the native build can read. */
+      if (typeof offNative !== 'function' || !offNative()){
+        jfStatus('Searching by name needs the installed app. Use the library search below, or add the food by hand.');
+        return;
+      }
+      if (raw.length < 3){ if (jfScanResults) jfScanResults.innerHTML = ''; return; }
+      journalNameSearch(raw);
       return;
     }
     if (q.length < 8){ jfStatus('Keep going — barcodes are 8 to 14 digits (' + q.length + ' so far).'); return; }
@@ -127,7 +178,10 @@
       clearTimeout(jfTypeTimer);
       const v = jfBarcodeInput.value.trim();
       if (!v){ if (jfScanResults) jfScanResults.innerHTML = ''; return; }
-      jfTypeTimer = setTimeout(function(){ journalScanLookup(v); }, 300);
+      /* Open Food Facts allows ten searches a minute but far more barcode
+         lookups, so a name waits longer before it costs a request. */
+      const delay = /^[\d\s-]+$/.test(v) ? 300 : 650;
+      jfTypeTimer = setTimeout(function(){ journalScanLookup(v); }, delay);
     });
   }
 
