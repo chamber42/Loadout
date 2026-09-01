@@ -886,6 +886,9 @@
     };
     state.activeDay = 1;
     state.portionOverrides = {};
+    /* A prep is built at the point somebody is about to cook and eat it, so
+       day 1 is today unless they say otherwise on the prep screen. */
+    if (typeof ensurePrepStartDate === 'function') ensurePrepStartDate();
     applyDayToSelections(1);
 
     enforceOnHand();

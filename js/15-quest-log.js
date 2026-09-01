@@ -101,6 +101,19 @@
       ? `<strong class="n-green">${logged}</strong> day${logged>1?'s':''} logged in this ${mode}. The bar under each day shows how close it came to your target. ${legend}`
       : `Nothing logged in this ${mode} yet. Days you log in the Journal fill in here. ${legend}`;
 
+    if (typeof renderStreak === 'function') renderStreak();
+
+    /* Weight, daily burn and activity moved here from the character sheet.
+       Their modules hook renderTiers, which draws the sheet — so without
+       this they would only refresh after visiting a screen they are no
+       longer on, and somebody who opened Progress directly would find them
+       stale or blank. Each is a no-op when its panel is absent or has
+       nothing to say. */
+    if (typeof renderWeightPanel === 'function') renderWeightPanel();
+    if (typeof renderExpenditurePanel === 'function') renderExpenditurePanel();
+    if (typeof refreshStepsPanel === 'function') refreshStepsPanel();
+    if (typeof renderHealthWriteControl === 'function') renderHealthWriteControl();
+
     renderCalDay();
   }
 
@@ -145,7 +158,7 @@
          here, so the calendar and the strip cannot drift apart about which
          day is open. Declared in 12-journal.js, resolved at click time. */
       selectJournalDay(key);
-      goTab('journal');
+      goTab('today');
     });
   }
 

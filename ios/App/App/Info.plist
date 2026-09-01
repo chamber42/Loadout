@@ -76,7 +76,20 @@
 	     rather than saying "health data", because this is the sentence the
 	     permission sheet shows and a vague one earns a refusal. -->
 	<key>NSHealthShareUsageDescription</key>
-	<string>Loadout can fill in your height, weight, age and sex from the Health app so you don't have to type them, and show your step count on your character sheet. It only reads those five things, never writes to Health, and everything stays on your device.</string>
+	<string>Loadout can fill in your height, weight, age and sex from the Health app so you don't have to type them, show your step count and active energy on your character sheet, and read your weigh-ins so your weight trend keeps itself up to date. Everything stays on your device.</string>
+	<!-- Makes the app's Documents folder visible in Files, under
+	     On My iPhone > Loadout. That is where 33-native-backup.js writes its
+	     mirror and where an export lands, so this is what turns a file
+	     nobody could reach into one somebody can copy to iCloud Drive,
+	     AirDrop or mail to themselves. Both keys are plain Info.plist
+	     settings, not entitlements, so they work on a free developer team
+	     where iCloud Documents does not. -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Loadout can save what you log — calories, protein, carbs, fat, fiber and sodium — into the Health app, so the rest of your apps can see it. Only food you have logged is written, and only if you turn it on.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Loadout scans barcodes on food packaging to look up nutrition information. The picture is read on your device — only the barcode number is sent to Open Food Facts.</string>
 </dict>

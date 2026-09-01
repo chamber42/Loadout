@@ -42,7 +42,15 @@
     var DIR     = 'DOCUMENTS';
     var UTF8    = 'utf8';
     var PRIMARY = 'gfl.state.v1';                 // the one that holds real data
-    var KEYS    = [PRIMARY, 'loadout.disclaimer.v1', 'loadout.timers.v1'];
+    /* Every key the app owns. Must stay in step with EXPORT_KEYS in
+       50-data-export.js — a key missing from this list is one that survives
+       an export but NOT an eviction, which is the more likely of the two to
+       happen and the harder to notice: the app comes back with its journal
+       intact and its reminders quietly switched off. A test asserts the two
+       lists match. Not read from that file directly because this one runs
+       its restore during load, before 50 exists. */
+    var KEYS    = [PRIMARY, 'loadout.disclaimer.v1', 'loadout.timers.v1',
+                   'gfl.health.write.v1', 'gfl.reminders.v1'];
 
     /* Set before the reload so a failed restore cannot loop: if writing to
        localStorage does not stick, the second pass finds this flag and gives

@@ -9,6 +9,16 @@ const SUITES = [
   './label-quality.test.js',
   './icon-names.test.js',
   './barcode-decode.test.js',
+  './weight-trend.test.js',
+  './expenditure.test.js',
+  './recents.test.js',
+  './usda-search.test.js',
+  './journal-repeat.test.js',
+  './units.test.js',
+  './prep-dates.test.js',
+  './streaks.test.js',
+  './data-export.test.js',
+  './recipe-import.test.js',
 ];
 
 let passed = 0, failed = 0;

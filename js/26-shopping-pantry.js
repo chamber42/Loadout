@@ -373,6 +373,20 @@
     renderPrepGrid(); renderShoppingList(); showScreen('screen-shop');
   });
 
+  /* The recipe book and the prepped days lost their own tabs when the six
+     destinations became four. Both are part of planning, so they are reached
+     from the planning screens rather than from the bar. */
+  ['btnPrepRecipes', 'btnLoadoutRecipes'].forEach(id=>{
+    const b = document.getElementById(id);
+    if (b) b.addEventListener('click', ()=>{ renderRecipeBook(); showScreen('screen-recipes'); });
+  });
+  (function(){
+    const b = document.getElementById('btnLoadoutPrepDays');
+    if (b) b.addEventListener('click', ()=>{
+      writeBackActiveDay(); renderPrepDays(); showScreen('screen-prep');
+    });
+  })();
+
   document.getElementById('btnCookPlan').addEventListener('click', ()=>{
     renderCookPlan();
     openModal('modalCookPlan');

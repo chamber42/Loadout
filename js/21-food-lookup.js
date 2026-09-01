@@ -41,7 +41,17 @@
      that don't. Browsers forbid scripts from setting User-Agent and drop this
      silently; the native bridge sends it, which is where the searching
      happens anyway. */
-  const OFF_UA = 'Loadout/1.0 (https://github.com/chamber42/Loadout)';
+  /* Open Food Facts asks callers to identify themselves as
+     AppName/Version (ContactEmail) so they have somewhere to write if an
+     app misbehaves, and they block callers they cannot reach.
+
+     TODO BEFORE THE APP STORE BUILD: replace the repository URL with a real
+     contact address. The URL is accepted today and nothing breaks without
+     the change, but it is not what they ask for, and the same address has
+     to exist anyway — Apple requires a public support contact on the store
+     listing. See the launch-decisions note kept outside this repository. */
+  const LOADOUT_CONTACT = 'https://github.com/chamber42/Loadout';   // <- email goes here
+  const OFF_UA = 'Loadout/1.0 (' + LOADOUT_CONTACT + ')';
 
   /* Name search reaches a host that sends no access-control-allow-origin, so
      a WebView fetch of it is blocked before it leaves the page. Capacitor's
@@ -241,22 +251,38 @@
      usual filter does the real work — anything with no name or no calories
      is dropped before display, and what survives is capped at a screenful. */
   function offSearchByName(term, results){
-    results.innerHTML = '<div class="off-status">Searching…</div>';
+    /* The bundled USDA table answers before the network does — it is local,
+       so there is nothing to wait for and no rate limit to spend. Rendering
+       it straight away puts a whole food on screen while the Open Food
+       Facts request is still in flight. */
+    const local = (typeof usdaSearch === 'function') ? usdaSearch(term) : [];
+    if (local.length) offRenderHits(local);
+    else results.innerHTML = '<div class="off-status">Searching…</div>';
+
     const seq = ++offSeq;
     offTimer = setTimeout(async ()=>{
       const url = `${OFF_SEARCH}?q=${encodeURIComponent(term)}`
                 + `&page_size=25&fields=${OFF_FIELDS}`;
       const r = await offFetchJson(url, seq);
       if (r.stale) return;
-      if (r.netError || r.httpError){ offShowFailure(r, results); return; }
+      if (r.netError || r.httpError){
+        /* A failed lookup is only a failure when it leaves the person with
+           nothing. With USDA hits already on screen, announcing that the
+           network broke would be telling them their results are missing
+           while they are looking at them. */
+        if (!local.length) offShowFailure(r, results);
+        return;
+      }
       const hits = (r.data && Array.isArray(r.data.hits)) ? r.data.hits : [];
       const usable = hits.map(offParseProduct).filter(Boolean).slice(0, 12)
         .map(h => Object.assign(h, {_fromSearch: true}));
       if (!usable.length){
-        results.innerHTML = `<div class="off-status">Nothing usable for “${escapeHtml(term)}”. Try the brand name, or fewer words — or add the item manually below.</div>`;
+        if (!local.length){
+          results.innerHTML = `<div class="off-status">Nothing usable for “${escapeHtml(term)}”. Try the brand name, or fewer words — or add the item manually below.</div>`;
+        }
         return;
       }
-      offRenderHits(usable);
+      offRenderHits(local.concat(usable));
     }, 650);
   }
 
@@ -615,6 +641,65 @@
   document.getElementById('btnSystem').addEventListener('click', ()=>{
     renderSystemMenu(); openModal('modalSystem');
   });
+  /* ---- export and import ----------------------------------------------
+
+     Import is deliberately two taps and a confirmation. It replaces
+     everything, and the one thing worse than losing a history is
+     overwriting a live one by tapping the wrong row in a file picker. */
+  (function wireDataButtons(){
+    const note = document.getElementById('sysDataNote');
+    const say = (msg, warn) => {
+      if (!note) return;
+      note.innerHTML = msg;
+      note.style.color = warn ? 'var(--red)' : '';
+    };
+
+    const exportBtn = document.getElementById('sysExport');
+    if (exportBtn) exportBtn.addEventListener('click', ()=>{
+      if (typeof exportData !== 'function') return;
+      exportBtn.disabled = true;
+      exportData()
+        .then(where => say(escapeHtml(where)))
+        .catch(err => say(escapeHtml(err && err.message ? err.message : 'Export failed.'), true))
+        .then(()=>{ exportBtn.disabled = false; });
+    });
+
+    const importBtn = document.getElementById('sysImport');
+    const picker = document.getElementById('sysImportFile');
+    if (importBtn && picker){
+      importBtn.addEventListener('click', ()=>{
+        if (importBtn.dataset.armed){
+          importBtn.dataset.armed = '';
+          importBtn.innerHTML = ic('back') + ' Import from a file';
+          picker.click();
+          return;
+        }
+        importBtn.dataset.armed = '1';
+        importBtn.innerHTML = ic('warn') + ' Tap again — this replaces everything here';
+        setTimeout(()=>{
+          if (!importBtn.dataset.armed) return;
+          importBtn.dataset.armed = '';
+          importBtn.innerHTML = ic('back') + ' Import from a file';
+        }, 5000);
+      });
+
+      picker.addEventListener('change', (e)=>{
+        const file = e.target.files && e.target.files[0];
+        e.target.value = '';                     // so the same file can be retried
+        if (!file || typeof importData !== 'function') return;
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          const res = importData(String(reader.result || ''));
+          if (!res.ok){ say(escapeHtml(res.why), true); return; }
+          say('Imported. Reloading&hellip;');
+          setTimeout(()=>location.reload(), 600);
+        };
+        reader.onerror = ()=> say('That file could not be read.', true);
+        reader.readAsText(file);
+      });
+    }
+  })();
+
   document.getElementById('sysRecreate').addEventListener('click', ()=>{
     closeModal('modalSystem'); showScreen('screen-onboard');
   });

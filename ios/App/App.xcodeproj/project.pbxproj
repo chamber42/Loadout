@@ -13,6 +13,7 @@
 		504EC3081FED79650016851F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 504EC3071FED79650016851F /* AppDelegate.swift */; };
 		B8F3B944EA9AAFFF621314C6 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CFA29DF181CB5CC69DB5072 /* MainViewController.swift */; };
 		B853C42750E84A2A33A8C4A8 /* HealthKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82BB816EC864B54584F1CF60 /* HealthKitPlugin.swift */; };
+		A1F2C3D4E5B6A7C8D9E0F102 /* NotificationsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1F2C3D4E5B6A7C8D9E0F103 /* NotificationsPlugin.swift */; };
 		504EC30D1FED79650016851F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30B1FED79650016851F /* Main.storyboard */; };
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
@@ -27,6 +28,7 @@
 		504EC3071FED79650016851F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1CFA29DF181CB5CC69DB5072 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		82BB816EC864B54584F1CF60 /* HealthKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitPlugin.swift; sourceTree = "<group>"; };
+		A1F2C3D4E5B6A7C8D9E0F103 /* NotificationsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsPlugin.swift; sourceTree = "<group>"; };
 		504EC30C1FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		504EC30E1FED79650016851F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		504EC3111FED79650016851F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 				504EC3071FED79650016851F /* AppDelegate.swift */,
 				1CFA29DF181CB5CC69DB5072 /* MainViewController.swift */,
 				82BB816EC864B54584F1CF60 /* HealthKitPlugin.swift */,
+				A1F2C3D4E5B6A7C8D9E0F103 /* NotificationsPlugin.swift */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
@@ -167,6 +170,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				B8F3B944EA9AAFFF621314C6 /* MainViewController.swift in Sources */,
 				B853C42750E84A2A33A8C4A8 /* HealthKitPlugin.swift in Sources */,
+				A1F2C3D4E5B6A7C8D9E0F102 /* NotificationsPlugin.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

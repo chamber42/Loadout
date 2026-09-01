@@ -10,11 +10,18 @@ import HealthKit
  and nothing else, and a dependency for that would be more code to trust
  and keep current than the code it replaces.
 
- Read-only, deliberately. Nothing is written back to Health, so the
- authorisation request asks to share nothing and Info.plist carries only
- NSHealthShareUsageDescription. Writing nutrition data back is a
- reasonable thing to want later, but it is a separate decision and should
- come with its own prompt rather than riding along on this one.
+ Reading and writing are kept apart on purpose. requestAuthorization asks
+ only to READ, exactly as it always did, so nobody who granted that is
+ re-prompted or has their answer widened underneath them.
+ requestWriteAuthorization is a second, separate request, made only when
+ someone turns nutrition writing on. Info.plist carries a usage string for
+ each.
+
+ What is written is only ever what the person logged in the journal, and
+ only into the six dietary types below. Loadout deletes and rewrites its
+ OWN samples for a day when that day is re-saved — HealthKit scopes such a
+ delete to samples this app wrote, so a day logged in another app is never
+ touched.
  */
 @objc(HealthKitPlugin)
 public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
@@ -25,7 +32,11 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestAuthorization", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "readProfile", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "readSteps", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "readSteps", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "readWeights", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "canWrite", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestWriteAuthorization", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "writeNutrition", returnType: CAPPluginReturnPromise)
     ]
 
     private let store = HKHealthStore()
@@ -238,6 +249,234 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         store.execute(query)
+    }
+
+    /* Every weigh-in Health holds for the last year, one figure per day.
+
+       This is what makes a connected scale useful: someone who steps on a
+       Withings or a Renpho every morning has a year of readings sitting in
+       Health, and until now Loadout asked them to type today's in by hand
+       while ignoring all of it.
+
+       Averaged within a day rather than taking the first or the last.
+       Someone who weighs twice in a morning has two equally real readings,
+       and the mean of them is a better estimate of that day than either
+       alone; the app's own trend smoothing then does the rest.
+
+       A year rather than a month, unlike the step window. Steps are read to
+       describe today; weights are read to establish a trend, and a trend
+       wants as much history as exists. It is one query either way.
+
+       Resolves with nothing when weights are unreadable, for the same
+       reason readProfile does: a refused permission and a phone that holds
+       no weigh-ins are indistinguishable from here. */
+    @objc func readWeights(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable(),
+              let type = HKQuantityType.quantityType(forIdentifier: .bodyMass) else {
+            call.resolve([:])
+            return
+        }
+
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: Date())
+        guard let windowStart = calendar.date(byAdding: .day, value: -365, to: startOfToday) else {
+            call.resolve([:])
+            return
+        }
+
+        let keyFormatter = DateFormatter()
+        keyFormatter.dateFormat = "yyyy-MM-dd"
+        keyFormatter.locale = Locale(identifier: "en_US_POSIX")
+        keyFormatter.timeZone = calendar.timeZone
+
+        var oneDay = DateComponents()
+        oneDay.day = 1
+
+        let query = HKStatisticsCollectionQuery(
+            quantityType: type,
+            quantitySamplePredicate: HKQuery.predicateForSamples(withStart: windowStart, end: Date()),
+            options: .discreteAverage,
+            anchorDate: startOfToday,
+            intervalComponents: oneDay)
+
+        query.initialResultsHandler = { _, collection, _ in
+            var byDay = JSObject()
+            collection?.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
+                /* averageQuantity is nil on a day with no weigh-in, which is
+                   most days for most people — skipped rather than written as
+                   zero, which would read as a weightless morning. */
+                guard let value = stat.averageQuantity()?.doubleValue(for: .pound()) else { return }
+                byDay[keyFormatter.string(from: stat.startDate)] = round(value * 10) / 10
+            }
+            DispatchQueue.main.async { call.resolve(["byDay": byDay]) }
+        }
+
+        store.execute(query)
+    }
+
+    /* ---- writing -------------------------------------------------------
+
+       The dietary types Loadout may write. In practice the journal stores
+       only calories and the three macros against each entry, so those four
+       are what actually get sent today; fibre and sodium are declared
+       because the app models them elsewhere and an entry may carry them
+       later, and each field is simply skipped when the caller omits it.
+
+       Nothing derived is ever written. A per-day fibre figure could be
+       reconstructed from the foods behind the entries, but it would be an
+       estimate, and an estimate does not belong in a shared store that
+       other apps will read as measurement. */
+    private var shareTypes: Set<HKSampleType> {
+        var types = Set<HKSampleType>()
+        let ids: [HKQuantityTypeIdentifier] = [
+            .dietaryEnergyConsumed, .dietaryProtein, .dietaryCarbohydrates,
+            .dietaryFatTotal, .dietaryFiber, .dietarySodium
+        ]
+        for id in ids {
+            if let t = HKObjectType.quantityType(forIdentifier: id) { types.insert(t) }
+        }
+        return types
+    }
+
+    private func unitFor(_ id: HKQuantityTypeIdentifier) -> HKUnit {
+        switch id {
+        case .dietaryEnergyConsumed: return .kilocalorie()
+        case .dietarySodium:         return .gramUnit(with: .milli)
+        default:                     return .gram()
+        }
+    }
+
+    /* Whether writing is possible AND already permitted.
+
+       Unlike reading, HealthKit does tell an app whether it may write —
+       write permission is not itself a disclosure, since the app already
+       knows what it is trying to save. So this can be trusted to decide
+       whether to show a control, which the read side could never do. */
+    @objc func canWrite(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.resolve(["available": false, "authorized": false])
+            return
+        }
+        let authorized = shareTypes.allSatisfy {
+            store.authorizationStatus(for: $0) == .sharingAuthorized
+        }
+        call.resolve(["available": true, "authorized": authorized])
+    }
+
+    /* A separate prompt from the read one, deliberately: someone who agreed
+       to let Loadout read their weight has not agreed to let it write their
+       meals, and rolling the two together would take that decision from
+       them. */
+    @objc func requestWriteAuthorization(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.resolve(["granted": false])
+            return
+        }
+        store.requestAuthorization(toShare: shareTypes, read: []) { [weak self] _, error in
+            if let error = error {
+                call.reject(error.localizedDescription)
+                return
+            }
+            guard let self = self else { call.resolve(["granted": false]); return }
+            let granted = self.shareTypes.allSatisfy {
+                self.store.authorizationStatus(for: $0) == .sharingAuthorized
+            }
+            call.resolve(["granted": granted])
+        }
+    }
+
+    /* One day's totals, replacing whatever Loadout wrote for that day before.
+
+       Delete-then-write rather than append, because a journal gets edited:
+       someone adds a forgotten lunch at nine in the evening and the day's
+       energy must end up stated once, correctly, not twice. The delete
+       predicate is scoped to this app's own samples — HKQuery's
+       predicateForObjects(from:) with the default source — so a breakfast
+       logged in somebody else's app on the same day survives untouched.
+
+       Samples are stamped across the whole day rather than at the moment of
+       saving, since that is what they describe. A day with nothing in it is
+       a valid request: it deletes what was there and writes nothing, which
+       is how clearing a day propagates. */
+    @objc func writeNutrition(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.resolve(["written": false]); return
+        }
+        guard let dayKey = call.getString("day") else {
+            call.reject("writeNutrition needs a day"); return
+        }
+
+        let keyFormatter = DateFormatter()
+        keyFormatter.dateFormat = "yyyy-MM-dd"
+        keyFormatter.locale = Locale(identifier: "en_US_POSIX")
+        keyFormatter.timeZone = Calendar.current.timeZone
+
+        guard let start = keyFormatter.date(from: dayKey),
+              let end = Calendar.current.date(byAdding: .day, value: 1, to: start) else {
+            call.reject("writeNutrition could not read the day"); return
+        }
+
+        let totals = call.getObject("totals") ?? JSObject()
+        let mapping: [(String, HKQuantityTypeIdentifier)] = [
+            ("kcal",    .dietaryEnergyConsumed),
+            ("protein", .dietaryProtein),
+            ("carbs",   .dietaryCarbohydrates),
+            ("fat",     .dietaryFatTotal),
+            ("fibre",   .dietaryFiber),
+            ("sodium",  .dietarySodium),
+        ]
+
+        var samples: [HKQuantitySample] = []
+        for (field, id) in mapping {
+            guard let type = HKQuantityType.quantityType(forIdentifier: id) else { continue }
+            /* A missing figure and a zero are different: absent means the
+               journal does not track it for this day, and inventing a zero
+               would tell every other app the person ate no sodium. */
+            guard let raw = totals[field] as? NSNumber else { continue }
+            let value = raw.doubleValue
+            if !value.isFinite || value <= 0 { continue }
+            samples.append(HKQuantitySample(
+                type: type,
+                quantity: HKQuantity(unit: unitFor(id), doubleValue: value),
+                start: start,
+                end: end))
+        }
+
+        let scoped = HKQuery.predicateForObjects(from: HKSource.default())
+        let onDay = HKQuery.predicateForSamples(withStart: start, end: end,
+                                                options: [.strictStartDate])
+        let mine = NSCompoundPredicate(andPredicateWithSubpredicates: [scoped, onDay])
+
+        let group = DispatchGroup()
+        var failure: String?
+
+        for type in shareTypes {
+            group.enter()
+            store.deleteObjects(of: type, predicate: mine) { _, _, _ in
+                /* A delete that finds nothing reports an error on some iOS
+                   versions, and a first-ever save legitimately finds nothing.
+                   Deletion problems are therefore not treated as fatal: the
+                   write below is what the caller is actually asking for. */
+                group.leave()
+            }
+        }
+
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { call.resolve(["written": false]); return }
+            guard !samples.isEmpty else {
+                call.resolve(["written": true, "samples": 0]); return
+            }
+            self.store.save(samples) { ok, error in
+                if let error = error { failure = error.localizedDescription }
+                DispatchQueue.main.async {
+                    if ok {
+                        call.resolve(["written": true, "samples": samples.count])
+                    } else {
+                        call.reject(failure ?? "Health refused the write")
+                    }
+                }
+            }
+        }
     }
 
     /* Most recent sample only. Health may hold years of weigh-ins from

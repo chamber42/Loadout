@@ -16,6 +16,10 @@
     goal:null,
     activity:null,
     sex:null,
+    /* 'imperial' or 'metric'. Presentation only — bodyweight below stays
+       pounds and heightIn stays inches whichever is chosen, so no saved
+       file ever changes meaning. See 00-units.js. */
+    units:null,
     bodyweight:null,
     heightIn:null,
     age:null,
@@ -26,6 +30,12 @@
     exerciseRaw:null,      // the custom burn the person typed, kept off the DOM
     exerciseKcal:0,        // credited burn added on a training day
     tdee:null,
+    /* Daily burn measured from logged intake against the weight trend, and
+       the day it was adopted. Null until someone chooses it over the
+       formula; snapshotted rather than live so a target cannot move under a
+       prep that has already been cooked. */
+    tdeeMeasured:null,
+    tdeeMeasuredAt:null,
     finalKcal:null,       // the rest-day target — the character's base number
     restKcal:null,        // base target, nothing added
     trainKcal:null,       // base + credited training burn
@@ -49,6 +59,14 @@
     breakfastAllDay:false,
     prepServings:1,     // days being cooked for
     log:{},             // date -> what was actually eaten
+    /* date -> a scale reading in lb. bodyweight above stays the single
+       current figure everything else reads; this is the history behind
+       it, which is what a trend and an adaptive expenditure need. */
+    weights:{},
+    /* Weigh-ins read out of the Health app, kept apart from the ones typed
+       here so a re-read can refresh them without touching anything the
+       person entered themselves. Native builds only; empty on the web. */
+    healthWeights:{},
     journalMeals:0,     // fallback slot count when there's no prep plan
     calDate:null, calMode:'month', calSel:null, journalDate:null,
     recipeQuery:'', recipeFilter:'all', recipeGoal:'any', seedRecipe:null,
@@ -63,6 +81,10 @@
        food, kept per slot, and merged into FOODS on load so every lookup,
        portion calculation and shopping list treats them like anything else. */
     customFoods:{protein:[], carb:[], fat:[], veg:[], fruit:[], sauce:[]},
+    /* Recipes brought in from the web, one at a time, by this person. Each
+       carries its source permanently and is never shared anywhere — see
+       51-recipe-import.js. */
+    importedRecipes:[],
     eatingStyle:null, // 'consistent' | 'balanced' | 'variety'
     // selections[mealKey] = {protein:[keys], carb:[], fat:[], veg:[], fruit:[], sauce:[], notes:""}
     selections:{}

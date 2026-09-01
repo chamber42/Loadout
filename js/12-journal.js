@@ -75,6 +75,23 @@
        what it actually is. */
     const done  = slots.filter(sl => (log.meals[sl.name] || []).length).length;
 
+    /* Which sittings could be filled from an earlier day, and what to call
+       that day. Worked out once here rather than inside the map below, so a
+       sitting with nothing to copy simply gets no button rather than one
+       that would fail. */
+    const repeatable = {};
+    if (typeof lastMealBefore === 'function'){
+      slots.forEach(sl => {
+        if ((log.meals[sl.name] || []).length) return;   // already has something
+        const src = lastMealBefore(sl.name, key);
+        if (src) repeatable[sl.name] = repeatDayLabel(src.key, key);
+      });
+    }
+
+    /* A whole day is only offered on a day with nothing in it at all. */
+    const wholeDay = (t.items === 0 && typeof lastDayBefore === 'function')
+      ? lastDayBefore(key) : null;
+
     /* STEP BUFF — walking beyond a usual day, credited to that day's
        allowance. Scoped to the journal on purpose: the prep is built from the
        plain plan targets, so a cook plan comes out the same however far
@@ -121,6 +138,7 @@
           <i style="width:${Math.min(100, pct)}%"></i>
           <span>${Math.round(t.kcal)}${goal ? ' / ' + goal : ''} kcal</span>
         </div>
+        ${wholeDay ? `<button class="mini-btn add" data-jrepeatday="1" style="margin-top:10px;"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg> COPY ${escapeHtml(repeatDayLabel(wholeDay.key, key).toUpperCase())}</button>` : ''}
         ${daySteps != null ? `<div class="qb-buff${buff ? '' : ' flat'}">
           <span class="qb-buff-icon"><svg class="px" aria-hidden="true"><use href="#i-run"></use></svg></span>
           <span class="qb-buff-body">
@@ -202,6 +220,7 @@
               </div>`).join('')
             : '<div class="fav-nores">Nothing here yet. Add what you ate.</div>'}
           <button class="mini-btn add" data-jadd="${escapeHtml(sl.name)}">+ ADD FOOD</button>
+          ${repeatable[sl.name] ? `<button class="mini-btn add" data-jrepeat="${escapeHtml(sl.name)}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg> SAME AS ${escapeHtml(repeatable[sl.name].toUpperCase())}</button>` : ''}
           ${planned ? `<button class="mini-btn add" data-jplan="${escapeHtml(sl.key)}|${escapeHtml(sl.name)}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg> COPY FROM MY PREP PLAN</button>` : ''}
         </div>`;
       }).join('');
@@ -263,6 +282,12 @@
     body.querySelectorAll('[data-jplan]').forEach(b=>b.addEventListener('click', ()=>{
       const [mealKey, mealName] = b.getAttribute('data-jplan').split('|');
       journalCopyFromPlan(mealKey, mealName);
+    }));
+    body.querySelectorAll('[data-jrepeat]').forEach(b=>b.addEventListener('click', ()=>{
+      if (repeatMealInto(b.getAttribute('data-jrepeat'), key)){ renderJournal(); saveState(); }
+    }));
+    body.querySelectorAll('[data-jrepeatday]').forEach(b=>b.addEventListener('click', ()=>{
+      if (repeatDayInto(key)){ renderJournal(); saveState(); }
     }));
   }
 
@@ -328,9 +353,44 @@
       items = strict.length ? strict : items.filter(x => looseMatchesQuery(x.food.name, q));
     }
 
+    /* Empty box: the person's own foods rather than an instruction to
+       start typing. What somebody eats most is nearly always what they are
+       reaching for, and a list they can tap beats a prompt telling them to
+       search. The old hint only appears when there is genuinely no history
+       to show. */
     if (!q){
-      host.innerHTML = `<div class="fav-nores">Start typing to search ${items.length} foods —
-        “chicken”, “bread”, “rice”…</div>`;
+      const recents = (typeof journalRecents === 'function') ? journalRecents() : [];
+      if (!recents.length){
+        host.innerHTML = `<div class="fav-nores">Start typing to search ${items.length} foods —
+          “chicken”, “bread”, “rice”…</div>`;
+        return;
+      }
+      host.innerHTML = `<div class="fp-group">YOURS</div>` +
+        recents.map((r,i)=>`
+          <button class="fp-row" data-jr="${i}">
+            <span class="nm">${ic(r.icon)} ${escapeHtml(r.label)}</span>
+            <span class="kc">${r.uses}&times;${r.kind === 'food' && r.grams ? ' · ' + r.grams + ' g' : ''}</span>
+          </button>`).join('');
+
+      host.querySelectorAll('[data-jr]').forEach(b=>b.addEventListener('click', ()=>{
+        const r = recents[parseInt(b.getAttribute('data-jr'),10)];
+        if (r.kind === 'entry'){
+          /* A typed row has no per-100g table to re-scale, so it is copied
+             exactly as it was logged. The amount editor on the logged item
+             is still there for anyone who had a different amount today. */
+          const log = dayLog(state.journalDate || todayKey());
+          const meal = jfoodTarget.mealName;
+          log.meals[meal] = log.meals[meal] || [];
+          log.meals[meal].push(Object.assign({}, r.entry));
+          renderJournal();
+          saveState();
+          closeModal('modalJournalFood');
+          return;
+        }
+        jfoodTarget.pick = r.pick;
+        jfoodTarget.grams = r.grams || defaultLogGrams(r.pick.slot, r.pick.food);
+        renderJournalFoodAmount();
+      }));
       return;
     }
     if (!items.length){

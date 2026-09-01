@@ -26,7 +26,7 @@
                "cyan":"#00fff2","green":"#39ff88","amber":"#ffb000","red":"#ff3860","magenta":"#ff2fb0",
                "text":"#dff3ff","muted":"#95a6b9" },
       sheet:"OPERATOR SCREEN", sheetTitle:"Your Build",
-      words:{ tier:"TIER", loadout:"LOADOUT", quest:"QUEST", stat:"STAT", inventory:"INVENTORY",
+      words:{ tier:"TIER", loadout:"LOADOUT", quest:"QUEST", journal:"INTAKE", stat:"STAT", inventory:"INVENTORY",
               build:"BUILD YOUR LOADOUT", charCreate:"CHARACTER CREATION", hp:"KCAL", playstyle:"PLAYSTYLE",
               meals:"Assemble Your Meals", tierPick:"Choose Your Tier" }
     },
@@ -42,7 +42,7 @@
                "cyan":"#e8c977","green":"#8fbf6a","amber":"#d9a441","red":"#c0483c","magenta":"#a86fbf",
                "text":"#f2e6cf","muted":"#bfb39f" },
       sheet:"CHARACTER SHEET", sheetTitle:"Your Character",
-      words:{ tier:"RANK", loadout:"PROVISIONS", quest:"QUEST", stat:"ATTRIBUTE", inventory:"LARDER",
+      words:{ tier:"RANK", loadout:"PROVISIONS", quest:"QUEST", journal:"CHRONICLE", stat:"ATTRIBUTE", inventory:"LARDER",
               build:"Forge Your Provisions", charCreate:"CHARACTER CREATION", hp:"VIGOUR", playstyle:"DISCIPLINE",
               meals:"Lay Out Your Feast", tierPick:"Choose Your Rank" }
     },
@@ -58,7 +58,7 @@
                "cyan":"#ff8c1a","green":"#5ec26a","amber":"#e8b62c","red":"#e0463c","magenta":"#7fa8c9",
                "text":"#e6eaec","muted":"#9da9ae" },
       sheet:"OPERATOR DOSSIER", sheetTitle:"Your Operator",
-      words:{ tier:"CLASS", loadout:"LOADOUT", quest:"OBJECTIVE", stat:"METRIC", inventory:"ARMORY",
+      words:{ tier:"CLASS", loadout:"LOADOUT", quest:"OBJECTIVE", journal:"SITREP", stat:"METRIC", inventory:"ARMORY",
               build:"Configure Your Loadout", charCreate:"OPERATOR SETUP", hp:"FUEL", playstyle:"DOCTRINE",
               meals:"Build Your Loadout", tierPick:"Select Your Class" }
     },
@@ -74,7 +74,7 @@
                "cyan":"#b6e027","green":"#7fbf3f","amber":"#e3b23c","red":"#c4442a","magenta":"#94853f",
                "text":"#e7efd6","muted":"#9ea994" },
       sheet:"SURVIVOR PROFILE", sheetTitle:"Your Survivor",
-      words:{ tier:"GRADE", loadout:"SUPPLY RUN", quest:"TASK", stat:"READOUT", inventory:"STASH",
+      words:{ tier:"GRADE", loadout:"SUPPLY RUN", quest:"TASK", journal:"RATIONS", stat:"READOUT", inventory:"STASH",
               build:"Plan Your Supply Run", charCreate:"SURVIVOR PROFILE", hp:"RATIONS", playstyle:"APPROACH",
               meals:"Ration Out Your Day", tierPick:"Choose Your Grade" }
     },
@@ -99,7 +99,7 @@
                "cyan":"#f5b8d0","green":"#8fd46a","amber":"#ffd166","red":"#ef6f6c","magenta":"#7fb8e8",
                "text":"#f6f2e4","muted":"#a9b898" },
       sheet:"FARMER ALMANAC", sheetTitle:"Your Farmer",
-      words:{ tier:"SEASON", loadout:"HARVEST", quest:"CHORE", stat:"YIELD", inventory:"ROOT CELLAR",
+      words:{ tier:"SEASON", loadout:"HARVEST", quest:"CHORE", journal:"DAYBOOK", stat:"YIELD", inventory:"ROOT CELLAR",
               build:"Plan Your Harvest", charCreate:"NEW FARMER", hp:"STAMINA", playstyle:"FARMING STYLE",
               meals:"Lay Out Your Table", tierPick:"Choose Your Season" }
     },
@@ -120,7 +120,7 @@
                "cyan":"#d9a05e","green":"#7fb054","amber":"#e8a838","red":"#c96c50","magenta":"#9fb0c4",
                "text":"#f0e6d8","muted":"#b8ab99" },
       sheet:"PLAYER STATS", sheetTitle:"Your Player",
-      words:{ tier:"LEVEL", loadout:"HOTBAR", quest:"TASK", stat:"BAR", inventory:"CHEST",
+      words:{ tier:"LEVEL", loadout:"HOTBAR", quest:"TASK", journal:"HUNGER", stat:"BAR", inventory:"CHEST",
               build:"Fill Your Hotbar", charCreate:"NEW WORLD", hp:"HEARTS", playstyle:"DIFFICULTY",
               meals:"Stock Your Hotbar", tierPick:"Choose Your Level" }
     },
@@ -136,7 +136,7 @@
                "cyan":"#e28a3a","green":"#7fb069","amber":"#e0b445","red":"#c35b4a","magenta":"#8ab6c9",
                "text":"#eef2ec","muted":"#a1b1a8" },
       sheet:"FIELD CARD", sheetTitle:"Your License",
-      words:{ tier:"TAG", loadout:"KIT", quest:"OUTING", stat:"READING", inventory:"COOLER",
+      words:{ tier:"TAG", loadout:"KIT", quest:"OUTING", journal:"MESS", stat:"READING", inventory:"COOLER",
               build:"Pack Your Kit", charCreate:"LICENSE APPLICATION", hp:"ENERGY", playstyle:"APPROACH",
               meals:"Pack Your Kit", tierPick:"Choose Your Tag" }
     },
@@ -152,7 +152,7 @@
                "cyan":"#e05a5a","green":"#8fae76","amber":"#d19a3c","red":"#e04a4a","magenta":"#9a6ba8",
                "text":"#ece2e2","muted":"#ab9c9e" },
       sheet:"CASE FILE", sheetTitle:"Your Case File",
-      words:{ tier:"CHAPTER", loadout:"SUPPLIES", quest:"NIGHT", stat:"VITALS", inventory:"SATCHEL",
+      words:{ tier:"CHAPTER", loadout:"SUPPLIES", quest:"NIGHT", journal:"INTAKE", stat:"VITALS", inventory:"SATCHEL",
               build:"Ready Your Supplies", charCreate:"THE VICTIM", hp:"SANITY", playstyle:"DISPOSITION",
               meals:"Ration What's Left", tierPick:"Choose Your Chapter" }
     },
@@ -168,7 +168,7 @@
                "cyan":"#ff7575","green":"#4ec97a","amber":"#f0c93a","red":"#ff5a5a","magenta":"#6fa8e0",
                "text":"#eef1f4","muted":"#9fa7b1" },
       sheet:"DRIVER CARD", sheetTitle:"Your Driver",
-      words:{ tier:"CLASS", loadout:"SETUP", quest:"STINT", stat:"TELEMETRY", inventory:"GARAGE",
+      words:{ tier:"CLASS", loadout:"SETUP", quest:"STINT", journal:"FUEL", stat:"TELEMETRY", inventory:"GARAGE",
               build:"Dial In Your Setup", charCreate:"DRIVER PROFILE", hp:"FUEL", playstyle:"DRIVING STYLE",
               meals:"Dial In Your Setup", tierPick:"Choose Your Class" }
     },
@@ -184,7 +184,7 @@
                "cyan":"#00e5ff","green":"#4dff5a","amber":"#ffd93d","red":"#ff4d6d","magenta":"#ff5cf0",
                "text":"#fdf3ff","muted":"#b69dd7" },
       sheet:"PLAYER CARD", sheetTitle:"Your Player",
-      words:{ tier:"STAGE", loadout:"POWER-UPS", quest:"ROUND", stat:"SCORE", inventory:"ITEM SELECT",
+      words:{ tier:"STAGE", loadout:"POWER-UPS", quest:"ROUND", journal:"REFUEL", stat:"SCORE", inventory:"ITEM SELECT",
               build:"Pick Your Power-Ups", charCreate:"PLAYER SELECT", hp:"ENERGY", playstyle:"MODE",
               meals:"Pick Your Power-Ups", tierPick:"Select Stage" }
     },

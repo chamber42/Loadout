@@ -93,23 +93,39 @@
   }
 
   function journalNameSearch(term){
-    jfStatus('Searching…');
+    const local = (typeof usdaSearch === 'function') ? usdaSearch(term) : [];
+    if (local.length) jfShowHits(local);
+    else jfStatus('Searching…');
+
+    /* Open Food Facts' name search reaches a host that sends no CORS header,
+       so on the web it cannot be called at all. The USDA table is bundled and
+       has no origin to be blocked from, so a web user now gets whole-food
+       results here rather than being told the feature needs the app. */
+    if (typeof offNative !== 'function' || !offNative()) return;
+
     const seq = ++offSeq;
     const url = OFF_SEARCH + '?q=' + encodeURIComponent(term)
               + '&page_size=25&fields=' + OFF_FIELDS;
     offFetchJson(url, seq).then(function(r){
       if (r.stale) return;
-      if (r.netError || r.httpError){ offShowFailure(r, jfScanResults); return; }
+      if (r.netError || r.httpError){
+        if (!local.length) offShowFailure(r, jfScanResults);
+        return;
+      }
       const raw = (r.data && Array.isArray(r.data.hits)) ? r.data.hits : [];
       const usable = raw.map(offParseProduct).filter(Boolean).slice(0, 12)
         .map(function(h){ return Object.assign(h, {_fromSearch: true}); });
       if (!usable.length){
-        jfStatus('Nothing usable for “' + escapeHtml(term) + '”. Try the brand name, or add the food by hand.');
+        if (!local.length){
+          jfStatus('Nothing usable for “' + escapeHtml(term) + '”. Try the brand name, or add the food by hand.');
+        }
         return;
       }
-      jfShowHits(usable);
+      jfShowHits(local.concat(usable));
     }).catch(function(){
-      jfStatus('That search failed. Check your connection, or add the food by hand.');
+      if (!local.length){
+        jfStatus('That search failed. Check your connection, or add the food by hand.');
+      }
     });
   }
 
@@ -122,10 +138,6 @@
     if (!/^\d+$/.test(q)){
       /* Same split as the loadout panel: a name goes to Open Food Facts'
          full-text search, which only the native build can read. */
-      if (typeof offNative !== 'function' || !offNative()){
-        jfStatus('Searching by name needs the installed app. Use the library search below, or add the food by hand.');
-        return;
-      }
       if (raw.length < 3){ if (jfScanResults) jfScanResults.innerHTML = ''; return; }
       journalNameSearch(raw);
       return;

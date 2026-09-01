@@ -295,4 +295,9 @@
 
     refresh();
 
+    /* The activity panel now lives on the quest log rather than the
+       character sheet, so the calendar has to be able to refresh it too —
+       see the note in renderCalendar. */
+    window.refreshStepsPanel = refresh;
+
   })();

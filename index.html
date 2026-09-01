@@ -117,6 +117,11 @@
         <button class="fav-clear" id="fpBarcodeClear" aria-label="Clear barcode" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
       </div>
       <div id="fpScanResults"></div>
+      <!-- A barcode scanned here goes straight into the slot without ever
+           rendering a result list, so the credit the ODbL requires cannot
+           ride along on one the way it does on the other two scan surfaces.
+           It sits with the control instead. -->
+      <div class="off-credit">Barcodes looked up via <a href="https://openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>, ODbL.</div>
 
       <div class="fav-search-wrap" style="margin-top:14px;">
         <input type="text" id="foodPickSearch" class="fav-search" placeholder="Type to search" autocomplete="off" aria-label="Search foods">
@@ -292,6 +297,12 @@
       <label class="field-label" style="margin-top:20px;">ABOUT</label>
       <button class="btn-ghost" id="sysLegal"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> Legal, credits &amp; privacy</button>
 
+      <label class="field-label" style="margin-top:20px;">YOUR DATA</label>
+      <button class="btn-ghost" id="sysExport"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> Export everything to a file</button>
+      <button class="btn-ghost" id="sysImport"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg> Import from a file</button>
+      <input type="file" id="sysImportFile" accept="application/json,.json" hidden>
+      <p class="subtitle" id="sysDataNote" style="font-size:11px; margin:12px 0 0;"></p>
+
       <label class="field-label" style="margin-top:20px;">DANGER ZONE</label>
       <button class="btn-ghost" id="sysReset" style="border-color:var(--red); color:var(--red);"><svg class="px" aria-hidden="true"><use href="#i-power"></use></svg> Start over — wipes everything saved</button>
       <p class="subtitle" style="font-size:11px; margin:12px 0 0;">
@@ -442,13 +453,14 @@
      visible wherever you are in the app. Rendered by js/30-timers.js. -->
 <div id="timerStrip" class="timer-strip" hidden aria-live="polite" aria-label="Running timers"></div>
 
+<!-- Four destinations, in the order of the loop they describe: who you are,
+     what you'll cook, what you're eating, what it did. Each keeps its genre's
+     own name for itself — the labels are filled in by refreshTabs(). -->
 <nav id="tabBar" class="tab-bar" hidden aria-label="Sections">
-  <button class="tab" data-tab="sheet"   aria-label="Character sheet"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Sheet</span></button>
-  <button class="tab" data-tab="roadmap" aria-label="Meal prep loadout"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-map"></use></svg></span><span class="lbl" id="tabLoadoutLbl">Loadout</span></button>
-  <button class="tab" data-tab="prep"    aria-label="Prepped days"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-bento"></use></svg></span><span class="lbl">Prep Days</span></button>
-  <button class="tab" data-tab="journal" aria-label="Meal journal"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg></span><span class="lbl">Journal</span></button>
-  <button class="tab" data-tab="quest"   aria-label="Quest log calendar"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg></span><span class="lbl" id="tabQuestLbl">Quest Log</span></button>
-  <button class="tab" data-tab="recipes" aria-label="Recipe book"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg></span><span class="lbl">Recipes</span></button>
+  <button class="tab" data-tab="you"      aria-label="Character sheet"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Sheet</span></button>
+  <button class="tab" data-tab="prep"     aria-label="Meal prep loadout"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-map"></use></svg></span><span class="lbl" id="tabLoadoutLbl">Loadout</span></button>
+  <button class="tab" data-tab="today"    aria-label="Today's food"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg></span><span class="lbl" id="tabJournalLbl">Journal</span></button>
+  <button class="tab" data-tab="progress" aria-label="Quest log calendar"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg></span><span class="lbl" id="tabQuestLbl">Quest Log</span></button>
 </nav>
 
 <div id="app">
@@ -543,8 +555,8 @@
     <div class="panel" id="calcPanel" style="display:none;">
       <label class="field-label">GOAL</label>
       <div class="choice-grid" id="goalGrid">
-        <button class="choice-btn" data-goal="extreme_loss"><span><strong>Cut Hard</strong><span class="desc">−1000 kcal/day (~2 lb/wk)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-fire"></use></svg></span></button>
-        <button class="choice-btn" data-goal="loss"><span><strong>Fat Loss</strong><span class="desc">−500 kcal/day (~1 lb/wk)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-sword"></use></svg></span></button>
+        <button class="choice-btn" data-goal="extreme_loss"><span><strong>Cut Hard</strong><span class="desc">−1000 kcal/day (<span class="wk-rate" data-lbwk="2"></span>)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-fire"></use></svg></span></button>
+        <button class="choice-btn" data-goal="loss"><span><strong>Fat Loss</strong><span class="desc">−500 kcal/day (<span class="wk-rate" data-lbwk="1"></span>)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-sword"></use></svg></span></button>
         <button class="choice-btn" data-goal="maintain"><span><strong>Maintain</strong><span class="desc">Hold current weight</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-shield"></use></svg></span></button>
         <button class="choice-btn" data-goal="gain"><span><strong>Bulk</strong><span class="desc">+300 kcal/day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-muscle"></use></svg></span></button>
       </div>
@@ -586,14 +598,18 @@
         <button class="choice-btn" data-sex="female"><span><strong>Female</strong></span></button>
       </div>
 
-      <label class="field-label" style="margin-top:18px;">CURRENT BODYWEIGHT (LBS)</label>
-      <input type="number" id="bodyweightInput" placeholder="e.g. 213" inputmode="numeric" min="70" max="500">
+      <label class="field-label" style="margin-top:18px;">UNITS</label>
+      <div class="seg" id="unitSeg"></div>
+
+      <label class="field-label" style="margin-top:18px;" id="bodyweightLabel">CURRENT BODYWEIGHT</label>
+      <input type="number" id="bodyweightInput" placeholder="e.g. 213" inputmode="decimal" min="70" max="500">
 
       <label class="field-label" style="margin-top:14px;">HEIGHT</label>
-      <div style="display:flex; gap:10px;">
+      <div style="display:flex; gap:10px;" id="heightImperial">
         <input type="number" id="heightFtInput" placeholder="ft" inputmode="numeric" min="3" max="8">
         <input type="number" id="heightInInput" placeholder="in" inputmode="numeric" min="0" max="11">
       </div>
+      <input type="number" id="heightCmInput" placeholder="cm" inputmode="numeric" min="120" max="230" hidden>
 
       <label class="field-label" style="margin-top:14px;">AGE</label>
       <input type="number" id="ageInput" placeholder="e.g. 28" inputmode="numeric" min="14" max="99">
@@ -637,13 +653,20 @@
     <div class="panel cs-mod">
       <label class="field-label mod-head"><span class="mod-no">01</span>VITALS</label>
       <div class="vitals-grid" id="sheetVitals"></div>
+      <div class="seg" id="sheetUnitSeg" style="margin-top:12px;"></div>
     </div>
 
-    <!-- Steps read from the Health app. Native builds only: the panel stays
-         hidden on the web, where nothing can fill it. -->
-    <div class="panel cs-mod" id="sheetActivityPanel" hidden>
-      <label class="field-label mod-head"><span class="mod-no">02</span>ACTIVITY</label>
-      <div id="sheetSteps"></div>
+
+
+
+
+
+
+    <!-- Daily reminders. Native builds only: nothing scheduled in a browser
+         tab ever fires, so the panel stays hidden on the web. -->
+    <div class="panel cs-mod" id="sheetRemindPanel" hidden>
+      <label class="field-label mod-head"><span class="mod-no">02</span>REMINDERS</label>
+      <div id="sheetRemind"></div>
     </div>
 
     <div class="panel cs-mod">
@@ -672,16 +695,51 @@
     <div class="eyebrow">MEAL PREP</div>
     <h1 class="title">Your Prepped Days</h1>
     <p class="subtitle" id="prepDaysIntro"></p>
+    <div id="prepDates"></div>
     <div id="prepDayList"></div>
     <div id="prepDishSummary"></div>
     <button class="btn-ghost" id="btnPrepReshuffle"><svg class="px" aria-hidden="true"><use href="#i-dice"></use></svg> RESHUFFLE THE WHOLE PREP</button>
     <button class="btn-ghost" id="btnCookPlan"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> COOK PLAN — WHAT ORDER TO COOK IN</button>
     <button class="btn-ghost" id="btnPrepShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> SHOPPING LIST FOR THIS PREP</button>
+    <!-- The recipe book stopped being a tab of its own: it is an input to
+         planning rather than a destination, so it is reached from the two
+         screens where planning actually happens. -->
+    <button class="btn-ghost" id="btnPrepRecipes"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> RECIPE BOOK</button>
   </section>
 
   <section class="screen" id="screen-quest">
     <div class="eyebrow">QUEST LOG</div>
     <h1 class="title">Your Calendar</h1>
+    <div id="questStreak"></div>
+
+    <!-- Moved here from the character sheet. These are the things that
+         change on their own and you watch; the sheet keeps the things you
+         set and forget. Eight panels on one screen was the reason the app
+         started feeling heavy. -->
+    <!-- Weight history: the readings, the trend through them, and today's
+         weigh-in. Works everywhere — the series is the app's own, not
+         Health's — so unlike ACTIVITY this panel is never hidden. -->
+    <div class="panel cs-mod" id="sheetWeightPanel">
+      <label class="field-label mod-head"><span class="mod-no">01</span>WEIGHT</label>
+      <div id="sheetWeight"></div>
+    </div>
+
+    <!-- Daily burn: the formula's guess beside the figure measured from
+         this person's own log. Hidden until there are two numbers to
+         compare, so it never stands there explaining itself. -->
+    <div class="panel cs-mod" id="sheetBurnPanel" hidden>
+      <label class="field-label mod-head"><span class="mod-no">02</span>DAILY BURN</label>
+      <div id="sheetBurn"></div>
+    </div>
+
+    <!-- Steps read from the Health app. Native builds only: the panel stays
+         hidden on the web, where nothing can fill it. -->
+    <div class="panel cs-mod" id="sheetActivityPanel" hidden>
+      <label class="field-label mod-head"><span class="mod-no">03</span>ACTIVITY</label>
+      <div id="sheetSteps"></div>
+      <div id="sheetHealthWrite"></div>
+    </div>
+
     <div class="panel cal-panel">
       <div class="cal-head">
         <button class="mini-btn" id="calPrev" aria-label="Previous">‹</button>
@@ -729,8 +787,17 @@
 
   <!-- RECIPES -->
   <section class="screen" id="screen-recipes">
+    <button class="text-link" data-back="screen-prep" style="margin-bottom:8px;">&lsaquo; Back to your prep</button>
     <div class="eyebrow">RECIPE BOOK</div>
     <h1 class="title">Recipes</h1>
+    <div class="panel">
+      <div class="fav-search-wrap">
+        <input type="url" id="recipeImportUrl" class="fav-search" placeholder="Paste a recipe link" autocomplete="off" inputmode="url" aria-label="Recipe web address">
+        <button class="fav-clear" id="recipeImportGo" aria-label="Import"><svg class="px" aria-hidden="true"><use href="#i-plus"></use></svg></button>
+      </div>
+      <div id="recipeImportResult"></div>
+    </div>
+
     <div class="panel">
       <div class="fav-search-wrap">
         <input type="text" id="recipeSearch" class="fav-search" placeholder="Search recipes or an ingredient" autocomplete="off" aria-label="Search recipes">
@@ -1005,6 +1072,8 @@
       </div>
     </div>
     <div class="timeline" id="mealTimeline"></div>
+    <button class="btn-ghost" id="btnLoadoutPrepDays"><svg class="px" aria-hidden="true"><use href="#i-bento"></use></svg> YOUR PREPPED DAYS</button>
+    <button class="btn-ghost" id="btnLoadoutRecipes"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> RECIPE BOOK</button>
     <button class="btn-primary" id="btnShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> BUILD SHOPPING LIST</button>
     <p class="subtitle" style="font-size:var(--fs-body); margin-top:14px; opacity:.8;">
       Nutrition figures are reference values and vary by brand and cut — for anything packaged, the label on the box beats this table.
@@ -1014,6 +1083,7 @@
 </div>
 
 
+<script src="js/00-units.js"></script>
 <script src="js/01-boot.js"></script>
 <script src="js/02-themes.js"></script>
 <script src="js/03-data-tiers.js"></script>
@@ -1051,6 +1121,20 @@
 <script src="js/35-steps.js"></script>
 <script src="js/36-slot-scan.js"></script>
 <script src="js/37-custom-food.js"></script>
+<script src="js/38-weight.js"></script>
+<script src="js/39-expenditure.js"></script>
+<script src="js/40-recents.js"></script>
+<script src="js/41-health-write.js"></script>
+<script src="js/42-usda-data.js"></script>
+<script src="js/43-usda.js"></script>
+<script src="js/44-health-weight.js"></script>
+<script src="js/45-journal-repeat.js"></script>
+<script src="js/47-reminders.js"></script>
+<script src="js/48-prep-dates.js"></script>
+<script src="js/49-streaks.js"></script>
+<script src="js/50-data-export.js"></script>
+<script src="js/51-recipe-import.js"></script>
+<script src="js/52-recipe-import-ui.js"></script>
 
 <!-- ==========================================================================
      SERVICE WORKER REGISTRATION

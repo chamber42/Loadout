@@ -241,18 +241,93 @@
     validateOnboard();
   });
 
-  [bwInput, ftInput, inInput, ageInput].forEach(el=>{
-    el.addEventListener('input', ()=>{
-      state.bodyweight = parseFloat(bwInput.value) || null;
+  const cmInput = document.getElementById('heightCmInput');
+
+  /* Reads whichever boxes are on screen and writes pounds and inches, which
+     is what everything downstream expects however this screen is labelled. */
+  function readOnboardBody(){
+    const metric = (typeof isMetric === 'function') && isMetric();
+    const bw = parseFloat(bwInput.value);
+    state.bodyweight = isFinite(bw)
+      ? ((typeof storeWeight === 'function') ? storeWeight(bw) : bw)
+      : null;
+
+    if (metric){
+      const cm = parseFloat(cmInput.value);
+      state.heightIn = isFinite(cm)
+        ? ((typeof storeHeight === 'function') ? storeHeight(cm) : cm)
+        : null;
+    } else {
       const ft = parseFloat(ftInput.value) || 0;
       const inch = parseFloat(inInput.value) || 0;
       state.heightIn = (ft*12 + inch) || null;
-      state.age = parseFloat(ageInput.value) || null;
+    }
+    state.age = parseFloat(ageInput.value) || null;
+  }
+
+  [bwInput, ftInput, inInput, cmInput, ageInput].forEach(el=>{
+    if (!el) return;
+    el.addEventListener('input', ()=>{
+      readOnboardBody();
       syncExerciseKcal();
       renderExerciseOptions();
       validateOnboard();
     });
   });
+
+  /* Swaps the labels and the shape of the height row. Whatever was already
+     typed is rewritten into the new unit rather than cleared — someone
+     who realises halfway through that they wanted kilograms should not have
+     to start the form again. */
+  function renderOnboardUnits(){
+    const seg = document.getElementById('unitSeg');
+    const metric = (typeof isMetric === 'function') && isMetric();
+
+    if (seg){
+      seg.innerHTML = [['imperial','lb / ft'], ['metric','kg / cm']].map(([k,l])=>
+        `<button class="${(metric ? 'metric' : 'imperial') === k ? 'on' : ''}" data-units="${k}">${l}</button>`).join('');
+      seg.querySelectorAll('[data-units]').forEach(b=>b.addEventListener('click', ()=>{
+        if (typeof setUnits === 'function') setUnits(b.getAttribute('data-units'));
+      }));
+    }
+
+    const lbl = document.getElementById('bodyweightLabel');
+    if (lbl) lbl.textContent = 'CURRENT BODYWEIGHT (' +
+      ((typeof weightUnitLabel === 'function' ? weightUnitLabel() : 'lb').toUpperCase()) + ')';
+
+    const wb = (typeof weightBounds === 'function') ? weightBounds() : {min:70, max:500, step:1};
+    bwInput.min = wb.min; bwInput.max = wb.max; bwInput.step = wb.step;
+    bwInput.placeholder = metric ? 'e.g. 97' : 'e.g. 213';
+    if (state.bodyweight > 0 && typeof showWeight === 'function'){
+      bwInput.value = showWeight(state.bodyweight, metric ? 1 : 0);
+    }
+
+    const imp = document.getElementById('heightImperial');
+    if (imp) imp.hidden = metric;
+    if (cmInput){
+      cmInput.hidden = !metric;
+      if (metric && state.heightIn > 0 && typeof showHeight === 'function'){
+        cmInput.value = showHeight(state.heightIn);
+      }
+    }
+    if (!metric && state.heightIn > 0){
+      ftInput.value = Math.floor(state.heightIn / 12);
+      inInput.value = Math.round(state.heightIn % 12);
+    }
+
+    /* The goal buttons quote a weekly rate, which is the one piece of
+       standing copy in this app carrying a unit of mass. Restated rather
+       than left in pounds, since a metric user reading "~2 lb/wk" has to do
+       the conversion the rest of this screen just saved them. */
+    document.querySelectorAll('.wk-rate').forEach(el=>{
+      const lbwk = parseFloat(el.getAttribute('data-lbwk')) || 0;
+      const v = (typeof showRate === 'function') ? showRate(lbwk) : lbwk;
+      const unit = (typeof weightUnitLabel === 'function') ? weightUnitLabel() : 'lb';
+      el.textContent = '~' + (metric ? v.toFixed(1) : Math.round(v)) + ' ' + unit + '/wk';
+    });
+  }
+  window.renderOnboardUnits = renderOnboardUnits;
+  renderOnboardUnits();
 
   function validateOnboard(){
     const ready = !!(state.goal && state.activity && state.sex &&
@@ -288,8 +363,16 @@
     state.trainingDays = Math.min(Math.max(state.trainingDays || 0, 0), prepDayCount());
   }
 
-  /* Mifflin-St Jeor BMR × daily-life activity factor (NEAT only) */
+  /* Mifflin-St Jeor BMR × daily-life activity factor (NEAT only), unless a
+     measurement of this particular person has been adopted in its place.
+
+     The formula is a prediction about people with these four numbers; an
+     adopted figure is what this person's own intake and weight actually
+     did over the last month, which is better evidence about them. It is
+     only ever set by an explicit tap on the character sheet — see
+     39-expenditure.js for why it is never applied automatically. */
   function computeTDEE(){
+    if (state.tdeeMeasured > 0) return state.tdeeMeasured;
     const kg = state.bodyweight * 0.453592;
     const cm = state.heightIn * 2.54;
     const base = (10*kg) + (6.25*cm) - (5*state.age);

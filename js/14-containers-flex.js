@@ -147,7 +147,7 @@
     state.journalDate = todayKey();
     closeModal('modalPrepDay');
     renderPrepDays();
-    goTab('journal');
+    goTab('today');
     renderJournal();
     journalAddRow(slotName);
     toast('Serving kept in the fridge — log what you actually ate', 'burger');
@@ -172,11 +172,55 @@
     toast._t = setTimeout(()=>{ el.classList.remove('on'); }, 2400);
   }
 
+  /* When the prep starts, and therefore when it runs out. The date is
+     editable because the guess — today, stamped when the prep is built — is
+     wrong for anyone who plans on Saturday and starts eating on Monday.
+     Shown as a countdown rather than only a date: "3 days left" is the
+     thing somebody actually wants to know, and it is what decides whether
+     to shop tonight. */
+  function renderPrepDates(){
+    const host = document.getElementById('prepDates');
+    if (!host) return;
+    if (!prepReady() || typeof prepStartKey !== 'function'){ host.innerHTML = ''; return; }
+
+    const start = prepStartKey();
+    if (!start){ host.innerHTML = ''; return; }
+    const last = prepLastKey();
+    const left = prepDaysLeft();
+
+    host.innerHTML = `
+      <div class="panel">
+        <div class="vital vital-wide">
+          <span class="vital-lbl">Day 1 is</span>
+          <span class="vital-edit">
+            <input type="date" id="prepStartInput" value="${start}" aria-label="Date of prep day 1">
+          </span>
+        </div>
+        <div class="vital vital-wide">
+          <span class="vital-lbl">Runs out after</span>
+          <span class="vital-edit"><strong${left != null && left <= 1 ? ' class="n-amber"' : ''}>${escapeHtml(prepDateLabel(last))}</strong></span>
+        </div>
+        ${left != null ? `<p class="subtitle" style="font-size:11px; margin:10px 0 0;">${
+          left === 0 ? 'This prep is finished.'
+          : left === 1 ? 'Today is the last day.'
+          : left + ' days left, counting today.'}</p>` : ''}
+      </div>`;
+
+    const input = document.getElementById('prepStartInput');
+    if (input) input.addEventListener('change', ()=>{
+      if (!setPrepStartDate(input.value)) return;
+      renderPrepDays();
+      saveState();
+    });
+  }
+
   function renderPrepDays(){
     const host = document.getElementById('prepDayList');
     const intro = document.getElementById('prepDaysIntro');
     const summary = document.getElementById('prepDishSummary');
     if (!host) return;
+
+    renderPrepDates();
 
     if (!prepReady()){
       intro.textContent = 'No prep built yet.';
@@ -430,7 +474,7 @@
     applyDayToSelections(keep);
     state.journalDate = todayKey();
     renderJournal();
-    goTab('journal');
+    goTab('today');
     saveState();
   }
 

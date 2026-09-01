@@ -85,11 +85,29 @@
 
   /* Editable vitals. Changing any of these re-runs the whole calculation,
      the way a stat screen updates when you re-spec. */
-  const VITALS = [
-    {key:'bodyweight', label:'Weight', unit:'lb',  min:60,  max:600, step:1},
-    {key:'age',        label:'Age',    unit:'yrs', min:13,  max:100, step:1},
-    {key:'heightIn',   label:'Height', unit:'in',  min:48,  max:90,  step:1},
-  ];
+  /* Built per render rather than held as a constant: two of the three carry
+     a unit that the person can change, and the bounds move with it. Weight
+     and height are stored in pounds and inches whatever is displayed —
+     46-units.js converts at the edge and nothing else in the app knows. */
+  function vitalDefs(){
+    const w = (typeof weightBounds === 'function') ? weightBounds()
+                                                   : {min:60, max:600, step:1};
+    const metric = (typeof isMetric === 'function') && isMetric();
+    return [
+      {key:'bodyweight', label:'Weight',
+       unit: (typeof weightUnitLabel === 'function') ? weightUnitLabel() : 'lb',
+       min:w.min, max:w.max, step:w.step,
+       show: v => (typeof showWeight === 'function') ? showWeight(v, metric ? 1 : 0) : v,
+       store: n => (typeof storeWeight === 'function') ? storeWeight(n) : n},
+      {key:'age', label:'Age', unit:'yrs', min:13, max:100, step:1,
+       show: v => v, store: n => n},
+      {key:'heightIn', label:'Height',
+       unit: metric ? 'cm' : 'in',
+       min: metric ? 120 : 48, max: metric ? 230 : 90, step:1,
+       show: v => (typeof showHeight === 'function') ? showHeight(v) : v,
+       store: n => (typeof storeHeight === 'function') ? storeHeight(n) : n},
+    ];
+  }
 
   /* ---- the two daily numbers, side by side on the hero panel ----
      A character sheet states what you are, not what today happens to be, so
@@ -246,7 +264,9 @@
     ];
     host.innerHTML = rows.map(r=>{
       const pct = tg.kcal ? Math.round(r.kcal / tg.kcal * 100) : 0;
-      const perLb = state.bodyweight ? (r.g / state.bodyweight).toFixed(2) + ' g/lb' : '';
+      const perLb = (typeof perBodyweight === 'function')
+        ? perBodyweight(r.g, state.bodyweight)
+        : (state.bodyweight ? (r.g / state.bodyweight).toFixed(2) + ' g/lb' : '');
       return `<div class="stat-row attr-row" style="--c:${r.col}">
         <div class="stat-head attr-head">
           <span class="attr-glyph">${r.glyph}</span>
@@ -309,12 +329,21 @@
       (state.activity ? ' · ' + activityLabel(state.activity) : '');
 
     /* ---- vitals ---- */
+    const VITALS = vitalDefs();
+    const unitSeg = document.getElementById('sheetUnitSeg');
+    if (unitSeg && typeof setUnits === 'function'){
+      const metric = isMetric();
+      unitSeg.innerHTML = [['imperial','lb / ft'], ['metric','kg / cm']].map(([k,l])=>
+        `<button class="${(metric ? 'metric' : 'imperial') === k ? 'on' : ''}" data-sheetunits="${k}">${l}</button>`).join('');
+      unitSeg.querySelectorAll('[data-sheetunits]').forEach(b=>b.addEventListener('click', ()=>
+        setUnits(b.getAttribute('data-sheetunits'))));
+    }
     document.getElementById('sheetVitals').innerHTML = VITALS.map(v=>`
       <div class="vital">
         <span class="vital-lbl">${v.label}</span>
         <span class="vital-edit">
-          <input type="number" id="vital-${v.key}" value="${state[v.key] ?? ''}"
-                 min="${v.min}" max="${v.max}" step="${v.step}" inputmode="numeric"
+          <input type="number" id="vital-${v.key}" value="${state[v.key] != null ? (v.show(state[v.key]) ?? '') : ''}"
+                 min="${v.min}" max="${v.max}" step="${v.step}" inputmode="decimal"
                  aria-label="${v.label} in ${v.unit}">
           <span class="vital-unit">${v.unit}</span>
         </span>
@@ -341,7 +370,13 @@
       el.addEventListener('input', ()=>{
         const n = parseFloat(el.value);
         if (!(n >= v.min && n <= v.max)) return;   // ignore half-typed values
-        state[v.key] = n;
+        /* Typed in whatever is on screen, stored in pounds or inches. */
+        state[v.key] = v.store(n);
+        /* Correcting the weight here IS a weigh-in — it is someone saying
+           what they weigh today. Recording it keeps the history and the
+           current figure from disagreeing, which they would the first
+           time anybody edited this field instead of the panel below. */
+        if (v.key === 'bodyweight' && typeof recordWeight === 'function') recordWeight(state[v.key]);
         recalcFromVitals();
       });
     });
@@ -394,7 +429,10 @@
         bits.push(['Training-day target', `${targetsFor('train').kcal} kcal`]);
       }
     }
-    if (state.bodyweight) bits.push(['Bodyweight', `${state.bodyweight} lb`]);
+    if (state.bodyweight) bits.push(['Bodyweight',
+      (typeof showWeight === 'function')
+        ? `${showWeight(state.bodyweight, isMetric() ? 1 : 0)} ${weightUnitLabel()}`
+        : `${state.bodyweight} lb`]);
     bits.push(['Band', `${tier ? tier.min : ''}–${tier ? tier.max : ''} kcal`]);
     document.getElementById('sheetBreakdown').innerHTML =
       bits.map(([k,v])=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('') +

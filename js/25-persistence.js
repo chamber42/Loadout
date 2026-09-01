@@ -15,14 +15,14 @@
   ========================================================= */
   const SAVE_KEY = 'gfl.state.v1';
   const SAVE_FIELDS = ['theme','mode','directKcal','directP','directC','directF','goal',
-    'activity','sex','bodyweight','heightIn','age','exerciseMode','exerciseRaw','exerciseKcal',
-    'tdee','finalKcal','restKcal','trainKcal','trainingDays','sheetDayView',
+    'activity','sex','units','bodyweight','heightIn','age','exerciseMode','exerciseRaw','exerciseKcal',
+    'tdee','tdeeMeasured','tdeeMeasuredAt','finalKcal','restKcal','trainKcal','trainingDays','sheetDayView',
     'assignedTierId','selectedTierId','preferences','cravings','mealCount',
     'favorites','discoveryMode','dislikes','mustUse','mustQty','eatingStyle','selections',
     'mealPlan','mealWeights','skipBreakfast','breakfastForDinner','breakfastAllDay',
     'uniqueMeals','uniqueSnacks','prep','activeDay','portionOverrides','variety',
-    'log','journalMeals','calMode','calSel','calDate',
-    'eaten','prepServings','pantry','cupboard','customFoods'];
+    'log','weights','healthWeights','journalMeals','calMode','calSel','calDate',
+    'eaten','prepServings','pantry','cupboard','customFoods','importedRecipes'];
 
   let saveTimer = null;
   /* Whether the last attempt to write to storage failed. Read by nothing yet;
@@ -135,6 +135,14 @@
          product, and until it is back in its slot's list that key resolves
          to nothing and the slot renders empty. */
       mergeCustomFoods();
+      /* Before anything lists or scores a recipe: an imported dish has to
+         be in RECIPES for the recipe book, the planner and the goal-fit
+         scoring to treat it like any other. */
+      if (typeof mergeImportedRecipes === 'function') mergeImportedRecipes();
+      /* Before the trend reads it: a save written before weights existed
+         has a bodyweight and no history, and an empty chart would tell a
+         long-standing user they have never weighed themselves. */
+      if (typeof seedWeightHistory === 'function') seedWeightHistory();
       migrateDayType(data);
       migrateSeasonings();
       // after migrateDayType: it is what decides whether this prep has a split
@@ -145,6 +153,10 @@
       MEALS = buildMeals(state.mealPlan || '3+1');
       state.mealCount = MEALS.length;
       state.portionOverrides = state.portionOverrides || {};
+      /* A prep saved before dates existed has no start day. Stamped as
+         today rather than left blank, so everything that reads a prep date
+         has an answer; it is one tap to correct on the prep screen. */
+      if (typeof ensurePrepStartDate === 'function') ensurePrepStartDate();
       // rebuild the working copy from the saved prep so both stay in step
       if (prepReady()) applyDayToSelections(state.activeDay || 1);
       return !!(state.finalKcal && state.assignedTierId);

@@ -15,6 +15,11 @@
    would mirror -- start/pause/resume/cancel plus a change
    subscription, with no DOM assumptions in the data.
 
+   An end timestamp is also exactly what a scheduled notification
+   wants, which is how a finished timer now reaches somebody who
+   is not looking at the app -- see the note above
+   requestNotifyPermission.
+
    Its own localStorage key, so cook timers are independent of
    the meal-plan save blob and of "Start over".
    ============================================================ */
@@ -85,6 +90,21 @@
     timersChanged();
     ensureTicking();
     requestNotifyPermission();
+    armNativeTimerAlert(t);
+
+    /* The strip sits at z-index 45 and every modal overlay at 60, so a timer
+       started from the cook plan — which is where nearly all of them are
+       started — renders completely behind the sheet it was started from.
+       It is running; there is simply no way to see it until the modal is
+       closed, which reads as the button doing nothing at all.
+
+       Raising the strip is not the fix: it was lowered to 45 on purpose,
+       because at 60 it tied with .modal-wrap and painted over modal buttons.
+       A toast is at 9999 and belongs to the moment rather than the screen,
+       so it confirms the tap wherever it happened. */
+    if (typeof toast === 'function'){
+      toast(t.label + ' — ' + fmtClock(ms) + ' running', 'timer');
+    }
     return t.id;
   }
 
@@ -98,6 +118,7 @@
     if (!t || t.status !== 'running') return;
     t.remainingMs = Math.max(0, t.endsAt - Date.now());
     t.status = 'paused';
+    disarmNativeTimerAlert(t);
     timersChanged();
   }
 
@@ -106,12 +127,15 @@
     if (!t || t.status !== 'paused') return;
     t.endsAt = Date.now() + t.remainingMs;
     t.status = 'running';
+    armNativeTimerAlert(t);
     timersChanged();
     ensureTicking();
   }
 
   function timerCancel(id){
     const before = timers.length;
+    const going = timerFind(id);
+    if (going) disarmNativeTimerAlert(going);
     timers = timers.filter(function(t){ return t.id !== id; });
     if (timers.length !== before) timersChanged();
   }
@@ -123,17 +147,82 @@
     t.doneAt = Date.now();
     if (!t.notified){
       t.notified = true;
-      notifyTimerDone(t);
+      /* Native alerts are armed when the timer starts, so iOS delivers this
+         one whether the app is open or not — the plugin sets itself as the
+         notification-centre delegate so a banner still appears in the
+         foreground, which iOS otherwise suppresses. Announcing it again
+         here would double it for anyone watching the countdown. */
+      if (!nativeReminders()) notifyTimerDone(t);
     }
+  }
+
+  /* ---- where a finished timer actually gets announced ------------------
+
+     Two routes, and only one of them has ever worked on the phone.
+
+     NATIVE. UNUserNotificationCenter, through the Reminders plugin. The
+     alert is handed to iOS the moment the timer starts, scheduled for the
+     moment it ends, so it arrives whether or not the app is running — which
+     is the whole point of a cook timer, since nobody watches a countdown
+     for forty minutes.
+
+     WEB. new Notification(), which only fires while the page is alive.
+
+     The web route was the only one here, and inside this app it has never
+     fired at all: WKWebView does not implement the Notification API, so
+     `typeof Notification` is undefined and the call has been returning
+     early every time. The countdown was real; the alert was not. The web
+     route stays for the browser build, where it is the best available. */
+  function nativeReminders(){
+    var cap = window.Capacitor;
+    return (cap && cap.Plugins && cap.Plugins.Reminders) || null;
   }
 
   function requestNotifyPermission(){
     /* Asked on the first timer start rather than at app launch: a permission
        prompt makes sense when you have just asked for something that needs it. */
     try{
+      var RM = nativeReminders();
+      if (RM){
+        RM.status().then(function(res){
+          if (res && res.status === 'unasked') return RM.requestAuthorization();
+        }).catch(function(){});
+        return;
+      }
+    }catch(e){ return; }
+    try{
       if (typeof Notification === 'undefined') return;
       if (Notification.permission === 'default') Notification.requestPermission();
     }catch(e){}
+  }
+
+  /* Handed to iOS up front, for when the timer will finish. */
+  /* Every native call here is wrapped, not just its promise. A plugin
+     method that is missing throws SYNCHRONOUSLY rather than rejecting, and
+     an exception escaping this would take the whole click handler with it —
+     turning a notification that could not be scheduled into a timer that
+     could not be started. The alert is the optional part; the timer is not. */
+  function armNativeTimerAlert(t){
+    try{
+      var RM = nativeReminders();
+      if (!RM) return;
+      RM.scheduleAt({
+        id: 'timer.' + t.id,
+        at: t.endsAt,
+        title: 'Timer finished',
+        body: t.label + ' is done.'
+      }).catch(function(){});
+    }catch(e){ console.warn('Loadout: could not schedule a timer alert', e); }
+  }
+
+  /* A paused or cancelled timer must take its scheduled alert with it, or
+     iOS still announces a dish that is no longer cooking. */
+  function disarmNativeTimerAlert(t){
+    try{
+      var RM = nativeReminders();
+      if (!RM) return;
+      RM.cancel({id: 'timer.' + t.id}).catch(function(){});
+    }catch(e){ /* nothing was scheduled, so nothing to withdraw */ }
   }
 
   function notifyTimerDone(t){
@@ -196,11 +285,43 @@
      whatever is at the end of the page. Reserving its MEASURED height keeps the
      last row of content reachable; hard-coding a number gets it wrong the moment
      a second timer wraps the strip to two rows. */
+  /* Where the strip sits, and how much room the page owes it.
+
+     Two measurements rather than two constants. The action bar's height
+     depends on the safe-area inset, which differs by device and changes
+     when the phone rotates; the strip's own height depends on how many
+     timers are running and whether their labels wrap. Hard-coding either
+     gets it wrong on some phone, in some orientation, at some point — and
+     the way it goes wrong is that a timer ends up underneath the bar,
+     which is exactly the bug this replaces. */
   function syncStripSpace(){
     const host = document.getElementById('timerStrip');
     if (!host) return;
-    document.body.style.paddingBottom =
-      host.hidden ? '' : (host.offsetHeight + 10) + 'px';
+    const root = document.documentElement;
+
+    /* The bar is hidden until tabs are in play, and offsetHeight of a
+       hidden element is 0 — which is the right answer for both.
+
+       With no bar there is nothing between the strip and the bottom of the
+       screen, so it has to clear the home indicator itself. The action bar
+       already pays that inset in its own padding, and its offsetHeight
+       includes it, so when the bar IS there the strip must not pay it a
+       second time — that was a visible gap between the timer and the
+       buttons, not a rounding error. */
+    const bar = document.getElementById('tabBar');
+    let barH = (bar && !bar.hidden) ? bar.offsetHeight : 0;
+    if (!barH){
+      const inset = getComputedStyle(root).getPropertyValue('--safe-bottom').trim();
+      barH = parseFloat(inset) || 0;
+    }
+    root.style.setProperty('--tab-h', barH + 'px');
+
+    const stripH = host.hidden ? 0 : host.offsetHeight;
+    root.style.setProperty('--strip-h', stripH + 'px');
+
+    /* Only the strip's own height: the screen already reserves space for
+       the action bar through body.tabbed .screen. */
+    document.body.style.paddingBottom = stripH ? (stripH + 10) + 'px' : '';
   }
 
   function renderTimerStrip(){
@@ -229,8 +350,16 @@
     syncStripSpace();
   }
 
-  /* A rotate or a resize changes how many rows the strip needs. */
+  /* A rotate or a resize changes how many rows the strip needs, and moves
+     the safe-area inset the action bar is sized against. */
   window.addEventListener('resize', syncStripSpace);
+  window.addEventListener('orientationchange', syncStripSpace);
+
+  /* The action bar is revealed once onboarding finishes, which happens long
+     after this file has run and measured a bar that was still hidden. A
+     one-off pass after the first paint catches that; the resize and render
+     hooks keep it right afterwards. */
+  setTimeout(syncStripSpace, 0);
 
   /* ---- wiring ----
      Delegated from document, so buttons keep working across the re-renders

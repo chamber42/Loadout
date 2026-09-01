@@ -11,21 +11,45 @@
      Character creation happens once. After that the app is a set of
      sections rather than a linear flow, and the character sheet is home.
   ========================================================= */
+  /* FOUR DESTINATIONS, NAMED FOR WHAT YOU ARE DOING
+
+     The six that came before were six OBJECTS — a character, a plan, some
+     prepped days, a journal, a calendar, a recipe book. That is how the data
+     is shaped and it is not how anybody uses an app: the screen opened five
+     times a day sat at the same weight as a calendar opened once a week, and
+     the one thing this app does that nothing else does — re-sizing a real
+     dish to your real numbers — was spread across three of them.
+
+     These four are the loop the app actually describes, left to right:
+
+       you       who you are, and what the targets are built from
+       prep      what you will cook — the whole build, the cook plan, the
+                 shopping list, the recipe book that feeds it
+       today     what you are eating right now
+       progress  what all of it did
+
+     Each keeps its genre's own name. The grouping changed; the vocabulary
+     did not. */
   const TABS = {
-    sheet:   {screen:'screen-tiers'},
-    roadmap: {screen:'screen-prefs'},
-    prep:    {screen:'screen-prep'},
-    quest:   {screen:'screen-quest'},
-    journal: {screen:'screen-journal'},
-    recipes: {screen:'screen-recipes'},
+    you:      {screen:'screen-tiers'},
+    prep:     {screen:'screen-prefs'},
+    today:    {screen:'screen-journal'},
+    progress: {screen:'screen-quest'},
   };
-  /* Which section each screen belongs to, so sub-pages keep the right tab lit */
+
+  /* Which destination each screen belongs to, so a sub-page keeps the right
+     tab lit. The build flow — preferences, cravings, eating style, the
+     suggestion, the loadout — stays whole inside `prep`: it is one sequence
+     and splitting it across destinations would break it in the middle. */
   const SCREEN_TAB = {
-    'screen-tiers':'sheet',
-    'screen-prefs':'roadmap', 'screen-cravings':'roadmap', 'screen-style':'roadmap',
-    'screen-suggest':'roadmap', 'screen-loadout':'roadmap', 'screen-shop':'roadmap',
-    'screen-prep':'prep',
-    'screen-quest':'quest', 'screen-journal':'journal', 'screen-recipes':'recipes',
+    'screen-tiers':'you',
+
+    'screen-prefs':'prep', 'screen-cravings':'prep', 'screen-style':'prep',
+    'screen-suggest':'prep', 'screen-loadout':'prep', 'screen-shop':'prep',
+    'screen-prep':'prep', 'screen-recipes':'prep',
+
+    'screen-journal':'today',
+    'screen-quest':'progress',
   };
 
   function characterExists(){ return !!(state.finalKcal && state.assignedTierId); }
@@ -57,10 +81,18 @@
     // the sheet tab takes the genre's own name for it
     const t = THEMES[state.theme] || THEMES.cyberpunk;
     const lbl = document.getElementById('tabSheetLbl');
-    if (lbl) lbl.textContent = (t.sheet || 'CHARACTER SHEET').split(' ')[0].replace(/^\w/, c=>c.toUpperCase()).slice(0,9);
+    /* Through tabWord like the other three. The genre names are authored in
+       caps for headings, and this one used to keep them — which was hard to
+       notice among six tabs and obvious among four, where OPERATOR sat
+       beside Loadout, Intake and Quest Log. */
+    if (lbl) lbl.textContent = tabWord((t.sheet || 'CHARACTER SHEET').split(' ')[0], 'Sheet').slice(0, 9);
     // and the loadout tab takes the genre's word for a day's food
     const loLbl = document.getElementById('tabLoadoutLbl');
     if (loLbl) loLbl.textContent = tabWord(t.words && t.words.loadout, 'Loadout');
+    /* The journal takes the genre's word for a record of what was eaten —
+       Rations in the wasteland, Fuel on the grid, Chronicle in the tavern. */
+    const jLbl = document.getElementById('tabJournalLbl');
+    if (jLbl) jLbl.textContent = tabWord(t.words && t.words.journal, 'Journal');
     /* Same for the calendar. "Log" reads better than the bare noun, so keep
        it wherever the pair still fits the column — "Objective Log" does not,
        and drops the suffix rather than the meaning. */
@@ -74,20 +106,26 @@
   function goTab(name){
     const t = TABS[name];
     if (!t) return;
-    if (name === 'sheet') renderTiers();
-    if (name === 'roadmap'){
-      // pick up wherever the prep was left, rather than restarting it
+    if (name === 'you') renderTiers();
+    if (name === 'prep'){
+      /* Pick up wherever the prep was left rather than restarting it. A
+         half-built loadout is the common case, and dropping somebody back
+         at the preferences screen would throw it away. */
       if (Object.values(state.selections || {}).some(sel =>
             SLOT_DEFS.some(d => (sel[d.slot]||[]).some(Boolean)))){
         renderEatenPanel(); renderMealTimeline(); refreshTargets();
         showScreen('screen-loadout'); return;
       }
+      /* A prep that is already cooked lands on the prepped days instead of
+         asking about preferences again. */
+      if (typeof prepReady === 'function' && prepReady()){
+        writeBackActiveDay(); renderPrepDays();
+        showScreen('screen-prep'); return;
+      }
       renderPrefs();
     }
-    if (name === 'prep'){ writeBackActiveDay(); renderPrepDays(); }
-    if (name === 'quest')   renderCalendar();
-    if (name === 'journal') renderJournal();
-    if (name === 'recipes') renderRecipeBook();
+    if (name === 'progress') renderCalendar();
+    if (name === 'today')    renderJournal();
     showScreen(t.screen);
   }
 
@@ -109,8 +147,8 @@
     const name = b.getAttribute('data-tab');
     /* Reaching the journal from the tab bar always lands on today. Done here
        rather than inside goTab() on purpose: the calendar opens a chosen day
-       by calling goTab('journal') directly, and that date has to survive. */
-    if (name === 'journal' && typeof resetJournalToToday === 'function') resetJournalToToday();
+       by calling goTab('today') directly, and that date has to survive. */
+    if (name === 'today' && typeof resetJournalToToday === 'function') resetJournalToToday();
     goTab(name);
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{

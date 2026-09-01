@@ -2,7 +2,7 @@ import UIKit
 import Capacitor
 
 /*
- Exists solely to register HealthKitPlugin.
+ Exists solely to register the plugins that live in the app target.
 
  Capacitor's automatic registration reads a packageClassList out of the
  generated capacitor.config.json, and the CLI rebuilds that list from the
@@ -22,5 +22,6 @@ class MainViewController: CAPBridgeViewController {
 
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(HealthKitPlugin())
+        bridge?.registerPluginInstance(NotificationsPlugin())
     }
 }

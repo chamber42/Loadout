@@ -554,7 +554,7 @@
         <button class="btn-primary" id="rpGoRoadmap" style="margin-top:14px;">GO TO THE LOADOUT</button>`;
       openModal('modalRecipePlace');
       document.getElementById('rpGoRoadmap').addEventListener('click', ()=>{
-        closeModal('modalRecipePlace'); goTab('roadmap');
+        closeModal('modalRecipePlace'); goTab('prep');
       });
       return;
     }

@@ -87,6 +87,9 @@
             var total = Math.round(p.heightIn);
             fill(ft, Math.floor(total / 12));
             fill(inches, total % 12);
+            /* Rewrites whichever boxes are actually on screen, so a metric
+               user gets centimetres rather than an empty height row. */
+            if (typeof renderOnboardUnits === 'function') renderOnboardUnits();
             got.push('height');
           }
 

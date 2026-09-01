@@ -450,7 +450,10 @@
   .mustuse-chosen .chip{ border-color:var(--amber)!important; color:var(--amber)!important; background:rgba(255,176,0,0.10)!important; }
   .fav-chosen.mustuse-chosen{ display:block; }
   /* ---- tab tray ---- */
-  .tab-bar{ position:sticky; top:0; z-index:40; display:grid; grid-template-columns:repeat(6,1fr);
+  /* Columns follow the number of tabs rather than a fixed six, so the bar
+     cannot end up with dead space when a destination is added or removed. */
+  .tab-bar{ position:sticky; top:0; z-index:40; display:grid;
+            grid-auto-flow:column; grid-auto-columns:1fr;
             gap:1px; padding:calc(6px + var(--safe-top)) 4px 6px;
             background:var(--bg-1); border-bottom:1px solid var(--line); }
   .tab-bar[hidden]{ display:none; }
@@ -520,6 +523,10 @@
               -webkit-appearance:none; appearance:none; background:transparent;
               padding:14px 12px; border:1px dashed var(--accent-line); border-radius:10px;
               color:var(--cyan); font-family:var(--font-body); font-size:var(--fs-body); line-height:1.4; }
+  /* An author `display` beats the hidden attribute's own display:none, so
+     without this a camera button stays on screen where no camera exists —
+     visible and dead. Same guard as .tab-bar and .timer-strip. */
+  .photo-btn[hidden]{ display:none; }
   .photo-btn:active{ background:var(--accent-soft); }
   .scan-video{ width:100%; max-height:260px; object-fit:cover; border-radius:10px;
                background:#000; border:1px solid var(--line); }
@@ -715,6 +722,7 @@
   .day-chip .kd{ display:block; font-size:9px; line-height:1; margin-top:2px; opacity:.85; }
   .day-chip.train{ border-color:rgba(120,220,150,.45); }
   .seg{ display:flex; gap:6px; margin-bottom:14px; }
+  .seg[hidden]{ display:none; }
   .seg button{ flex:1; min-height:40px; border-radius:9px; border:1px solid var(--line);
                background:var(--panel-2); color:var(--muted); font-family:var(--font-body);
                font-size:12px; letter-spacing:.5px; cursor:pointer; }
@@ -903,9 +911,11 @@
   }
 
   /* -- the chrome above and below the app -------------------------------- */
-  body[data-material="salvage"] .tab-bar{
-    border-top-color:#36421f;
-    box-shadow:inset 0 1px 0 rgba(182,224,39,.12);
+  /* The bar is no longer a slab, so there is no top edge to tint. The
+     wasteland's colour lives on the buttons instead. */
+  body[data-material="salvage"] .tab{
+    border-color:#36421f;
+    box-shadow:inset 0 1px 0 rgba(182,224,39,.12), 0 4px 14px rgba(0,0,0,.45);
   }
   body[data-material="salvage"] .tab.active .lbl,
   body[data-material="salvage"] .tab.active .ico{ color:var(--wl-toxic); }
@@ -1237,17 +1247,29 @@
      one-handed. Active tab is raised and marked with a top rail. */
   .tab-bar{
     position:fixed; top:auto; left:0; right:0; bottom:0; z-index:45;
-    gap:2px; padding:8px 8px calc(8px + var(--safe-bottom));
-    background:
-      linear-gradient(180deg, rgba(255,255,255,.05), transparent 30px),
-      linear-gradient(180deg, var(--panel), var(--bg-0));
-    border-top:1px solid var(--accent-line); border-bottom:0;
-    box-shadow:0 -8px 24px rgba(0,0,0,.5);
+    gap:8px; padding:0 10px calc(10px + var(--safe-bottom));
+    /* No slab. The bar itself carries nothing — no background, no border,
+       no shadow — so what you see at the bottom of the screen is four
+       buttons floating over the page rather than a black band with icons
+       printed on it. The buttons below take the surface instead.
+
+       The page still reserves the same room through body.tabbed .screen, so
+       content stops above the buttons rather than sliding beneath them. */
+    background:none;
+    border-top:0; border-bottom:0;
+    box-shadow:none;
   }
+  /* CAREFUL: four separate rules in this file have `.tab` as their subject,
+     all at the same specificity and all at the top level, so the LAST one
+     wins per property. The keycap block further down sets background and
+     border-radius, which is why neither belongs here — declaring them
+     twice looks like styling and is dead text. The shadow does belong
+     here: nothing later touches it. */
   .tab{
-    position:relative; border-radius:5px;
-    border:1px solid transparent; min-height:54px; gap:4px;
-    transition:color .12s, background .12s, transform .08s;
+    position:relative;
+    border:1px solid var(--line); min-height:54px; gap:4px;
+    box-shadow:0 4px 14px rgba(0,0,0,.38);
+    transition:color .12s, background .12s, transform .08s, box-shadow .12s;
   }
   .tab .lbl{ letter-spacing:.4px; }
   .tab::before{
@@ -1255,8 +1277,8 @@
     background:var(--cyan); opacity:0; transition:opacity .15s;
   }
   .tab.on{
-    background:linear-gradient(180deg, var(--accent-soft), transparent);
     border-color:var(--accent-line);
+    box-shadow:0 6px 18px rgba(0,0,0,.45);
   }
   .tab.on::before{ opacity:1; }
   .tab.on .ico{ transform:translateY(-1px); }
@@ -1268,7 +1290,9 @@
     padding-bottom:calc(108px + var(--safe-bottom));
   }
   body.tabbed.hud-on .screen{ padding-top:18px; }
-  .toast{ bottom:calc(104px + var(--safe-bottom)); border-radius:4px; }
+  /* Clears the action bar, and the timer strip too when one is showing —
+     --strip-h is 0px whenever no timer is running. */
+  .toast{ bottom:calc(104px + var(--safe-bottom) + var(--strip-h, 0px)); border-radius:4px; }
 
   /* ---------- Dialogs ----------------------------------------------------*/
   .modal-card, .modal{
@@ -1352,8 +1376,8 @@
     .panel{ --pad:22px; padding:var(--pad); }
     .panel::after{ inset:7px; }
     .tab-bar{
-      max-width:640px; margin:0 auto; border-radius:8px 8px 0 0;
-      border-left:1px solid var(--accent-line); border-right:1px solid var(--accent-line);
+      max-width:640px; margin:0 auto;
+      border-radius:0; border-left:0; border-right:0;
     }
   }
   @media (min-width:1080px){
@@ -1592,14 +1616,22 @@
   /* ---------- Action bar --------------------------------------------------
      Tabs become keycaps: a raised plate with a bottom bevel that depresses
      on touch, and a lit rail plus a filled body when active. */
+  /* The sheen sits ON a solid plate rather than on nothing. Before, the
+     gradient faded to fully transparent, which was invisible while the bar
+     underneath was an opaque slab and became see-through keys the moment
+     the slab was removed. A key should be a key. */
   .tab{
-    background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,0));
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,0)),
+      var(--panel-2);
     border:1px solid var(--line); border-bottom-width:3px;
     border-bottom-color:rgba(0,0,0,.5);
-    border-radius:4px;
+    border-radius:12px;
   }
   .tab.on{
-    background:linear-gradient(180deg, var(--accent-soft), rgba(255,255,255,0));
+    background:
+      linear-gradient(180deg, var(--accent-soft), rgba(255,255,255,0)),
+      var(--panel-2);
     border-color:var(--accent-line); border-bottom-color:var(--cyan);
   }
   .tab.on::before{ left:14%; right:14%; height:3px; }
@@ -1754,6 +1786,56 @@
   .vital-wide select{ max-width:none; flex:1 1 190px; }
   .vital input{ color:var(--cyan); border-bottom-style:solid; }
   .vital-unit{ letter-spacing:1px; }
+
+  /* ---------- Streak ------------------------------------------------------*/
+  /* Three figures read at a glance, then what is coming next. Laid out as a
+     stat row rather than a sentence: the numbers are the message. */
+  .streak-panel{ padding-top:16px; padding-bottom:16px; }
+  .streak-row{ display:flex; gap:8px; }
+  .streak-stat{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+    text-align:center;
+  }
+  .streak-n{
+    font-family:var(--font-display); font-size:26px; line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .streak-lbl{
+    font-family:var(--font-body); font-size:9px; letter-spacing:1.6px;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .streak-next{
+    display:grid; grid-template-columns:auto 1fr auto; gap:8px;
+    align-items:center; margin-top:16px;
+  }
+  .streak-next-lbl,
+  .streak-next-go{
+    font-family:var(--font-body); font-size:10px; letter-spacing:1px;
+    text-transform:uppercase; color:var(--muted); white-space:nowrap;
+  }
+  .streak-next-bar{
+    display:block; height:4px; border-radius:2px;
+    background:var(--line); overflow:hidden;
+  }
+  .streak-next-bar i{ display:block; height:100%; background:var(--cyan); }
+  .streak-badges{
+    display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;
+    padding-top:14px; border-top:1px solid var(--line);
+  }
+  .streak-badge{
+    font-family:var(--font-body); font-size:9px; letter-spacing:1.2px;
+    text-transform:uppercase; color:var(--cyan);
+    border:1px solid var(--cyan); border-radius:2px; padding:3px 7px;
+  }
+
+  /* ---------- Weight trend ------------------------------------------------*/
+  /* The chart carries the shape; the gridline figures carry the numbers. Both
+     drawn from the theme's own variables so every genre keeps its palette. */
+  .wt-chart{ display:block; width:100%; height:auto; margin:2px 0 10px; overflow:visible; }
+  .wt-axis{
+    font-family:var(--font-body); font-size:8.5px; letter-spacing:.6px;
+    fill:var(--muted);
+  }
 
   /* ---------- Attributes --------------------------------------------------*/
   .cs-attr-split{ display:block; }
@@ -5265,16 +5347,35 @@
 
   /* ---------- COOK TIMERS (30-timers.js) ---------- */
   .timer-strip{
-    /* Below modals (60) and the HUD (50), above the tab bar (40). At 60 it tied
-       with .modal-wrap and, being later in the DOM, painted over modal buttons
-       whenever a timer was running. */
-    position:fixed; left:0; right:0; bottom:0; z-index:45;
-    padding:8px 10px calc(8px + var(--safe-bottom));
-    background:linear-gradient(180deg, rgba(10,14,20,.92), rgba(10,14,20,.99));
-    border-top:1px solid var(--line);
-    backdrop-filter:blur(6px);
+    /* Sits ON TOP OF the action bar, not behind it.
+
+       The comment that used to be here said "above the tab bar (40)", which
+       stopped being true when the action bar moved to the bottom of the
+       screen and became fixed at z-index 45 — the same corner and the same
+       stacking level as this. Being two lines earlier in the DOM, the strip
+       lost, and the bar painted straight over it: one timer disappeared
+       completely, and two were clipped to whatever peeked above the bar.
+
+       So: raised one level over the bar, and lifted clear of it by the
+       bar's own measured height (--tab-h, set in 30-timers.js). Still
+       below modals at 60, which is what the original 45 was protecting. */
+    position:fixed; left:0; right:0; bottom:var(--tab-h, 0px); z-index:46;
+    /* Transparent, like the action bar below it: a running timer should read
+       as a bubble sitting over the page, not as a second black band stacked
+       on the first. The rows carry the surface. No bottom padding — the
+       safe-area inset belongs to the action bar underneath, and paying for
+       it twice left a gap the timer appeared to float above. */
+    padding:0 10px 8px;
+    background:none;
+    border-top:0;
     display:flex; flex-direction:column; gap:6px;
   }
+  /* An author `display` beats the hidden attribute's own display:none, so
+     without this the strip renders as an empty bar whenever no timer is
+     running. It always did — it was simply out of sight underneath the
+     action bar until the strip was lifted clear of it. .tab-bar carries the
+     same guard, for the same reason. */
+  .timer-strip[hidden]{ display:none; }
   /* The tab bar is sticky-to-TOP, not a bottom nav, so the strip simply pins to
      the bottom. Room for it is reserved by syncStripSpace() in 30-timers.js,
      which measures the real height rather than hard-coding one. */
@@ -5282,8 +5383,12 @@
   .timer-row{
     position:relative; overflow:hidden;
     display:flex; align-items:center; gap:8px;
-    padding:8px 10px;
-    background:var(--panel-2); border:1px solid var(--line); border-radius:6px;
+    padding:10px 12px;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:14px;
+    /* Matches the action bar's buttons, so a timer reads as one more thing
+       floating at the bottom of the screen rather than a different kind of
+       object that happens to be nearby. */
+    box-shadow:0 4px 14px rgba(0,0,0,.38);
   }
   /* Progress is a background wash rather than a separate bar, so the row stays
      one line tall on a phone. */
