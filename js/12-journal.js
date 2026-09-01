@@ -150,8 +150,19 @@
                   ? `${daySteps != null ? daySteps.toLocaleString() + ' steps · ' : ''}measured from your activity, beyond a usual day`
                   : `${buff.extra != null ? buff.extra.toLocaleString() + ' past your usual ' + buff.average.toLocaleString() + ' · ' : ''}estimated from steps`)
               : `${dayAverage ? `Your usual is about ${dayAverage.toLocaleString()}. ` : ''}${
-                  isToday ? 'Go past that and today\'s target goes up.'
-                          : 'No further than usual, so no buff.'}`}</span>
+                  /* Never claim the day was no further than usual when the
+                     number printed on the line above says it was further.
+                     A buff can be declined for reasons that have nothing to
+                     do with distance — a training session already paid for,
+                     or an activity reading that saw nothing — and saying
+                     "no further than usual" in those cases contradicts the
+                     step count sitting right next to it. */
+                  (typeof stepsBeatUsual === 'function' && stepsBeatUsual(key))
+                    ? (dayKind === 'train'
+                        ? 'Your training session already covers it.'
+                        : 'Already counted in your activity level.')
+                    : (isToday ? 'Go past that and today\'s target goes up.'
+                               : 'No further than usual, so no buff.')}`}</span>
           </span>
         </div>` : ''}
         <div class="qb-macros">

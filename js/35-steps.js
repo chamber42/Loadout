@@ -100,45 +100,193 @@
        whole thing: state.activity is already a multiplier over BMR standing
        for how much this person moves normally, so crediting a normal day
        again would pay for the same movement twice. */
+    /* ---- what "usual" means ---------------------------------------------
+
+       One blended mean across every day alike — a training day is a gym
+       session lifting weights, which carries no more walking than any other
+       day, so the rest/training flag says nothing about how far somebody
+       walked and nothing here reads it.
+
+       Measured over FOUR WEEKS rather than HealthKit's seven days, and that
+       window length is doing real work.
+
+       The buff credits movement beyond a usual day, on the grounds that a
+       usual day is already paid for by state.activity inside TDEE. That
+       holds only while state.activity is right, and it is one of four fixed
+       numbers chosen once at character creation. It never moves. So when
+       somebody genuinely starts walking further, a seven-day baseline
+       absorbs the change inside a week — the buff decays to nothing — while
+       their TDEE never rises to replace it. They burn more permanently and
+       are credited for none of it.
+
+       The measured expenditure in 39-expenditure.js does catch that, because
+       it reads intake against the weight trend rather than a multiplier. But
+       it needs two to four weeks to see it. A four-week baseline makes the
+       buff fade over roughly the same period the measurement takes to catch
+       up, so the credit hands off from one to the other instead of falling
+       through the gap between them.
+
+       Falls back to HealthKit's own figure when there is not yet a month of
+       history to average. */
+    var USUAL_WINDOW_DAYS = 28;
+    var USUAL_MIN_DAYS    = 7;
+
+    function meanRecent(map, fallback){
+      if (!map) return fallback;
+      var today = todayKeyLocal();
+      var vals = Object.keys(map).filter(function(k){
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return false;
+        if (k >= today) return false;                 // still being lived
+        /* Zeros excluded, for the same reason sessionStepCost excludes them:
+           a recorded zero is a phone left on a desk far more often than a
+           day without a single step. The two means must also agree on which
+           days they count, or the difference between them means nothing. */
+        return map[k] > 0;
+      }).sort().slice(-USUAL_WINDOW_DAYS).map(function(k){ return map[k]; });
+
+      if (vals.length < USUAL_MIN_DAYS) return fallback;
+      return vals.reduce(function(a, b){ return a + b; }, 0) / vals.length;
+    }
+
+    function usualSteps(){
+      return Math.round(meanRecent(latest && latest.byDay,
+                                   (latest && latest.average) || 0));
+    }
+    function usualEnergy(){
+      return meanRecent(latest && latest.energyByDay,
+                        (latest && latest.energyAverage) || 0);
+    }
+
+    /* ---- how many steps a training session actually costs ---------------
+
+       On a training day the credited session burn is already inside the
+       target, so any part of it that ALSO shows up in the step surplus
+       would be paid for twice. The question is how much of it does.
+
+       That depends on the session, and the app has no idea what the session
+       was — it has a step count and nothing else. Rather than ask, and then
+       guess the step cost from the answer, this measures the step cost
+       directly: on the days you marked as training, how many more steps did
+       you take than on the days you did not?
+
+       The difference IS the session's contribution to the counter, for you.
+       Lifting comes out near zero, a run comes out in the thousands, and
+       cycling comes out near zero too — correctly, because a bike puts no
+       steps on the counter whatever else it does. The exercise type never
+       needs naming, because it was only ever a way of predicting this
+       number, and this number can be observed.
+
+       Null until there is enough of both kinds to compare, and the caller
+       falls back to subtracting the whole session while that is true. */
+    var INFER_MIN_DAYS = 3;    // of each kind, before a difference means anything
+
+    function dayKindAtKey(key){
+      var day = (typeof state !== 'undefined' && state.log) ? state.log[key] : null;
+      /* Same default the journal uses: a date nobody marked is a rest day. */
+      return (day && day.dayKind === 'train') ? 'train' : 'rest';
+    }
+
+    window.sessionStepCost = function(){
+      if (!latest || !latest.byDay) return null;
+      var today = todayKeyLocal();
+      var train = [], rest = [];
+      Object.keys(latest.byDay).forEach(function(k){
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return;
+        if (k >= today) return;                       // still being lived
+        var n = latest.byDay[k];
+        /* A recorded zero is a phone left on a desk far more often than a
+           day without a single step, and it would drag whichever mean it
+           lands in. */
+        if (!(n > 0)) return;
+        (dayKindAtKey(k) === 'train' ? train : rest).push(n);
+      });
+
+      if (train.length < INFER_MIN_DAYS || rest.length < INFER_MIN_DAYS) return null;
+      var mean = function(a){
+        return a.reduce(function(x, y){ return x + y; }, 0) / a.length;
+      };
+      /* Clamped at zero: a training population that walks LESS than the rest
+         population is noise, not a session that removes steps. */
+      return Math.max(0, Math.round(mean(train) - mean(rest)));
+    };
+
     window.stepBuffFor = function(key, kind){
       if (!latest) return null;
       if (typeof state === 'undefined' || !(state.bodyweight > 0)) return null;
 
-      var source, extraKcal;
       var steps  = window.stepsOn(key);
       var energy = window.energyOn(key);
 
-      if (energy != null && latest.energyAverage > 0){
-        source = 'energy';
-        extraKcal = energy - latest.energyAverage;
-      } else if (steps != null && latest.average > 0){
-        source = 'steps';
-        var kg = state.bodyweight * 0.453592;
-        extraKcal = (steps - latest.average) * NET_KCAL_PER_STEP_PER_KG * kg;
-      } else {
-        return null;
-      }
+      /* On a training day the session burn is already inside the training
+         target, so it must not be paid for a second time here. Whether it
+         IS in a given figure depends entirely on which figure:
 
-      /* On a training day the logged session burn is already added into the
-         training-day target, and the same effort is inside these figures
-         too. Measured energy can have it taken back out, so a training day
-         that ALSO involved a lot of walking still earns something for the
-         walking — which is the fair answer, and a kinder one than refusing
-         the whole day. A step count cannot be separated that way: there is
-         no telling which steps belonged to the session, so that path still
-         declines rather than risk paying twice. */
-      /* The caller passes the kind of the day being LOOKED AT. Falling back
-         to activeDayKind() would answer for today whatever day is on screen,
-         which is wrong the moment anyone scrolls back through the journal. */
+           ENERGY captures the session. Active energy comes from heart rate
+           and motion, so an hour of lifting shows up in it plainly. Credit
+           it again and the day is paid twice, so the session comes out.
+
+           STEPS do not. Lifting produces almost no walking — a few hundred
+           paces between racks, against a surplus measured in thousands. The
+           session was never in this number, so taking it out is subtracting
+           something that is not there.
+
+         Both earlier versions got this wrong in opposite directions. The
+         first refused the step path outright on a training day, so a gym day
+         with 17,000 steps earned nothing. The second subtracted the whole
+         session from the step figure, which zeroed out almost every day it
+         touched. The distinction is not the day, it is the signal.
+
+         Worth revisiting only if training ever means long runs: a run DOES
+         show up in the step count, and then the overlap is real. */
       var dayKind = kind || ((typeof activeDayKind === 'function') ? activeDayKind() : 'rest');
+      var session = (dayKind === 'train' && typeof rawExerciseKcal === 'function')
+        ? rawExerciseKcal() : 0;
 
-      if (dayKind === 'train'){
-        if (source !== 'energy') return null;
-        var session = (typeof rawExerciseKcal === 'function') ? rawExerciseKcal() : 0;
-        extraKcal -= session;
+      /* BOTH signals are computed, and whichever shows a real surplus wins.
+
+         Measured active energy used to win outright whenever it existed,
+         which was wrong on a phone carried without a Watch: iOS still
+         estimates active energy from motion, that estimate barely moves with
+         a long walk, and a flat estimate would then block a step count that
+         had plainly doubled. A day of 25,415 steps against a usual of 13,524
+         reported no buff and said "no further than usual" — while the number
+         on the same line said otherwise.
+
+         Energy is still preferred when both agree there was a surplus: it
+         knows a hill from a flat stroll and counts activity that takes no
+         steps at all. It is only overruled when it says nothing happened and
+         the step count says something did. */
+      var fromEnergy = null, fromSteps = null;
+      var usualE = usualEnergy();
+      var usualS = usualSteps();
+
+      if (energy != null && usualE > 0){
+        fromEnergy = (energy - usualE) - session;
+      }
+      if (steps != null && usualS > 0){
+        var kg = state.bodyweight * 0.453592;
+        /* Subtract the session's own step cost, measured rather than
+           assumed — see sessionStepCost above. Near zero for lifting or
+           cycling, thousands for a run, and whatever it actually is for
+           whatever you actually do.
+
+           Where there is not yet enough history to measure it, fall back to
+           taking the whole session burn out. That is the conservative
+           answer and it is the one that was zeroing out training days, so
+           it should be temporary: a few marked days of each kind is all it
+           takes to replace a guess with a measurement. */
+        var costSteps = (dayKind === 'train') ? window.sessionStepCost() : 0;
+        if (dayKind === 'train' && costSteps == null){
+          fromSteps = ((steps - usualS) * NET_KCAL_PER_STEP_PER_KG * kg) - session;
+        } else {
+          fromSteps = (steps - usualS - (costSteps || 0)) * NET_KCAL_PER_STEP_PER_KG * kg;
+        }
       }
 
-      if (extraKcal <= 0) return null;
+      var source, extraKcal;
+      if (fromEnergy != null && fromEnergy > 0){ source = 'energy'; extraKcal = fromEnergy; }
+      else if (fromSteps != null && fromSteps > 0){ source = 'steps'; extraKcal = fromSteps; }
+      else return null;
 
       /* The same slide the app applies to exercise. Both sources run high —
          wearables optimistically, step formulas by ignoring that most of a
@@ -151,16 +299,35 @@
       return {
         kcal: kcal,
         source: source,
+        /* What the session was measured to cost in steps, so the journal can
+           say so rather than leaving a deduction unexplained. Null when
+           there was not enough history and the whole session was taken out
+           instead. */
+        sessionSteps: (dayKind === 'train') ? window.sessionStepCost() : null,
         steps: steps,
-        average: latest.average,
-        extra: (steps != null && latest.average) ? Math.round(steps - latest.average) : null
+        /* The usual for this kind of day, not the blended one — it is what
+           the figure was actually measured against, and it is what the
+           journal quotes back. */
+        average: usualS,
+        extra: (steps != null && usualS) ? Math.round(steps - usualS) : null
       };
+    };
+
+    /* Whether the day's step count was actually above the usual, regardless
+       of whether it earned anything. The journal needs this to avoid telling
+       somebody they went "no further than usual" on a day they walked twice
+       as far — which is what it did whenever a buff was declined for a
+       reason other than the distance. */
+    window.stepsBeatUsual = function(key){
+      var steps = window.stepsOn(key);
+      var usual = usualSteps();
+      return !!(steps != null && usual > 0 && steps > usual);
     };
 
     /* A usual day lately, over the last seven completed days. Null until
        Health has been read. */
     window.stepAverage = function(){
-      return (latest && latest.average) ? latest.average : null;
+      return usualSteps() || null;
     };
 
     function todayKeyLocal(){

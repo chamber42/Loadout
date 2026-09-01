@@ -137,11 +137,9 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
        steps to someone who walked all day would be worse than saying
        nothing.
 
-       One caveat worth knowing: cumulativeSum adds every matching sample,
-       and an iPhone and an Apple Watch worn together both record steps. For
-       a phone-only user this matches the Health app. For a Watch user it
-       can read high, because Health applies its own source-priority rules
-       when it shows a single number and this does not. */
+       Counted per source and then taken as the largest, not the sum — see
+       the note inside dailyTotals. Summing double-counted any day where a
+       phone and a Watch both recorded the same walk. */
     @objc func readSteps(_ call: CAPPluginCall) {
         guard HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
@@ -219,10 +217,31 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         var oneDay = DateComponents()
         oneDay.day = 1
 
+        /* separateBySource, and then the LARGEST source rather than the sum
+           of all of them.
+
+           A plain cumulativeSum adds every matching sample, and an iPhone and
+           an Apple Watch worn together both record steps for the same walk —
+           so the total came out close to double what the Health app shows for
+           the same day. Health does not sum; it applies its own source
+           priority and reports one figure.
+
+           Taking the maximum is the closest approximation available through
+           this API, and it is right for the reason the double count happens:
+           the two devices are recording the SAME walk, not two different
+           ones, so the honest answer is the better-instrumented of the two
+           readings rather than their sum. A Watch worn all day sees strictly
+           more than a phone left on a desk, so the maximum picks it without
+           anything here having to know what a Watch is — and it degrades to
+           exactly the old behaviour when there is only one source.
+
+           Deliberately not hardcoding a preference for Apple Watch by bundle
+           identifier: it would need updating for every other device somebody
+           might wear, and picking the largest reading gets there anyway. */
         let query = HKStatisticsCollectionQuery(
             quantityType: type,
             quantitySamplePredicate: HKQuery.predicateForSamples(withStart: windowStart, end: Date()),
-            options: .cumulativeSum,
+            options: [.cumulativeSum, .separateBySource],
             anchorDate: startOfToday,
             intervalComponents: oneDay)
 
@@ -232,7 +251,17 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             var completed: [(Date, Double)] = []
 
             collection?.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
-                let total = stat.sumQuantity()?.doubleValue(for: unit) ?? 0
+                var total = 0.0
+                if let sources = stat.sources, !sources.isEmpty {
+                    for source in sources {
+                        let v = stat.sumQuantity(for: source)?.doubleValue(for: unit) ?? 0
+                        if v > total { total = v }
+                    }
+                } else {
+                    /* No per-source breakdown available: fall back to the
+                       combined figure, which is what it always was. */
+                    total = stat.sumQuantity()?.doubleValue(for: unit) ?? 0
+                }
                 byDay[keyFormatter.string(from: stat.startDate)] = Int(total.rounded())
                 if calendar.isDate(stat.startDate, inSameDayAs: startOfToday) {
                     today = total
