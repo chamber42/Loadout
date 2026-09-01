@@ -809,11 +809,59 @@
       selectJournalDay(b.getAttribute('data-jdate'));
     }));
 
-    /* Centre the selection by setting scrollLeft rather than calling
-       scrollIntoView, which would also scroll the PAGE to reach it. */
-    const on = strip.querySelector('.day-chip.on');
-    if (on) strip.scrollLeft = on.offsetLeft - (strip.clientWidth - on.offsetWidth) / 2;
+    centreJournalStripSoon();
+  }
 
+  /* Put the selected day in the middle of the strip.
+
+     scrollLeft rather than scrollIntoView, which would also scroll the PAGE
+     to reach it.
+
+     Retried on the next frame when the strip cannot be measured yet. This is
+     not defensive padding: goTab('today') calls renderJournal() and THEN
+     showScreen(), so on every arrival from the tab bar this runs while the
+     journal is still display:none — where clientWidth and offsetLeft are
+     both 0, the arithmetic collapses to zero, and the strip stays pinned to
+     the left of a three-week range. By the next frame showScreen has run and
+     the same measurement is real. */
+  function centreJournalStrip(){
+    const strip = document.getElementById('journalDateStrip');
+    if (!strip) return true;
+    const on = strip.querySelector('.day-chip.on');
+    if (!on) return true;
+
+    if (!strip.clientWidth) return false;          // not laid out yet
+
+    /* Measured with rects rather than offsetLeft.
+
+       offsetLeft is relative to the nearest POSITIONED ancestor, and neither
+       .date-strip nor .date-nav sets position — so a chip's offsetLeft was
+       measured from somewhere further up and silently included the width of
+       the back arrow sitting to the strip's left. scrollLeft then overshot by
+       exactly that, which put the selected day about one chip left of centre
+       every time. Close enough to look like a rounding problem and not one.
+
+       getBoundingClientRect is immune: both rects are in the same viewport
+       space, so their difference is the true offset inside the scroller
+       whatever the ancestors are doing. */
+    const chip = on.getBoundingClientRect();
+    const box  = strip.getBoundingClientRect();
+    const delta = (chip.left - box.left) - (box.width - chip.width) / 2;
+
+    /* Jump rather than animate. The stylesheet asks for smooth scrolling,
+       which is right when a person drags the strip and wrong here — the
+       selected day should already be in the middle when the screen appears,
+       not slide there afterwards. */
+    const behaviour = strip.style.scrollBehavior;
+    strip.style.scrollBehavior = 'auto';
+    strip.scrollLeft += delta;
+    strip.style.scrollBehavior = behaviour;
+    return true;
+  }
+
+  function centreJournalStripSoon(){
+    if (centreJournalStrip()) return;
+    requestAnimationFrame(function(){ centreJournalStrip(); });
   }
 
   (function(){

@@ -601,16 +601,33 @@
     const sel = {protein:[], carb:[], fat:[], veg:[], fruit:[], sauce:[],
                  dish:'', _recipe:recipe.name};
 
+    /* An imported recipe's slots mean something different from a built-in
+       one's, and this is the only place that difference matters.
+
+       A built-in lists ALTERNATIVES: Burrito Bowl names five proteins
+       meaning "pick one of these", so taking the first usable is exactly
+       right and the caps below are the design.
+
+       An import lists INGREDIENTS. A chili really does contain ground beef
+       AND black beans, because both were on the page. Capping it at one
+       protein silently drops half the dish — which is what "doesn't pull all
+       the ingredients" was. So an import takes everything it listed, and the
+       combination rules that stop the app inventing an odd pairing are
+       relaxed too: nobody invented this pairing, somebody wrote it down. */
+    const literal = !!recipe._imported;
+
     const firstUsable = (slot, want)=>{
       const out = [];
       for (const k of (recipe[slot] || [])){
-        if (out.length >= want) break;
+        if (!literal && out.length >= want) break;
         let f = listFor(slot).find(x=>x.key === k);
         if (f && isDisliked(f)) f = substituteFor(slot, k);
+        /* Dietary preferences and dislikes still apply either way — a
+           vegetarian does not get beef because a web page said so. */
         if (!f || !passesPrefs(f) || isDisliked(f)) continue;
         if (f.powder && !POWDER_OK.includes(role)) continue;
-        if (out.some(o=>familyClashPair(o, f))) continue;
-        if (slot === 'protein' && isMeat(f) && out.some(isMeat)) continue;
+        if (!literal && out.some(o=>familyClashPair(o, f))) continue;
+        if (!literal && slot === 'protein' && isMeat(f) && out.some(isMeat)) continue;
         out.push(f);
       }
       return out;
@@ -618,7 +635,9 @@
 
     [['protein',1], ['carb',1], ['fat',1],
      ['veg', role === 'snack' ? 0 : 2], ['fruit',1], ['sauce',1]].forEach(([slot, want])=>{
-      if (!want) return;
+      /* A snack skips veg entirely when the app is choosing. An imported
+         recipe still gets its own, because they were in the dish. */
+      if (!want && !literal) return;
       sel[slot] = firstUsable(slot, want).map(f=>f.key);
     });
 

@@ -19,6 +19,7 @@ const SUITES = [
   './streaks.test.js',
   './data-export.test.js',
   './recipe-import.test.js',
+  './recipe-place.test.js',
 ];
 
 let passed = 0, failed = 0;
