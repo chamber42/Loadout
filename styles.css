@@ -1213,9 +1213,14 @@
   /* ---------- Inputs -----------------------------------------------------
      Fields are recessed rather than raised, so they read as slots you type
      into instead of buttons you press. */
+  /* --readout, not --bg-0. They are the same thing at :root, so nothing
+     changes for a material that leaves it alone — but every material that
+     relights the plate (because its panel sits well clear of the page) now
+     reaches the fields too, instead of leaving a black hole in the middle of
+     a straw cloth or a filing card. */
   input[type=number], input[type=text], select, textarea, .fav-search, .amt-input{
     border-radius:4px; box-shadow:var(--sunk);
-    background-color:var(--bg-0);
+    background-color:var(--readout);
   }
   input[type=number]:focus, input[type=text]:focus, select:focus, textarea:focus{
     border-color:var(--cyan);
@@ -6293,4 +6298,112 @@
         rgba(var(--cyan-rgb),.85) 0 9px, rgba(12,14,15,.92) 9px 18px)
       0 0/100% 5px no-repeat;
     opacity:.9;
+  }
+
+  /* =========================================================================
+     PASS: THE LAST THREE GENRES
+
+     Craft is scoped by THEME rather than by material, because it shares
+     "pixel" with arcade and arcade is already doing what it should.
+     ========================================================================= */
+
+  /* ---- SURVIVAL CRAFT — an inventory panel, not a dark box ----------------
+     "Punch trees, build base, fear the dark." The pixel material gave it a
+     hard black border and a heavy 3D bevel, and then filled it with a brown
+     so dark the bevel had nothing to catch. A crafting UI is stone and plank
+     lit from the top left with the slots cut into it — so the plate lifts
+     until the bevel reads, and the readouts become sockets. */
+  body[data-theme="craft"] .screen:not(#screen-quest) .panel,
+  body[data-theme="craft"] .modal-card,
+  body[data-theme="craft"] .quest{
+    background:
+      repeating-linear-gradient(90deg, rgba(0,0,0,.10) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, #4a3d29 0%, #3d3221 100%);
+    box-shadow:
+      inset 3px 3px 0 rgba(255,240,214,.16),
+      inset -3px -3px 0 rgba(0,0,0,.55),
+      4px 4px 0 rgba(0,0,0,.5);
+  }
+  /* sockets: cut into the plank, lit from the bottom right like a hole */
+  body[data-theme="craft"] .screen:not(#screen-quest) .panel{
+    --readout:#241d14;
+    --sunk:inset 2px 2px 0 rgba(0,0,0,.6), inset -2px -2px 0 rgba(255,240,214,.10);
+  }
+  body[data-theme="craft"] .vital{
+    border-radius:0;
+    border:2px solid #1a150e;
+    background:#332a1c;
+    box-shadow:inset 2px 2px 0 rgba(0,0,0,.45), inset -2px -2px 0 rgba(255,240,214,.09);
+  }
+  body[data-theme="craft"] .tab{ background:linear-gradient(180deg, #4a3d29, #3a3020); }
+
+  /* ---- POST-APOCALYPTIC — light on metal, not metal made of light ---------
+     "Green haze, scavenged gear and something moving in the stairwell." The
+     haze had got into everything: page, plate and readout were all the same
+     olive, so the green stopped being a light source and became the
+     material. Pulling the green out of the surfaces and leaving it in the
+     type and the glow gives the haze something to fall on — scavenged plate,
+     patched and riveted, under a bad green lamp. */
+  body[data-material="salvage"] .screen:not(#screen-quest) .panel,
+  body[data-material="salvage"] .modal-card,
+  body[data-material="salvage"] .quest{
+    border:1px solid #4a4b3c;
+    background:
+      /* rivets down both edges */
+      radial-gradient(circle at 9px 14px, rgba(255,255,255,.16) 0 1.5px, transparent 2px),
+      radial-gradient(circle at calc(100% - 9px) 14px, rgba(255,255,255,.16) 0 1.5px, transparent 2px),
+      /* patched plate: two panels butted together */
+      linear-gradient(90deg, transparent 0 61%, rgba(0,0,0,.30) 61% 62%, transparent 62%),
+      /* rust bloom, warm not green */
+      radial-gradient(ellipse 46% 32% at 86% 8%, rgba(150,74,38,.20), transparent 70%),
+      radial-gradient(ellipse 40% 28% at 8% 92%, rgba(150,74,38,.15), transparent 72%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #33352a 0%, #24261d 55%, #1b1c15 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.10),
+      inset 0 -2px 0 rgba(0,0,0,.55),
+      0 6px 16px rgba(0,0,0,.55);
+  }
+  body[data-material="salvage"] .screen:not(#screen-quest) .panel,
+  body[data-material="salvage"] .modal-card{
+    --readout:rgba(0,0,0,.34);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.6), inset 0 -1px 0 rgba(255,255,255,.07);
+  }
+  body[data-material="salvage"] .tab{
+    background:linear-gradient(180deg, #33352a, #22241b);
+  }
+
+  /* ---- FARM LIFE SIM — let the sun in ------------------------------------
+     "Sunlit fields and nothing but time", rendered entirely in field green:
+     green boards, green cloth, green readouts, so nothing in it was sunlit
+     and the blossom pink had nowhere to sit. Green belongs to the field, not
+     to the furniture. The cloth becomes straw and warm timber with a gingham
+     check through it, which is where a farm sim actually lives, and the
+     green outside the panel finally reads as the field it is. */
+  body[data-material="cozy"] .screen:not(#screen-quest) .panel,
+  body[data-material="cozy"] .modal-card,
+  body[data-material="cozy"] .quest{
+    border:1px solid rgba(255,238,196,.20);
+    background:
+      /* gingham, in the blossom accent, barely there */
+      repeating-linear-gradient(90deg,
+        rgba(var(--cyan-rgb),.055) 0 13px, transparent 13px 26px),
+      repeating-linear-gradient(0deg,
+        rgba(var(--cyan-rgb),.055) 0 13px, transparent 13px 26px),
+      /* straw grain */
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,.028) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #4a4023 0%, #3f3720 48%, #322c18 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255,238,196,.15),
+      inset 0 -3px 0 rgba(0,0,0,.30),
+      0 7px 18px rgba(0,0,0,.42);
+  }
+  body[data-material="cozy"] .screen:not(#screen-quest) .panel,
+  body[data-material="cozy"] .modal-card{
+    --readout:rgba(0,0,0,.22);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,238,196,.10);
+  }
+  body[data-material="cozy"] .tab{
+    background:linear-gradient(180deg, #4f4425, #3a331c);
   }
