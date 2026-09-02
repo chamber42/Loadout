@@ -6527,3 +6527,114 @@
     color:var(--cyan);
     text-shadow:0 0 5px rgba(var(--cyan-rgb),.35);
   }
+
+  /* =========================================================================
+     REFERENCE PASS 2 — ONE OBJECT PER GENRE
+
+     What each theme is meant to BE, taken from the interfaces the genre is
+     actually known for rather than from the palette:
+
+       cyberpunk  a screen            scanlines, and a HUD curved by shader
+       arcade     a cabinet           bezel around the glass, marquee above
+       fantasy    a page on a table   gilt rule, ruled vellum
+       horror     a case file         ruled notebook, red margin      (done)
+       survival   a Pip-Boy           phosphor tube in scavenged plate (done)
+       craft      an inventory panel  bevelled plank, cut sockets      (done)
+       fps        an equipment case   stencil and hazard tape
+       outdoors   a Huntermate card   contours, a device frame
+       farm       a cloth on a table  straw and gingham                (done)
+       racing     a pit board         kerb, tabular figures            (done)
+
+     The four that already read well get additions, not redesigns: the point
+     is to finish the sentence each was already saying.
+     ========================================================================= */
+
+  /* ---- DIGITAL (cyberpunk) — the glass is curved -------------------------
+     Cyberpunk 2077's HUD is bent by a shader; its panels are not flat planes
+     but the front of a tube. Scanlines were already here; this is the other
+     half — the corners fall away and the centre carries the bloom, so a
+     panel reads as something lit from behind rather than printed. */
+
+  /* ---- STEEL (fps) — issued, not machined --------------------------------
+     Tarkov and its neighbours mark equipment with stencils and rugged,
+     distressed lettering. The hazard tape was the first half of that; a
+     stencilled index down the head is the other, and the scuff along the
+     foot stops the case looking factory-fresh. */
+  body[data-material="steel"] .panel > .field-label:first-child,
+  body[data-material="steel"] .panel > .rgoal-label:first-child{
+    font-weight:700;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(var(--cyan-rgb),.30) 0 3px, transparent 3px 8px)
+        0 100%/100% 1px no-repeat,
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01));
+  }
+
+  /* ---- LEDGER (outdoors) — the Huntermate ---------------------------------
+     theHunter carries its map on an in-world handheld rather than on a HUD.
+     The contours already put this outdoors; the frame makes it a device you
+     are holding — a bezel around the card, and a punched corner where the
+     lanyard goes through a tag. */
+  body[data-material="ledger"] .screen .panel,
+  body[data-material="ledger"] .modal-card{
+    position:relative;
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.45),
+      inset 0 0 0 4px rgba(226,138,58,.09),
+      inset 0 1px 0 rgba(255,255,255,.07),
+      0 5px 14px rgba(0,0,0,.5);
+  }
+
+  /* ---- PAPER (fantasy only) — a gilt rule under the heading ---------------
+     The classic cRPG page is vellum with gold ruling on it. Horror shares
+     this material and must NOT take it: its sheet is a case file, and gilt
+     on a case file is the wrong century. */
+  body[data-theme="fantasy"] .panel > .field-label:first-child,
+  body[data-theme="fantasy"] .panel > .rgoal-label:first-child{
+    background:
+      linear-gradient(90deg,
+        transparent 0 4%, rgba(154,110,44,.55) 4% 96%, transparent 96%)
+        0 100%/100% 1px no-repeat,
+      rgba(0,0,0,.045);
+  }
+
+  /* These ride on .paper-fx, the overlay element each material already uses.
+     They were briefly written as .panel::after, which is wrong: that pseudo
+     draws the corner L-brackets, so setting a background on it silently
+     removes them from every panel in the theme. */
+
+  /* cyberpunk: scanlines, plus the fall-off of a curved tube */
+  body[data-material="digital"] .screen:not(#screen-quest) .paper-fx{
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(var(--cyan-rgb),.05) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg,
+        rgba(255,60,190,.02) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse 130% 120% at 50% 46%,
+        rgba(var(--cyan-rgb),.05) 0 46%, transparent 74%);
+    mix-blend-mode:screen; opacity:.55;
+  }
+
+  /* fps: the hazard tape, and a scuff along the foot so the case has been
+     carried rather than unboxed */
+  body[data-material="steel"] .screen:not(#screen-quest) .paper-fx{
+    background:
+      repeating-linear-gradient(45deg,
+        rgba(var(--cyan-rgb),.85) 0 9px, rgba(12,14,15,.92) 9px 18px)
+        0 0/100% 5px no-repeat,
+      repeating-linear-gradient(88deg,
+        rgba(255,255,255,.06) 0 9px, transparent 9px 23px)
+        0 100%/100% 2px no-repeat;
+    opacity:.9;
+  }
+
+  /* outdoors: the bound edge, and the punched corner of a tag */
+  body[data-material="ledger"] .screen:not(#screen-quest) .paper-fx{
+    background:
+      repeating-linear-gradient(180deg,
+        transparent 0 13px,
+        rgba(var(--cyan-rgb),.38) 13px 19px,
+        transparent 19px 26px) 11px 0/2px 100% no-repeat,
+      radial-gradient(circle 4px at calc(100% - 15px) 15px,
+        rgba(0,0,0,.6) 0 58%, transparent 60%);
+  }
