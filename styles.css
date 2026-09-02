@@ -5804,14 +5804,23 @@
      the same inversion the page panels already do, applied to the buttons
      and the sheet. Without it the modal would be light paper carrying light
      type, which is the worst of both. */
+  /* The tab sits over the page, not inside a panel, so it needs its own
+     opaque stock. A translucent wash worked on a panel — there was always a
+     surface behind it — but over the page it let the calendar read straight
+     through the buttons. Every other material builds its keycap on a solid
+     bottom layer for the same reason; this one had been the exception. */
   body[data-material="paper"] .tab{
-    background:rgba(0,0,0,.05);
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.03), rgba(0,0,0,.08)),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
     border:1px solid var(--pp-rule);
     border-bottom-width:3px; border-bottom-color:rgba(0,0,0,.28);
     color:var(--pp-soft);
   }
   body[data-material="paper"] .tab.on{
-    background:rgba(0,0,0,.10);
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.10), rgba(0,0,0,.15)),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
     border-color:var(--pp-seal);
     border-bottom-color:var(--pp-seal);
     color:var(--pp-ink);
@@ -5941,10 +5950,28 @@
   body[data-material="salvage"] #screen-quest .panel .vital::before{
     background:var(--pp-seal); opacity:.7;
   }
-  /* controls inside those rows, same hand as the page */
-  body[data-material="paper"] #screen-quest .panel .vital .btn-ghost,
-  body[data-material="paper"] #screen-quest .panel .vital .mini-btn,
-  body[data-material="paper"] #screen-quest .panel .vital select{
+  /* Controls on the sheet, same hand as the page.
+
+     The whole set, not the ones that happened to be visible: an input is
+     the case that got missed first time round, because input[type=number]
+     paints background-color:var(--bg-0) as a longhand of its own rather
+     than reading --readout, so relighting the plate never reached it and a
+     weigh-in field stayed a black box on the page. Anything here that can
+     paint its own surface is listed, so the next control added to one of
+     these rows does not repeat it. */
+  body[data-material="paper"] #screen-quest .panel .chip,
+  body[data-material="paper"] #screen-quest .panel .choice,
+  body[data-material="paper"] #screen-quest .panel .btn-ghost,
+  body[data-material="paper"] #screen-quest .panel .mini-btn,
+  body[data-material="paper"] #screen-quest .panel select,
+  body[data-material="paper"] #screen-quest .panel input,
+  body[data-material="paper"] #screen-quest .panel textarea,
+  body[data-material="paper"] #screen-quest .panel .fav-search,
+  body[data-material="paper"] #screen-quest .panel .amt-input,
+  body[data-material="paper"] #screen-quest .panel .amt-btn,
+  body[data-material="salvage"] #screen-quest .panel select,
+  body[data-material="salvage"] #screen-quest .panel input,
+  body[data-material="salvage"] #screen-quest .panel textarea{
     background:rgba(0,0,0,.05);
     border:1px solid var(--pp-rule);
     color:var(--pp-ink);
