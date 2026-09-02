@@ -3429,28 +3429,9 @@
       radial-gradient(ellipse 48% 32% at 80% 76%, var(--pp-stain), transparent 62%),
       linear-gradient(180deg, #f3e5c1, #e2cda3 52%, #d4bc90);
     filter:drop-shadow(0 8px 18px rgba(0,0,0,.55));
-    /* the long edges were never trimmed straight */
-    -webkit-mask-image:var(--pp-tear-sides); mask-image:var(--pp-tear-sides);
-    -webkit-mask-size:100% 100%; mask-size:100% 100%;
-    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
   }
-  :root{
-    --pp-tear-sides:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' preserveAspectRatio='none'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.03 0.012' numOctaves='3' seed='11' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='9' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='4' y='-30' width='292' height='480' fill='%23000' filter='url(%23r)'/%3E%3C/svg%3E");
-  }
-  body[data-theme="fantasy"] #screen-quest .cal-panel{ padding-top:36px; padding-bottom:36px; }
 
   /* The two rods */
-  body[data-theme="fantasy"] .cal-panel .paper-edge::before,
-  body[data-theme="fantasy"] .cal-panel .paper-edge::after{
-    content:''; position:absolute; left:-10px; right:-10px; height:18px;
-    border-radius:9px;
-    background:
-      linear-gradient(90deg, #2e1d09 0 9px, transparent 9px calc(100% - 9px), #2e1d09 calc(100% - 9px)),
-      linear-gradient(180deg, #4a3113 0%, #8a6230 16%, #dcbb79 42%, #b0803f 64%, #6d4a1f 82%, #3a2610 100%);
-    box-shadow:0 4px 11px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.42);
-  }
-  body[data-theme="fantasy"] .cal-panel .paper-edge::before{ top:6px; }
-  body[data-theme="fantasy"] .cal-panel .paper-edge::after{ bottom:6px; }
   /* shadow cast by each rod onto the sheet below it */
   body[data-theme="fantasy"] .cal-panel .paper-fx{
     box-shadow:
@@ -3483,13 +3464,6 @@
       linear-gradient(180deg, #d7d1c5, #bab3a6);
     background-position:0 0, 0 40px, 0 0, 0 0, 0 0;
     filter:drop-shadow(0 6px 14px rgba(0,0,0,.6));
-    /* torn away along the bottom */
-    -webkit-mask-image:var(--pp-tear-foot); mask-image:var(--pp-tear-foot);
-    -webkit-mask-size:100% 100%; mask-size:100% 100%;
-    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
-  }
-  :root{
-    --pp-tear-foot:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' preserveAspectRatio='none'%3E%3Cfilter id='r2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045 0.03' numOctaves='4' seed='5' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='13' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='-30' y='-30' width='360' height='442' fill='%23000' filter='url(%23r2)'/%3E%3C/svg%3E");
   }
   /* wire binding: punched holes with the coil crossing over them.
      Switched off below — the page reads better as a loose sheet. */
@@ -3531,20 +3505,6 @@
         rgba(70,58,32,.04) 0 1px, transparent 1px 26px),
       linear-gradient(178deg, #e8dec6, #d2c5a6);
     filter:drop-shadow(0 6px 15px rgba(0,0,0,.65));
-    -webkit-mask-image:var(--pp-burn); mask-image:var(--pp-burn);
-    -webkit-mask-size:100% 100%; mask-size:100% 100%;
-    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
-  }
-  :root{
-    --pp-burn:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' preserveAspectRatio='none'%3E%3Cfilter id='r3'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05 0.035' numOctaves='4' seed='17' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='16' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='9' y='9' width='282' height='402' fill='%23000' filter='url(%23r3)'/%3E%3C/svg%3E");
-  }
-  /* char: black at the very edge, browning inward, then clean stock */
-  body[data-theme="survival"] #screen-quest .paper-edge::before{
-    content:''; position:absolute; inset:0;
-    box-shadow:
-      inset 0 0 9px 3px  rgba(24,10,3,.9),
-      inset 0 0 26px 9px rgba(74,34,10,.55),
-      inset 0 0 58px 22px rgba(132,78,30,.26);
   }
   /* soot carried in from the burn */
   body[data-theme="survival"] #screen-quest .paper-edge::after{
@@ -3930,37 +3890,6 @@
      rounder than the shaft, and the whole thing throws a shadow onto the
      vellum. A flat gradient with dark ends is a painted stripe.
      ---------------------------------------------------------------------- */
-  body[data-theme="fantasy"] .cal-panel .paper-edge::before,
-  body[data-theme="fantasy"] .cal-panel .paper-edge::after{
-    content:''; position:absolute; left:-8px; right:-8px; height:19px;
-    border-radius:10px;
-    background:
-      /* lengthways grain, faint enough to read as turned rather than sawn */
-      repeating-linear-gradient(90deg,
-        rgba(0,0,0,.035) 0 1px, transparent 1px 9px),
-      /* the turned knob at each end */
-      radial-gradient(ellipse 11px 9px at 11px 42%,
-        #e7c98a 0 26%, #a97b36 52%, #5c3d15 78%, #241703 100%) left center/24px 100% no-repeat,
-      radial-gradient(ellipse 11px 9px at calc(100% - 11px) 42%,
-        #e7c98a 0 26%, #a97b36 52%, #5c3d15 78%, #241703 100%) right center/24px 100% no-repeat,
-      /* the shaft — specular high, not central, because the light is above */
-      linear-gradient(180deg,
-        #2a1a06 0%, #5e3f16 9%, #9a6f2c 22%,
-        #e3c078 38%, #fbeab6 45%, #d9ad5c 53%,
-        #9c6c2b 68%, #543918 84%, #241705 100%);
-    box-shadow:
-      0 6px 14px rgba(0,0,0,.62),
-      inset 0 1px 0 rgba(255,255,255,.4),
-      inset 0 -1px 0 rgba(0,0,0,.5);
-  }
-  body[data-theme="fantasy"] .cal-panel .paper-edge::before{ top:3px; }
-  body[data-theme="fantasy"] .cal-panel .paper-edge::after{  bottom:3px; }
-  /* the sheet curls away under each rod rather than meeting it flat */
-  body[data-theme="fantasy"] .cal-panel .paper-fx{
-    box-shadow:
-      inset 0 30px 18px -20px rgba(62,40,12,.62),
-      inset 0 -30px 18px -20px rgba(62,40,12,.62);
-  }
 
   /* Paper that has actually caught goes carbon at the edge and only browns
      over the next few millimetres. The old ramp started brown, which is what
@@ -4245,11 +4174,11 @@
       inset 0 1px 0 rgba(255,255,255,.10),
       0 6px 18px rgba(0,0,0,.6);
   }
-  /* the livery stripe, and a clearcoat sheen over the weave */
+  /* Clearcoat sheen only. The livery stripe that used to lead this list
+     was the same solid-then-washed bar that broke the kerb on the other
+     screens; the kerb is the top mark on the quest tab too. */
   body[data-material="race"] #screen-quest .paper-fx{
     background:
-      linear-gradient(90deg, var(--cyan) 0 34%, rgba(255,92,92,.25) 34%)
-        0 0/100% 3px no-repeat,
       linear-gradient(163deg,
         rgba(255,255,255,.07) 0 18%, transparent 34%,
         transparent 70%, rgba(255,255,255,.035) 88%, transparent);
@@ -4655,12 +4584,14 @@
     background-position:0 3.5px, 7px 0, 0 7px, 7px 3.5px, 0 0, 0 0;
     background-size:14px 14px;
   }
+  /* This used to paint a solid accent bar across the first 34% of every
+     panel top and a washed one across the rest. Once the kerb arrived they
+     were stacked, and the bar made the left third solid red while the wash
+     greyed out the white blocks beyond it — read, correctly, as a broken
+     chequer. The kerb is the top mark; this keeps only the raking sheen. */
   body[data-material="race"] .screen:not(#screen-quest) .paper-fx{
-    background:
-      linear-gradient(90deg, var(--cyan) 0 34%, rgba(255,92,92,.22) 34%)
-        0 0/100% 2px no-repeat,
-      linear-gradient(163deg,
-        rgba(255,255,255,.06) 0 18%, transparent 34%);
+    background:linear-gradient(163deg,
+      rgba(255,255,255,.06) 0 18%, transparent 34%);
   }
 
   body[data-material="cozy"] .screen:not(#screen-quest) .panel{
@@ -6240,18 +6171,6 @@
   body[data-material="race"] .hero-kcal,
   body[data-material="race"] .cal-num{ font-variant-numeric:tabular-nums; }
   /* a chequer under the heading instead of a plain rule */
-  /* A 45-degree gradient makes triangles, not squares — as a flag it read as
-     a zip. conic-gradient is the one that actually chequers. */
-  body[data-material="race"] .panel > .field-label:first-child,
-  body[data-material="race"] .panel > .rgoal-label:first-child{
-    border-bottom:0;
-    background:
-      conic-gradient(rgba(233,238,245,.85) 25%, rgba(20,22,26,.9) 0 50%,
-                     rgba(233,238,245,.85) 0 75%, rgba(20,22,26,.9) 0)
-        0 100%/9px 9px repeat-x,
-      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
-    padding-bottom:15px;
-  }
 
   /* ---- STEEL (Tactical FPS) — matte polymer, not a machine shop -----------
      Its own blurb is "matte black, orange accents, zero nonsense", and the
@@ -6530,3 +6449,16 @@
     --readout:#241d14;
     --sunk:inset 2px 2px 0 rgba(0,0,0,.6), inset -2px -2px 0 rgba(255,240,214,.10);
   }
+
+  /* ---- race: the kerb is the only mark on a panel -------------------------
+     Two things were drawing across the top of every racing panel: the kerb,
+     and the generic .panel::before accent rule. The rule is a 90-degree
+     gradient that fades in from transparent, so over a red-and-white rumble
+     strip it made the left third solid red and left the rest looking like
+     the white blocks had broken up — which is exactly how it was reported.
+
+     The chequered flag went with it. One flag under one heading was a motif;
+     one under every heading, over a kerb, on a scrolling page, was a lot of
+     flag. The kerb alone says motorsport and says it once. */
+  body[data-material="race"] .screen > .panel::before,
+  body[data-material="race"] .panel::before{ display:none; }
