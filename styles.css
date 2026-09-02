@@ -6155,3 +6155,142 @@
     --readout:rgba(0,0,0,.34);
     --sunk:inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.07);
   }
+
+  /* =========================================================================
+     PASS: THREE MATERIALS GET THEIR SUBJECT BACK
+
+     Lifting these off their pages made them legible but not evocative. Each
+     was reading as a generic dark card with an accent colour, and each one's
+     own blurb says what it should have been instead.
+     ========================================================================= */
+
+  /* ---- LEDGER (Fishing & Hunting) — a map, not an agenda ------------------
+     "Cold mornings, still water, long waits." The ruled horizontals and the
+     bound spine were doing the work of a desk diary, which is why it read as
+     a ledger somebody had tinted green. Contour rings and waxed canvas put
+     it back outdoors: the lines curve now, the way a map's do, and the blaze
+     orange stops being an accent on stationery and starts being blaze
+     orange. The spine goes with the rest of the office. */
+  body[data-material="ledger"] .screen:not(#screen-quest) .panel,
+  body[data-material="ledger"] .modal-card,
+  body[data-material="ledger"] .quest{
+    padding-left:var(--pad);
+    border:1px solid rgba(var(--cyan-rgb),.22);
+    border-radius:3px;
+    background:
+      /* two contour sets, off-centre so the rings never look concentric */
+      repeating-radial-gradient(ellipse 120% 90% at 16% 6%,
+        transparent 0 25px, rgba(127,176,105,.11) 25px 26px),
+      repeating-radial-gradient(ellipse 100% 130% at 90% 82%,
+        transparent 0 21px, rgba(127,176,105,.085) 21px 22px),
+      /* waxed canvas */
+      repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #263b31, #16241e);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),
+      0 5px 14px rgba(0,0,0,.5);
+  }
+  /* a survey tick along the heading rather than a ruled line */
+  body[data-material="ledger"] .panel > .field-label:first-child,
+  body[data-material="ledger"] .panel > .rgoal-label:first-child{
+    border-bottom:1px solid rgba(var(--cyan-rgb),.35);
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(var(--cyan-rgb),.5) 0 2px, transparent 2px 9px) 0 100%/100% 2px no-repeat,
+      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.01));
+  }
+
+  /* ---- RACE (Racing) — a pit board, not a wicker basket -------------------
+     "Carbon, apexes and tenths of a second." The twill was woven edge to
+     edge across every surface, and a weave at that density stops reading as
+     carbon and starts reading as basketwork. Carbon is a material you see in
+     patches on a car, not a wallpaper.
+
+     What actually says motorsport is the kerb — the red and white rumble
+     strip at the edge of every apex — and a flat graphite timing board to
+     read numbers off. So the weave goes, one kerb runs along the top of each
+     surface, and the panel underneath is smooth. */
+  body[data-material="race"] .screen:not(#screen-quest) .panel,
+  body[data-material="race"] .modal-card,
+  body[data-material="race"] .quest{
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:3px;
+    background-color:transparent;
+    background-image:
+      repeating-linear-gradient(90deg,
+        rgba(var(--cyan-rgb),.9) 0 15px, rgba(226,232,240,.85) 15px 30px),
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,.014) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, #23272e 0%, #1a1d22 55%, #131519 100%);
+    background-size:100% 3px, auto, auto;
+    background-position:0 0, 0 0, 0 0;
+    background-repeat:no-repeat, repeat, no-repeat;
+    box-shadow:
+      inset 0 4px 0 rgba(0,0,0,.35),
+      0 6px 16px rgba(0,0,0,.55);
+  }
+  /* the timing board reads in tabular figures */
+  body[data-material="race"] .vital strong,
+  body[data-material="race"] .hero-kcal,
+  body[data-material="race"] .cal-num{ font-variant-numeric:tabular-nums; }
+  /* a chequer under the heading instead of a plain rule */
+  /* A 45-degree gradient makes triangles, not squares — as a flag it read as
+     a zip. conic-gradient is the one that actually chequers. */
+  body[data-material="race"] .panel > .field-label:first-child,
+  body[data-material="race"] .panel > .rgoal-label:first-child{
+    border-bottom:0;
+    background:
+      conic-gradient(rgba(233,238,245,.85) 25%, rgba(20,22,26,.9) 0 50%,
+                     rgba(233,238,245,.85) 0 75%, rgba(20,22,26,.9) 0)
+        0 100%/12px 12px repeat-x,
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
+    padding-bottom:18px;
+  }
+
+  /* ---- STEEL (Tactical FPS) — matte polymer, not a machine shop -----------
+     Its own blurb is "matte black, orange accents, zero nonsense", and the
+     brushed-steel striping was the nonsense: a lit machined surface on every
+     panel, which reads industrial rather than issued. Flattened to a matte
+     polymer case with a stencilled index dash at the top-left — the mark on
+     a crate, not a finish on a lathe. */
+  body[data-material="steel"] .screen:not(#screen-quest) .panel,
+  body[data-material="steel"] .modal-card,
+  body[data-material="steel"] .quest{
+    border:1px solid #2f3538;
+    border-radius:2px;
+    background:linear-gradient(180deg, #1f2427 0%, #171b1d 58%, #121517 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.055),
+      inset 0 -1px 0 rgba(0,0,0,.6),
+      0 4px 12px rgba(0,0,0,.6);
+  }
+  /* the deck plate underfoot drops back so the cases sit on it, not in it */
+  body[data-theme="fps"]{
+    background-image:
+      radial-gradient(120% 66% at 50% -8%, rgba(255,190,120,.05), transparent 56%),
+      radial-gradient(150% 100% at 50% 114%, rgba(0,0,0,.72), transparent 62%),
+      repeating-linear-gradient(45deg,
+        rgba(255,255,255,.012) 0 2px, transparent 2px 14px),
+      repeating-linear-gradient(-45deg,
+        rgba(0,0,0,.16) 0 2px, transparent 2px 14px),
+      linear-gradient(180deg, #1a1f22, #0a0d0e);
+  }
+
+  /* The generic panel top-rule is a 2px band of the accent across the full
+     width. On steel that is a bright orange line above every card, which is
+     the opposite of "zero nonsense" — and it sat on top of the stencil dash,
+     so the case appeared to be taped shut. The stencil is the mark now. */
+  body[data-material="steel"] .screen > .panel::before,
+  body[data-material="steel"] .panel::before{ display:none; }
+
+  /* The hazard tape is the case's one mark, so it should look stamped rather
+     than smudged: wider bars, full strength, and thick enough to read as
+     tape at arm's length instead of as a fuzzy orange line. */
+  body[data-material="steel"] .screen:not(#screen-quest) .paper-fx{
+    background:
+      repeating-linear-gradient(45deg,
+        rgba(var(--cyan-rgb),.85) 0 9px, rgba(12,14,15,.92) 9px 18px)
+      0 0/100% 5px no-repeat;
+    opacity:.9;
+  }
