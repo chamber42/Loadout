@@ -2,7 +2,8 @@ import UIKit
 import Capacitor
 
 /*
- Exists solely to register the plugins that live in the app target.
+ Registers the plugins that live in the app target, and takes the scroll
+ indicators off the web view.
 
  Capacitor's automatic registration reads a packageClassList out of the
  generated capacitor.config.json, and the CLI rebuilds that list from the
@@ -23,5 +24,21 @@ class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(HealthKitPlugin())
         bridge?.registerPluginInstance(NotificationsPlugin())
+    }
+
+    /* The bar down the right-hand edge while scrolling is drawn by the web
+       view's UIScrollView, not by the page — so no CSS can reach it.
+       ::-webkit-scrollbar hides scrollbars on elements that scroll their own
+       overflow; the document's own indicator belongs to UIKit and has to be
+       turned off here.
+
+       Both axes: the horizontal one appears on the date strip and the wider
+       tables for the same reason and is no more useful. Nothing is lost by
+       removing them — the indicator on a web view cannot be dragged, so it
+       reports a position without offering any way to change it. */
+    override open func viewDidLoad() {
+        super.viewDidLoad()
+        webView?.scrollView.showsVerticalScrollIndicator = false
+        webView?.scrollView.showsHorizontalScrollIndicator = false
     }
 }
