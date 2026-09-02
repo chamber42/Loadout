@@ -1529,8 +1529,7 @@
 
   :root{
     --bracket:16px;                      /* corner bracket arm length       */
-    --hatch:repeating-linear-gradient(135deg,
-             var(--accent-line) 0 1px, transparent 1px 5px);
+
     --readout:var(--bg-0);               /* recessed numeric plate           */
     --notch-sm:6px;
   }
@@ -1560,9 +1559,9 @@
   .eyebrow{ text-transform:uppercase; }
 
   /* ---------- Modules -----------------------------------------------------
-     Corner ticks grow into proper L-brackets, and the title bar picks up a
-     diagonal hatch on its trailing edge. Both are stock game-UI vocabulary
-     and cost nothing at runtime. */
+     Corner ticks grow into proper L-brackets. The title bar used to pick up
+     a diagonal hatch on its trailing edge as well; it read as a rendering
+     artefact rather than as machining, and is gone. */
   .panel::after{
     inset:6px;
     opacity:.75;
@@ -1577,14 +1576,9 @@
       linear-gradient(var(--accent-line),var(--accent-line)) right bottom /1px var(--bracket) no-repeat;
   }
 
-  /* The hatch marks the trailing edge of a title bar. It is only safe where
-     the bar is a plain label — headers that carry a right-aligned readout
-     (the journal's day total) would have their number sitting on top of it. */
   .panel > .field-label:first-child,
   .panel > .rgoal-label:first-child{
-    background:
-      var(--hatch) right center / 46px 100% no-repeat,
-      linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.012));
+    background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.012));
   }
   .panel > .field-label:first-child,
   .panel > .eaten-head:first-child,
@@ -1611,9 +1605,7 @@
   .btn-primary:disabled::after{ display:none; }
 
   .btn-ghost{
-    background:
-      var(--hatch) right center / 34px 100% no-repeat,
-      linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,0));
   }
 
   /* ---------- Meters ------------------------------------------------------
@@ -2078,17 +2070,6 @@
      device pixels instead of blurring across them. */
   .px{ image-rendering:pixelated; }
 
-  /* -- Title-bar hatch ---------------------------------------------------
-     A 46px block of accent hatch on every module header was the loudest
-     repeated mark in the app. Narrowing it and dropping it to a whisper
-     keeps the machined feel without stamping the same badge forty times. */
-  .panel > .field-label:first-child,
-  .panel > .eaten-head:first-child,
-  .panel > .rgoal-label:first-child{ --hatch-op:.3; }
-  :root{ --hatch:repeating-linear-gradient(135deg,
-           color-mix(in srgb, var(--accent-line) 45%, transparent) 0 1px,
-           transparent 1px 6px); }
-
   /* =========================================================================
      ==  SKIN IV  —  MATERIAL  ===============================================
      One accent hue was doing every job at once: structure, decoration, state
@@ -2124,8 +2105,6 @@
       linear-gradient(var(--steel-3),var(--steel-3)) right bottom /1px var(--bracket) no-repeat;
     opacity:.55;
   }
-  :root{ --hatch:repeating-linear-gradient(135deg,
-           var(--steel-2) 0 1px, transparent 1px 6px); }
 
   /* The eyebrow was a filled accent chip on every screen. It becomes a
      stamped neutral tag with one accent tick, so the accent still points
@@ -2378,9 +2357,7 @@
     width:100%; margin:0; border:0; font:inherit; color:inherit;
     text-align:left; cursor:pointer; -webkit-appearance:none; appearance:none;
     border-bottom:1px solid var(--steel-2);
-    background:
-      var(--hatch),
-      linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.008));
+    background:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.008));
   }
   .quest-title{
     flex:1; min-width:0;
@@ -2524,9 +2501,7 @@
     display:flex; align-items:center; justify-content:space-between; gap:10px;
     padding:9px 14px;
     border-bottom:1px solid var(--steel-2);
-    background:
-      var(--hatch),
-      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
   }
   .qb-tag{
     display:flex; align-items:center; gap:7px;
@@ -5678,7 +5653,8 @@
      ========================================================================= */
 
   /* ---- DIGITAL (cyberpunk) — dark glass, accent-lit edge ----------------- */
-  body[data-material="digital"] .modal-card{
+  body[data-material="digital"] .modal-card,
+  body[data-material="digital"] .quest{
     background:radial-gradient(ellipse 120% 90% at 50% 0%, #0a1a22 0%, #050c11 66%, #03070a 100%);
     border-color:rgba(var(--cyan-rgb),.24);
   }
@@ -5689,7 +5665,8 @@
   body[data-material="digital"] .modal-head{ border-bottom-color:rgba(var(--cyan-rgb),.24); }
 
   /* ---- PIXEL (arcade, craft) — hard square keycap, no soft bevel --------- */
-  body[data-material="pixel"] .modal-card{
+  body[data-material="pixel"] .modal-card,
+  body[data-material="pixel"] .quest{
     border-radius:0; border:3px solid #05060a;
     background:var(--panel-2);
     box-shadow:inset 2px 2px 0 rgba(255,255,255,.12),
@@ -5709,7 +5686,8 @@
   body[data-material="pixel"] .modal-x{ border-radius:0; }
 
   /* ---- STEEL (fps) — brushed plate --------------------------------------- */
-  body[data-material="steel"] .modal-card{
+  body[data-material="steel"] .modal-card,
+  body[data-material="steel"] .quest{
     border-radius:2px;
     background:
       repeating-linear-gradient(90deg,
@@ -5728,7 +5706,8 @@
   }
 
   /* ---- LEDGER (outdoors) — a filing card with a bound edge --------------- */
-  body[data-material="ledger"] .modal-card{
+  body[data-material="ledger"] .modal-card,
+  body[data-material="ledger"] .quest{
     border-radius:2px 8px 8px 2px;
     background:
       repeating-linear-gradient(0deg,
@@ -5743,7 +5722,8 @@
   }
 
   /* ---- COZY (farm) — soft, borderless, no hard edges --------------------- */
-  body[data-material="cozy"] .modal-card{
+  body[data-material="cozy"] .modal-card,
+  body[data-material="cozy"] .quest{
     border:0; border-radius:16px 16px 0 0;
     background:
       repeating-linear-gradient(0deg,
@@ -5759,7 +5739,8 @@
   body[data-material="cozy"] .tab:active{ transform:translateY(1px); margin-bottom:1px; }
 
   /* ---- RACE (racing) — carbon weave -------------------------------------- */
-  body[data-material="race"] .modal-card{
+  body[data-material="race"] .modal-card,
+  body[data-material="race"] .quest{
     border-radius:2px;
     background-color:#121316;
     background-image:
@@ -5788,7 +5769,8 @@
       linear-gradient(180deg, rgba(var(--cyan-rgb),.05), transparent 26%),
       linear-gradient(180deg, var(--panel), var(--panel-2));
   }
-  body[data-material="salvage"] .modal-card{
+  body[data-material="salvage"] .modal-card,
+  body[data-material="salvage"] .quest{
     border-color:#3d4a25; border-radius:3px;
     background:
       linear-gradient(180deg, rgba(var(--cyan-rgb),.05), transparent 26%),
@@ -6061,4 +6043,115 @@
   }
   body[data-material="paper"] .obj.done .jmeal-head .eaten-title{
     color:var(--pp-seal);
+  }
+
+  /* =========================================================================
+     PASS: THE QUIETER MATERIALS EARN AN EDGE
+
+     Cyberpunk and arcade sit at 1.1:1 between page and panel and still read
+     perfectly well, because their panels are defined by an edge — a lit cyan
+     hairline, a hard black pixel border. The materials that were hard to
+     look at had neither: cozy sets border:0, and ledger's panel fill is the
+     same colour as the ground it sits on (1.01:1), so a page of them reads
+     as one flat sheet with text floating on it.
+
+     Each of these gets a fill lifted clear of its own ground and an edge
+     that states where the panel stops. The genre stays exactly what it was;
+     it is just legible now.
+     ========================================================================= */
+
+  /* ---- COZY (farm) — a cloth on the table, not more table -----------------
+     The blurb is "sunlit fields and nothing but time" and the panel was the
+     same olive as the boards under it. Warmed and lifted, with a soft
+     stitched edge so the cloth has a hem. */
+  body[data-material="cozy"] .screen:not(#screen-quest) .panel,
+  body[data-material="cozy"] .modal-card,
+  body[data-material="cozy"] .quest{
+    border:1px solid rgba(255,246,210,.16);
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,.03) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg,
+        rgba(0,0,0,.04) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #3e5427 0%, #33471f 45%, #263616 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255,255,255,.13),
+      inset 0 -3px 0 rgba(0,0,0,.30),
+      0 7px 18px rgba(0,0,0,.4);
+  }
+  body[data-material="cozy"] .tab{
+    background:linear-gradient(180deg, #445c2b, #33471f);
+  }
+
+  /* ---- LEDGER (outdoors) — the card has to leave the desk ----------------
+     Page #0e1412 against panel #0d1613 is 1.01:1: the same colour twice.
+     The stock lifts and the bound edge darkens, so the card reads as a card
+     and the binding reads as binding. */
+  body[data-material="ledger"] .screen:not(#screen-quest) .panel,
+  body[data-material="ledger"] .modal-card,
+  body[data-material="ledger"] .quest{
+    border:1px solid rgba(226,138,58,.20);
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0 25px, rgba(var(--cyan-rgb),.10) 25px 26px),
+      linear-gradient(90deg, #0a1210 0 22px, transparent 22px),
+      linear-gradient(180deg, #24382f, #172720);
+    box-shadow:
+      inset 24px 0 18px -19px rgba(0,0,0,.85),
+      0 5px 14px rgba(0,0,0,.5);
+  }
+  body[data-material="ledger"] .tab{
+    background:linear-gradient(180deg, #263b31, #18271f);
+  }
+
+  /* ---- RACE (racing) — carbon you can actually see -----------------------
+     The twill was woven in four greys inside six points of luminance, so at
+     arm's length it was flat charcoal. Same weave, wider apart, lifted off
+     the asphalt underneath it. */
+  body[data-material="race"] .screen:not(#screen-quest) .panel,
+  body[data-material="race"] .modal-card,
+  body[data-material="race"] .quest{
+    border:1px solid rgba(255,255,255,.09);
+    background-color:#191b1f;
+    background-image:
+      linear-gradient(27deg,  #23262c 3.5px, transparent 3.5px),
+      linear-gradient(207deg, #23262c 3.5px, transparent 3.5px),
+      linear-gradient(27deg,  #2e323a 3.5px, transparent 3.5px),
+      linear-gradient(207deg, #2e323a 3.5px, transparent 3.5px),
+      linear-gradient(90deg,  #202329 7px, transparent 7px),
+      linear-gradient(180deg, #2b2f37 25%, #1f2229 25%, #1f2229 50%,
+        transparent 50%, transparent 75%, #343945 75%, #343945);
+    background-position:0 3.5px, 7px 0, 0 7px, 7px 3.5px, 0 0, 0 0;
+    background-size:14px 14px;
+    box-shadow:0 5px 14px rgba(0,0,0,.5);
+  }
+  body[data-material="race"] .tab{
+    background:linear-gradient(180deg, #2a2e36, #1c1f24);
+  }
+
+  /* ---- recessed plates on the lifted materials ---------------------------
+     Same fault paper had: --readout is --bg-0, which is a sunken plate while
+     the panel sits near the page and a black hole once the panel is lifted
+     clear of it. On a cloth or a filing card a readout is an impression, so
+     it is drawn as a fraction of the surface rather than as the page colour
+     showing through a hole. */
+  body[data-material="cozy"] .screen:not(#screen-quest) .panel,
+  body[data-material="cozy"] .modal-card{
+    --readout:rgba(0,0,0,.20);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.07);
+  }
+  body[data-material="ledger"] .screen:not(#screen-quest) .panel,
+  body[data-material="ledger"] .modal-card{
+    --readout:rgba(0,0,0,.22);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.06);
+  }
+  body[data-material="race"] .screen:not(#screen-quest) .panel,
+  body[data-material="race"] .modal-card{
+    --readout:rgba(0,0,0,.30);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.5), inset 0 -1px 0 rgba(255,255,255,.05);
+  }
+  body[data-material="steel"] .screen:not(#screen-quest) .panel,
+  body[data-material="steel"] .modal-card{
+    --readout:rgba(0,0,0,.34);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.07);
   }
