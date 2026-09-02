@@ -5903,11 +5903,25 @@
      the loadout sheet while everything around it was paper. It becomes a
      card laid on the page — same ink, same rule, one step darker than the
      stock so it still reads as a separate piece. */
+  /* A meal card sits directly on the page, not inside a panel — and the page
+     is dark wood, not stock. A 5% black tint over it is still dark wood,
+     which is why these boxes stayed the darkest thing on the screen while
+     everything around them turned to paper. Same fault the journal's date
+     strip had: "on the page" is not "on paper".
+
+     It takes the real stock, opaque, the way the panels do. It stays plain
+     rather than ruled — a card is not a page, and the sheet it is lying on
+     already carries the ruling. */
   body[data-material="paper"] .screen:not(#screen-quest) .quest{
-    background:rgba(0,0,0,.05);
-    border:1px solid var(--pp-rule);
     color:var(--pp-ink);
-    box-shadow:none;
+    border:1px solid rgba(0,0,0,.26);
+    background:
+      radial-gradient(ellipse 55% 38% at 18% 14%, var(--pp-stain), transparent 62%),
+      repeating-linear-gradient(92deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
+    box-shadow:
+      inset 0 0 20px rgba(90,62,25,.12),
+      0 3px 10px rgba(0,0,0,.45);
   }
   body[data-material="paper"] .screen:not(#screen-quest) .quest .quest-title,
   body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-dish,
@@ -6637,4 +6651,62 @@
         transparent 19px 26px) 11px 0/2px 100% no-repeat,
       radial-gradient(circle 4px at calc(100% - 15px) 15px,
         rgba(0,0,0,.6) 0 58%, transparent 60%);
+  }
+
+  /* the card's own furniture, in ink on that stock */
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-head{
+    border-bottom:1px solid var(--pp-rule);
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-req,
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .quest-body{
+    border-color:var(--pp-rule);
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .slot-label,
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .quest-sub{
+    color:var(--pp-soft);
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .slot-pick,
+  body[data-material="paper"] .screen:not(#screen-quest) .quest select,
+  body[data-material="paper"] .screen:not(#screen-quest) .quest input{
+    background:rgba(0,0,0,.05);
+    border:1px solid var(--pp-rule);
+    color:var(--pp-ink);
+    box-shadow:none;
+  }
+
+  /* Buttons that sit in the content stack rather than inside a panel — the
+     two under the meal timeline are the case. They were left on the dark
+     control surface because the page is dark, which was right while they sat
+     among other dark things and wrong the moment the cards above them became
+     paper: a row of dark slabs between paper cards and the primary action.
+
+     Direct children of a screen only, so the back link at the top of a page
+     and the journal's date chips keep the page's own treatment. */
+  body[data-material="paper"] .screen:not(#screen-quest) > .btn-ghost{
+    color:var(--pp-ink);
+    border:1px solid rgba(0,0,0,.24);
+    background:
+      repeating-linear-gradient(92deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
+    box-shadow:0 2px 7px rgba(0,0,0,.4);
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) > .btn-ghost:active{
+    background:
+      linear-gradient(0deg, rgba(0,0,0,.08), rgba(0,0,0,.08)),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
+  }
+
+  /* The component meter on a meal card was drawn for a dark card: unlit pips
+     in near-black, lit ones in the accent. On paper the whole meter vanished.
+     Ink for the empties, the seal for the filled — the same pair the rest of
+     the sheet uses. */
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-pips i{
+    background:rgba(0,0,0,.14);
+    box-shadow:none;
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-pips i.on{
+    background:var(--pp-seal);
+  }
+  body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-chev{
+    color:var(--pp-soft);
   }
