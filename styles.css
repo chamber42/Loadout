@@ -4545,11 +4545,11 @@
      a panel; the pip and the back link sit on the page itself. Modals are
      siblings of #app rather than children of a .screen, so they keep their
      own dark plane, which is what every other material does with them too. */
-  body[data-material="paper"] .screen:not(#screen-quest) .day-chip,
-  body[data-material="paper"] .screen:not(#screen-quest) .var-step,
-  body[data-material="paper"] .screen:not(#screen-quest) .pip,
-  body[data-material="paper"] .screen:not(#screen-quest) .back-link,
-  body[data-material="paper"] .screen:not(#screen-quest) .off-hit{
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .day-chip,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .var-step,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .pip,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .back-link,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .off-hit{
     background:rgba(0,0,0,.05);
     border:1px solid var(--pp-rule);
     color:var(--pp-ink);
@@ -4557,8 +4557,8 @@
   }
   /* ...and their selected state, matching .chip.on above rather than the
      accent glow, which has nothing to sit on once the surface is paper. */
-  body[data-material="paper"] .screen:not(#screen-quest) .day-chip.on,
-  body[data-material="paper"] .screen:not(#screen-quest) .var-step.on{
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .day-chip.on,
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .var-step.on{
     background:rgba(0,0,0,.10);
     box-shadow:inset 0 0 0 2px var(--pp-seal);
     border-color:var(--pp-seal);
@@ -4566,7 +4566,7 @@
   }
   /* A filled pip is the one thing here that should stay solid — it is a count,
      not a surface. It inherits currentColor, so ink is all it needs. */
-  body[data-material="paper"] .screen:not(#screen-quest) .pip.full{
+  body[data-material="paper"] .screen:not(#screen-quest) .panel .pip.full{
     background:var(--pp-ink); border-color:var(--pp-ink);
   }
   body[data-material="paper"] .screen:not(#screen-quest) .panel hr,
@@ -6009,4 +6009,56 @@
   }
   body[data-material="paper"] .screen:not(#screen-quest) .quest .bench-pips i.on{
     background:var(--pp-seal);
+  }
+
+  /* ---- horror: the ruling reaches the Night Log's panels ------------------
+     The ruled notebook — red margin rule and blue feint — was written only
+     for .screen:not(#screen-quest), so the weight and activity panels, which
+     live on the quest screen, got the plain stock instead. Side by side the
+     Case file was ruled paper and the Night Log was blank paper, which is
+     the mismatch: they are meant to be pages out of the same book.
+
+     The calendar sheets are excluded. They carry their own construction —
+     a ruled grid, a torn edge and a seal — and a second set of rules
+     underneath a table reads as a printing fault rather than as stationery.
+     ---------------------------------------------------------------------- */
+  body[data-theme="horror"] #screen-quest .panel:not(.cal-panel){
+    padding-left:34px;
+    background:
+      linear-gradient(90deg, transparent 0 25px,
+        rgba(150,44,44,.38) 25px 26px, transparent 26px),
+      repeating-linear-gradient(0deg,
+        transparent 0 24px, rgba(52,74,96,.15) 24px 25px),
+      radial-gradient(ellipse 55% 38% at 18% 14%, var(--pp-stain), transparent 62%),
+      radial-gradient(ellipse 48% 32% at 82% 72%, var(--pp-stain), transparent 62%),
+      radial-gradient(ellipse 44% 26% at 74% 58%, rgba(74,52,40,.16), transparent 64%),
+      repeating-linear-gradient(92deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
+    background-position:0 0, 0 18px, 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  /* the day sheet under the calendar keeps its own stock */
+  body[data-theme="horror"] #screen-quest #calDayPanel .panel{
+    padding-left:var(--pad);
+  }
+
+  /* ---- the meal checkbox on paper ---------------------------------------
+     .obj-mark is a checkbox, not a bullet: dashed and empty until the meal
+     is logged, then bordered with a tick in it. Its dark-theme fill is 30%
+     black, which is a soft recess on a dark panel and a grey blob on paper —
+     so on the sheet it read as an ornament in front of the heading rather
+     than as a box waiting to be ticked. Drawn in ink here, the way a printed
+     form would have it. */
+  body[data-material="paper"] .obj-mark{
+    background:rgba(0,0,0,.04);
+    border:1px dashed var(--pp-rule);
+  }
+  body[data-material="paper"] .obj.done .obj-mark{
+    border:1px solid var(--pp-seal);
+    background:rgba(0,0,0,.10);
+  }
+  body[data-material="paper"] .obj.done .obj-mark::after{
+    border-color:var(--pp-seal);
+  }
+  body[data-material="paper"] .obj.done .jmeal-head .eaten-title{
+    color:var(--pp-seal);
   }
