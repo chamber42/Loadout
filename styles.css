@@ -11,6 +11,20 @@
     --magenta:#ff2fb0;
     --text:#dff3ff;
     --muted:#8296ad;
+    /* Channel form of the accents above, for rules that need the colour at
+       a fraction of full strength. 02-themes.js republishes these on every
+       theme change; the values here are the default theme's, and only ever
+       apply for the instant before the first applyTheme() call. */
+    --bg-0-rgb:10,14,20;
+    --bg-1-rgb:13,20,32;
+    --panel-rgb:17,26,39;
+    --line-rgb:30,44,61;
+    --text-rgb:223,243,255;
+    --cyan-rgb:0,255,242;
+    --green-rgb:57,255,136;
+    --amber-rgb:255,176,0;
+    --red-rgb:255,56,96;
+    --magenta-rgb:255,47,176;
     --font-display:'Press Start 2P', monospace;
     --font-body:'Share Tech Mono', 'Courier New', monospace;
     /* Display type is set in whole pixels per theme rather than scaled with
@@ -21,8 +35,8 @@
     --fs-10:10px; --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-18:18px;
     --display-spacing:1px;
     --title-glow:none;
-    --accent-soft:rgba(0,255,242,.10);   /* per-theme, replaces hardcoded cyan */
-    --accent-line:rgba(0,255,242,.45);
+    --accent-soft:rgba(var(--cyan-rgb),.10);   /* per-theme, replaces hardcoded cyan */
+    --accent-line:rgba(var(--cyan-rgb),.45);
     --lift:0 1px 2px rgba(0,0,0,.35);    /* honest depth instead of neon bloom */
     --bg-wash:radial-gradient(ellipse at top, #10202b 0%, #0a0e14 55%);
     --safe-top:env(safe-area-inset-top,0px);
@@ -34,7 +48,7 @@
   html{
     min-height:100%;
     overscroll-behavior:none;
-    background-color:#0a0e14;
+    background-color:var(--bg-0);
   }
 
   /* iOS Safari force-zooms on focus for any control under 16px, and once
@@ -51,7 +65,7 @@
     color:var(--text);
     touch-action:manipulation;
     overscroll-behavior:none;
-    background-color:#0a0e14;
+    background-color:var(--bg-0);
     background-image:var(--bg-wash);
     min-height:100vh;
     min-height:100dvh;   /* dvh accounts for iOS toolbars; vh is the fallback */
@@ -71,7 +85,7 @@
   #hud{
     position:sticky; top:0; z-index:50;
     padding:calc(10px + var(--safe-top)) 14px 10px;
-    background:linear-gradient(180deg, rgba(10,14,20,0.98) 70%, rgba(10,14,20,0.85));
+    background:linear-gradient(180deg, rgba(var(--bg-0-rgb),0.98) 70%, rgba(var(--bg-0-rgb),0.85));
     border-bottom:1px solid var(--line);
     backdrop-filter:blur(6px);
     display:none;
@@ -226,6 +240,14 @@
                margin:0; padding:2px 0; -webkit-overflow-scrolling:touch;
                scrollbar-width:none; }
   .date-strip::-webkit-scrollbar{ display:none; }
+
+  /* Everything else that scrolls its own overflow, on the same terms. The
+     document's indicator is the web view's and is switched off natively in
+     MainViewController; this covers the panels, sheets and tables that
+     scroll inside the page. Scroll position stays available to the
+     keyboard and to VoiceOver — only the drawn bar goes. */
+  *::-webkit-scrollbar{ display:none; }
+  *{ scrollbar-width:none; }
   .date-strip .day-chip{ flex:0 0 auto; display:flex; flex-direction:column;
                          align-items:center; justify-content:center; padding:4px 8px; }
   .date-arrow{ flex:0 0 auto; min-width:38px; min-height:44px; }
@@ -275,9 +297,19 @@
   .bar-fill.fat{ background:var(--amber); color:var(--amber); }
   .bar-fill.over{ background:var(--red)!important; color:var(--red); }
   .bar-track{ position:relative; }
+  /* This number sits half on the dark track and half on the bar's own fill,
+     and the fill is a bright theme accent — white on #00fff2 is 1.27:1, which
+     a soft drop shadow does not rescue at 10px. A hard one-pixel outline on
+     all four sides does: it keeps the white legible against the accent
+     without darkening the bar or fixing the text to a colour that would then
+     disappear against the track. */
   .bar-num{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
             font-family:var(--font-body); font-size:10px; letter-spacing:0.5px;
-            color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.9);
+            color:#fff;
+            text-shadow:
+              -1px 0 0 rgba(0,0,0,.92),  1px 0 0 rgba(0,0,0,.92),
+               0 -1px 0 rgba(0,0,0,.92), 0  1px 0 rgba(0,0,0,.92),
+               0 1px 3px rgba(0,0,0,.85);
             pointer-events:none; white-space:nowrap; }
   .bar-val{ width:88px; text-align:right; font-size:9px; color:var(--muted); flex-shrink:0; }
 
@@ -336,7 +368,7 @@
   .choice-btn .desc{ display:block; font-size:var(--fs-10); color:var(--muted); margin-top:3px; }
   .choice-btn:active{ transform:scale(.98); }
   .choice-btn.selected{
-    border-color:var(--green); background:rgba(57,255,136,0.08);
+    border-color:var(--green); background:rgba(var(--green-rgb),0.08);
     box-shadow:var(--lift);
   }
   .choice-btn .tag{ font-size:16px; }
@@ -429,7 +461,7 @@
              cursor:pointer; min-height:34px; }
   .mini-btn.add{ width:100%; margin-top:2px; }
   .mini-btn.add:active{ background:var(--accent-soft); }
-  .mini-btn.remove{ border:1px solid rgba(255,56,96,0.4); color:var(--red); padding:7px 11px; flex:0 0 auto; }
+  .mini-btn.remove{ border:1px solid rgba(var(--red-rgb),0.4); color:var(--red); padding:7px 11px; flex:0 0 auto; }
   .season-input{ width:100%; margin-bottom:6px; }
   .theme-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(88px,1fr)); gap:8px; }
   .theme-btn{ min-height:78px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:11px 6px;
@@ -445,9 +477,9 @@
               padding:8px 10px; cursor:pointer; }
   .fav-chosen{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
   .fav-chosen:empty{ display:none; }
-  .fav-chosen .chip{ border-color:var(--green); color:var(--green); background:rgba(57,255,136,0.10); }
-  .mustuse-panel{ border-color:rgba(255,176,0,0.32); }
-  .mustuse-chosen .chip{ border-color:var(--amber)!important; color:var(--amber)!important; background:rgba(255,176,0,0.10)!important; }
+  .fav-chosen .chip{ border-color:var(--green); color:var(--green); background:rgba(var(--green-rgb),0.10); }
+  .mustuse-panel{ border-color:rgba(var(--amber-rgb),0.32); }
+  .mustuse-chosen .chip{ border-color:var(--amber)!important; color:var(--amber)!important; background:rgba(var(--amber-rgb),0.10)!important; }
   .fav-chosen.mustuse-chosen{ display:block; }
   /* ---- tab tray ---- */
   /* Columns follow the number of tabs rather than a fixed six, so the bar
@@ -543,13 +575,13 @@
   .off-credit{ font-family:var(--font-body); font-size:10px; color:var(--muted);
                line-height:1.6; margin-top:8px; }
   .onhand-row{ display:flex; align-items:center; gap:8px; margin-bottom:8px;
-               border:1px solid rgba(255,176,0,0.3); background:rgba(255,176,0,0.05);
+               border:1px solid rgba(var(--amber-rgb),0.3); background:rgba(var(--amber-rgb),0.05);
                border-radius:8px; padding:8px 10px; }
   .onhand-name{ flex:1; font-family:var(--font-body); font-size:13px; color:var(--amber); line-height:1.3; }
   .onhand-qty{ width:80px; margin-bottom:0!important; padding:7px 8px; font-size:16px; text-align:center; }
   .onhand-unit{ font-family:var(--font-body); font-size:11px; color:var(--muted); white-space:nowrap; min-width:34px; }
-  .onhand-chosen .chip{ border-color:var(--amber)!important; color:var(--amber)!important; background:rgba(255,176,0,0.10)!important; }
-  .dislike-chosen .chip{ border-color:var(--red)!important; color:var(--red)!important; background:rgba(255,56,96,0.10)!important; }
+  .onhand-chosen .chip{ border-color:var(--amber)!important; color:var(--amber)!important; background:rgba(var(--amber-rgb),0.10)!important; }
+  .dislike-chosen .chip{ border-color:var(--red)!important; color:var(--red)!important; background:rgba(var(--red-rgb),0.10)!important; }
   .fav-nores{ font-size:11px; color:var(--muted); padding:10px 2px; line-height:1.6; }
   .fav-cat{ margin-bottom:10px; border:1px solid rgba(95,118,144,0.25); border-radius:8px; overflow:hidden; }
   .fav-head{ min-height:48px; width:100%; display:flex; justify-content:space-between; align-items:center; gap:10px;
@@ -561,10 +593,10 @@
   .fav-chips.hidden{ display:none; }
   .chip{ font-family:var(--font-body); font-size:12px; padding:8px 10px; border-radius:999px;
          border:1px solid rgba(95,118,144,0.4); background:transparent; color:var(--muted); cursor:pointer; min-height:34px; }
-  .chip.on{ border-color:var(--green); color:var(--green); background:rgba(57,255,136,0.10); }
+  .chip.on{ border-color:var(--green); color:var(--green); background:rgba(var(--green-rgb),0.10); }
   .chip.hashand{ border-color:var(--amber); color:var(--amber); }
   .chip.locked{ opacity:0.3; }
-  .eaten-panel{ border-color:rgba(255,176,0,0.35); }
+  .eaten-panel{ border-color:rgba(var(--amber-rgb),0.35); }
   .eaten-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; }
   .eaten-title{ min-height:14px; font-family:var(--font-display); font-size:var(--fs-8); color:var(--amber); letter-spacing:1px; line-height:1.6; }
   .eaten-total{ font-family:var(--font-body); font-size:13px; color:var(--amber); white-space:nowrap; }
@@ -590,10 +622,10 @@
   }
   .label-warn-inline{ color:var(--amber); }
 
-  .custom-banner{ border:1px solid rgba(255,176,0,0.35); background:rgba(255,176,0,0.06);
+  .custom-banner{ border:1px solid rgba(var(--amber-rgb),0.35); background:rgba(var(--amber-rgb),0.06);
                   border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:11px; line-height:1.6; }
-  .custom-card{ border:1px solid rgba(255,176,0,0.3); border-radius:8px; padding:10px; margin-bottom:8px;
-                background:rgba(255,176,0,0.04); }
+  .custom-card{ border:1px solid rgba(var(--amber-rgb),0.3); border-radius:8px; padding:10px; margin-bottom:8px;
+                background:rgba(var(--amber-rgb),0.04); }
   .custom-head{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
   .custom-name{ flex:1; margin-bottom:0!important; }
   .custom-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
@@ -2583,7 +2615,7 @@
     display:flex; align-items:center; gap:10px;
     margin:10px 14px 0; padding:9px 11px;
     border:1px solid var(--green); border-radius:6px;
-    background:rgba(57,255,136,0.07);
+    background:rgba(var(--green-rgb),0.07);
   }
   .qb-buff.flat{
     border-color:var(--line);
@@ -2880,6 +2912,77 @@
   body[data-material="salvage"] #screen-quest .panel::before,
   body[data-material="paper"] #screen-quest .panel::after,
   body[data-material="salvage"] #screen-quest .panel::after{ display:none; }
+
+  /* ---- but not everything on the sheet IS the sheet ----------------------
+
+     The rule above paints every panel on this screen in paper ink, which is
+     right for the calendar: dark writing on aged stock.
+
+     A .vital row is not written on the sheet. It carries its own near-black
+     background — an instrument sitting on the page rather than ink soaked
+     into it — and inheriting the paper's ink puts #241d1d text on a #120d0f
+     box. That is a contrast ratio of 1.16:1, which is not dim, it is
+     invisible. The labels escaped it because they set --muted explicitly and
+     land at 7.3:1; the values set no colour at all, so they took the ink.
+
+     Restoring the theme's own text colour brings them to 15.2:1. Scoped to
+     the row rather than the panel so the sheet around it keeps its ink. */
+  body[data-material="paper"] #screen-quest .vital,
+  body[data-material="salvage"] #screen-quest .vital{
+    color:var(--text);
+  }
+  body[data-material="paper"] #screen-quest .vital .vital-lbl,
+  body[data-material="salvage"] #screen-quest .vital .vital-lbl{
+    color:var(--muted);
+  }
+
+  /* ---- horror: the readouts glow red ------------------------------------
+
+     Everywhere, not only on the quest screen. A .vital row is the same
+     object on the character sheet as it is here — a lit panel set into a
+     dark case — and it should read the same on both.
+
+     var(--cyan) is the theme's accent slot, which in this genre holds
+     #e05a5a. Using the slot rather than a literal keeps it the same red as
+     the active tab, so nothing has to be kept in step by hand. It sits at
+     5.3:1 on the box, above the 4.5 floor for normal text.
+
+     WRITTEN TWICE, AND THAT IS THE POINT
+
+     The paper rules above and the control rules further down are all scoped
+     with #screen-quest, and an id outranks any number of classes — so a
+     theme rule written only with classes loses to them on the one screen it
+     most needs to win. The first pass here was, and the text stayed grey.
+     Each selector therefore appears in both forms: the plain one for the
+     rest of the app, and an #screen-quest one that can actually beat them.
+     ---------------------------------------------------------------------- */
+  body[data-theme="horror"] .vital,
+  body[data-theme="horror"] .vital .vital-lbl,
+  body[data-theme="horror"] .vital .vital-unit,
+  body[data-theme="horror"] .vital strong,
+  body[data-theme="horror"] .vital input,
+  body[data-theme="horror"] .vital .btn-ghost,
+  body[data-theme="horror"] .vital .mini-btn,
+  body[data-theme="horror"] #screen-quest .vital,
+  body[data-theme="horror"] #screen-quest .vital .vital-lbl,
+  body[data-theme="horror"] #screen-quest .vital .vital-unit,
+  body[data-theme="horror"] #screen-quest .vital strong,
+  body[data-theme="horror"] #screen-quest .vital input,
+  body[data-theme="horror"] #screen-quest .vital .btn-ghost,
+  body[data-theme="horror"] #screen-quest .vital .mini-btn{
+    color:var(--cyan);
+  }
+  /* A control inside a row keeps a visible caret and edge against the same
+     background — the ON/OFF switch was the least readable thing on the
+     screen, because it took the paper's ink through .btn-ghost. */
+  body[data-theme="horror"] .vital input,
+  body[data-theme="horror"] #screen-quest .vital input{
+    caret-color:var(--cyan);
+  }
+  body[data-theme="horror"] .vital .btn-ghost,
+  body[data-theme="horror"] #screen-quest .vital .btn-ghost{
+    border-color:var(--accent-line); background:transparent;
+  }
 
   /* Everything written on the sheet is written in ink */
   body[data-material="paper"] #screen-quest .cal-title,
@@ -3461,7 +3564,8 @@
   :root{
     --pp-tear-foot:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='420' preserveAspectRatio='none'%3E%3Cfilter id='r2'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045 0.03' numOctaves='4' seed='5' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='13' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='-30' y='-30' width='360' height='442' fill='%23000' filter='url(%23r2)'/%3E%3C/svg%3E");
   }
-  /* wire binding: punched holes with the coil crossing over them */
+  /* wire binding: punched holes with the coil crossing over them.
+     Switched off below — the page reads better as a loose sheet. */
   body[data-theme="horror"] #screen-quest .paper-edge::before{
     content:''; position:absolute; left:0; right:0; top:0; height:30px;
     background:
@@ -3868,6 +3972,29 @@
   /* the cut edge of the stock catches a little light along the punch line */
   body[data-theme="horror"] #screen-quest .cal-panel .paper-edge{
     box-shadow:inset 0 15px 0 -14px rgba(255,255,255,.22);
+  }
+
+  /* ---- no binding ---------------------------------------------------------
+     The coil and the punched holes are removed, and the head-room that was
+     reserved for them goes back to the page.
+
+     Placed after everything that draws them rather than by deleting those
+     rules: the wire is a genuinely nice piece of work — an SVG tile with the
+     hole, the wire, and the shadow the wire throws clipped to where there is
+     page to catch it — and it should be recoverable by removing this block
+     rather than rebuilt from scratch. It reads better as a loose sheet, so
+     it goes.
+     ---------------------------------------------------------------------- */
+  body[data-theme="horror"] #screen-quest .paper-edge::before,
+  body[data-theme="horror"] #screen-quest .cal-panel .paper-edge::before{
+    display:none;
+  }
+  body[data-theme="horror"] #screen-quest .cal-panel .paper-edge{
+    box-shadow:none;
+  }
+  /* 58px and 40px of it were head-room for a coil that is no longer there. */
+  body[data-theme="horror"] #screen-quest .cal-panel{
+    padding-top:22px;
   }
 
 
@@ -4345,6 +4472,49 @@
   /* brackets and accent hairlines belong on a screen, not on a sheet */
   body[data-material="paper"] .screen:not(#screen-quest) .panel::before,
   body[data-material="paper"] .screen:not(#screen-quest) .panel::after{ display:none; }
+
+  /* ---- horror: ruled notebook stock, everywhere ---------------------------
+
+     The quest sheet has been a page torn from a notebook since it was
+     written — feint rules, a red margin, blooms where it got damp. Every
+     other screen had the plain aged stock the three paper genres share, so
+     the case file was one page of notebook and a stack of blank leaves.
+
+     Same recipe as #screen-quest, at the same 24px rule pitch, layered
+     UNDER the stains that were already there so the rules sit in the sheet
+     rather than on top of it. Padding-left clears the margin so nothing is
+     written across it, which is the one thing that would make it read as a
+     texture rather than as ruling.
+
+     Left off the loadout screen's own inner strips deliberately: those are
+     components sitting on the page, not the page itself. */
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel{
+    padding-left:34px;
+    background:
+      /* the margin rule, in the same red as the case seal */
+      linear-gradient(90deg, transparent 0 25px,
+        rgba(150,44,44,.38) 25px 26px, transparent 26px),
+      /* ruled feint */
+      repeating-linear-gradient(0deg,
+        transparent 0 24px, rgba(52,74,96,.15) 24px 25px),
+      /* the stains and stock the sheet already had */
+      radial-gradient(ellipse 55% 38% at 18% 14%, var(--pp-stain), transparent 62%),
+      radial-gradient(ellipse 48% 32% at 82% 72%, var(--pp-stain), transparent 62%),
+      radial-gradient(ellipse 44% 26% at 74% 58%, rgba(74,52,40,.16), transparent 64%),
+      repeating-linear-gradient(92deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
+    /* the feint starts below the top padding so the first line of writing
+       sits ON a rule rather than between two of them */
+    background-position:0 0, 0 18px, 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  /* A panel that is a strip of controls rather than a page — the HUD and
+     the timer rows — keeps its own surface. Ruling a control reads as a
+     printing fault. */
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel.quest-brief,
+  body[data-theme="horror"] .screen:not(#screen-quest) .streak-panel{
+    padding-left:14px;
+    background:linear-gradient(158deg, var(--pp-1), var(--pp-2));
+  }
 
   body[data-material="paper"] .screen:not(#screen-quest) .paper-fx{
     display:block; position:absolute; inset:0; pointer-events:none; z-index:1;
@@ -5415,7 +5585,7 @@
 
   .timer-row.timer-done{ border-color:var(--green); }
   .timer-row.timer-done .timer-clock{ color:var(--green); font-weight:700; }
-  .timer-row.timer-done .timer-fill{ background:rgba(57,255,136,.14); }
+  .timer-row.timer-done .timer-fill{ background:rgba(var(--green-rgb),.14); }
 
   .mini-btn.timer-start{ margin-top:8px; }
 
@@ -5447,10 +5617,10 @@
   }
   .mc-uses{ background:var(--accent-soft); border:1px solid var(--accent-line); color:var(--text); }
   /* The plate disagrees with the written method - the loudest of the four. */
-  .mc-warn{ background:rgba(255,176,0,.10); border:1px solid var(--amber); color:var(--text); }
+  .mc-warn{ background:rgba(var(--amber-rgb),.10); border:1px solid var(--amber); color:var(--text); }
   /* Needed for cooking, deliberately not in the macros, calorie-dense enough
      that quietly omitting it would be dishonest. */
-  .mc-extra{ background:rgba(255,56,96,.08); border:1px solid var(--red); color:var(--text); }
+  .mc-extra{ background:rgba(var(--red-rgb),.08); border:1px solid var(--red); color:var(--text); }
   .mc-aid{ color:var(--muted); border:1px solid var(--line); }
 
   /* ---- recipe families -------------------------------------------------

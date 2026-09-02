@@ -498,7 +498,7 @@
      be dismissable by Escape or a backdrop tap. */
   const ALL_MODALS = ['modalHow','modalStats','modalSystem','modalRecipePlace','modalFoodPick',
                       'modalPrepDay','modalPortion','modalJournalFood','modalPantry',
-                      'modalCookPlan','modalLegal'];
+                      'modalCookPlan','modalLegal','modalCustomFood'];
   ALL_MODALS.forEach(id=>{
     const el = document.getElementById(id);
     if (el) el.addEventListener('click', e=>{ if (e.target === el) closeModal(id); });

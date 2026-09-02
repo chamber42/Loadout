@@ -169,37 +169,6 @@
     saveState();
   }
 
-  function foodOptions(list, selectedKey){
-    const filtered = list.filter(passesPrefs);
-    let opts = `<option value="">— None —</option>`;
-    if (!filtered.length){
-      return `<option value="">— No matches for your preferences —</option>`;
-    }
-    if (state.cravings.length){
-      const picks = filtered.filter(matchesCraving);
-      const rest  = filtered.filter(f=>!matchesCraving(f));
-      if (picks.length){
-        opts += `<optgroup label="★ CRAVING PICKS">`;
-        picks.forEach(f=>{
-          opts += `<option value="${f.key}" ${f.key===selectedKey?'selected':''}>${f.name}</option>`;
-        });
-        opts += `</optgroup>`;
-      }
-      if (rest.length){
-        opts += `<optgroup label="EVERYTHING ELSE">`;
-        rest.forEach(f=>{
-          opts += `<option value="${f.key}" ${f.key===selectedKey?'selected':''}>${f.name}</option>`;
-        });
-        opts += `</optgroup>`;
-      }
-      return opts;
-    }
-    filtered.forEach(f=>{
-      opts += `<option value="${f.key}" ${f.key===selectedKey?'selected':''}>${f.name}</option>`;
-    });
-    return opts;
-  }
-
   function currentTier(){
     return TIERS.find(t=>t.id === state.selectedTierId);
   }
@@ -1457,7 +1426,7 @@
       <div class="custom-card">
         <div class="custom-head">
           <input type="text" class="custom-name" data-ef="${i}|name" value="${(c.name||'').replace(/"/g,'&quot;')}" placeholder="Item name — e.g. Costco chicken bake">
-          <button class="mini-btn remove" data-rmeaten="${i}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+          <button class="mini-btn remove" data-rmeaten="${i}" aria-label="Remove ${escapeHtml(c.name || 'this item')}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
         </div>
         <div class="custom-grid">
           <label>KCAL<input type="number" inputmode="numeric" data-ef="${i}|kcal"    value="${c.kcal ?? ''}"    placeholder="0"></label>

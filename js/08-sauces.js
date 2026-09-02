@@ -86,8 +86,8 @@
        "Garlic — 1 clove",
        "Water or almond milk — 1–3 tbsp"],
      steps:[
-       "Blend the avocado, coriander, lime and garlic until completely smooth before the yogurt.",
-       "Include the coriander stalks — they carry more flavor than the leaves.",
+       "Blend the avocado, cilantro, lime and garlic until completely smooth before the yogurt.",
+       "Include the cilantro stems — they carry more flavor than the leaves.",
        "Add the yogurt and pulse briefly to combine.",
        "Use plenty of lime; it is what stops the avocado browning as much as it is a flavor.",
        "Press cling film onto the surface in the tub. It keeps about 3 days, less than the others."]},
@@ -291,14 +291,14 @@
        "Pickled jalapeños, chopped — 25g",
        "Green chiles, diced — 40g",
        "Cumin — ½ tsp, garlic powder — ½ tsp",
-       "Fresh coriander to finish"],
+       "Fresh cilantro to finish"],
      steps:[
        "Buy the white American from the deli counter, not the wrapped singles. It melts to a completely different texture.",
        "Tear the slices up and put them in a pan with half the milk over the lowest heat you have.",
        "Stir constantly. It will look wrong and broken for a couple of minutes, then suddenly come together — do not panic and turn the heat up.",
        "Add the rest of the milk to reach the consistency you want. It thickens fast as it cools.",
        "Chiles, jalapeños and spices in at the end.",
-       "Coriander over the top on serving. Reheat with a splash of milk."]},
+       "Cilantro over the top on serving. Reheat with a splash of milk."]},
     {key:"greenchilequeso", name:"Hatch Green Chile Queso", yield:"~7 servings", per:"~180 kcal · 8g protein · 6g carbs · 14g fat per 70g",
      ingredients:[
        "White American cheese — 200g",

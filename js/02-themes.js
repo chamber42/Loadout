@@ -20,7 +20,7 @@
       name:"Cyberpunk", icon:"city",
       blurb:"Neon, chrome and bad decisions at 3am",
       fonts:{ display:"'Press Start 2P', monospace", body:"'Share Tech Mono', 'Courier New', monospace", scale:1, spacing:"1px" },
-      sizes:{ "fs-6":"6px", "fs-7":"7px", "fs-8":"8px", "fs-9":"8px", "fs-10":"9px", "fs-11":"10px", "fs-12":"11px", "fs-13":"12px", "fs-18":"14px", "fs-body":"13px" },
+      sizes:{ "fs-6":"8px", "fs-7":"8px", "fs-8":"8px", "fs-9":"8px", "fs-10":"9px", "fs-11":"10px", "fs-12":"11px", "fs-13":"12px", "fs-18":"14px", "fs-body":"13px" },
       glow:"none", accentSoft:"rgba(0,255,242,.10)", accentLine:"rgba(0,255,242,.45)",
       colors:{ "bg-0":"#0a0e14","bg-1":"#0d1420","panel":"#111a27","panel-2":"#0e1622","line":"#1e2c3d",
                "cyan":"#00fff2","green":"#39ff88","amber":"#ffb000","red":"#ff3860","magenta":"#ff2fb0",
@@ -39,7 +39,7 @@
       sizes:{ "fs-6":"10px", "fs-7":"11px", "fs-8":"12px", "fs-9":"13px", "fs-10":"14px", "fs-11":"15px", "fs-12":"16px", "fs-13":"17px", "fs-18":"25px", "fs-body":"14px" },
       glow:"none", accentSoft:"rgba(232,201,119,.10)", accentLine:"rgba(232,201,119,.45)",
       colors:{ "bg-0":"#14100a","bg-1":"#1c160d","panel":"#241c11","panel-2":"#1e1710","line":"#3d3320",
-               "cyan":"#e8c977","green":"#8fbf6a","amber":"#d9a441","red":"#c0483c","magenta":"#a86fbf",
+               "cyan":"#e8c977","green":"#8fbf6a","amber":"#d9a441","red":"#cc665c","magenta":"#a86fbf",
                "text":"#f2e6cf","muted":"#bfb39f" },
       sheet:"CHARACTER SHEET", sheetTitle:"Your Character",
       words:{ tier:"RANK", loadout:"PROVISIONS", quest:"QUEST", journal:"CHRONICLE", stat:"ATTRIBUTE", inventory:"LARDER",
@@ -55,7 +55,7 @@
       sizes:{ "fs-6":"11px", "fs-7":"12px", "fs-8":"13px", "fs-9":"14px", "fs-10":"15px", "fs-11":"16px", "fs-12":"18px", "fs-13":"19px", "fs-18":"29px", "fs-body":"16px" },
       glow:"none", accentSoft:"rgba(255,140,26,.10)", accentLine:"rgba(255,140,26,.45)",
       colors:{ "bg-0":"#0e0f10","bg-1":"#141617","panel":"#1a1d1f","panel-2":"#151819","line":"#2b3033",
-               "cyan":"#ff8c1a","green":"#5ec26a","amber":"#e8b62c","red":"#e0463c","magenta":"#7fa8c9",
+               "cyan":"#ff8c1a","green":"#5ec26a","amber":"#e8b62c","red":"#e2544b","magenta":"#7fa8c9",
                "text":"#e6eaec","muted":"#9da9ae" },
       sheet:"OPERATOR DOSSIER", sheetTitle:"Your Operator",
       words:{ tier:"CLASS", loadout:"LOADOUT", quest:"OBJECTIVE", journal:"SITREP", stat:"METRIC", inventory:"ARMORY",
@@ -71,7 +71,7 @@
       sizes:{ "fs-6":"9px", "fs-7":"10px", "fs-8":"11px", "fs-9":"12px", "fs-10":"13px", "fs-11":"14px", "fs-12":"15px", "fs-13":"16px", "fs-18":"24px", "fs-body":"13px" },
       glow:"0 0 9px rgba(182,224,39,.3)", accentSoft:"rgba(182,224,39,.11)", accentLine:"rgba(182,224,39,.42)",
       colors:{ "bg-0":"#0a0d08","bg-1":"#10150e","panel":"#161d13","panel-2":"#111710","line":"#36421f",
-               "cyan":"#b6e027","green":"#7fbf3f","amber":"#e3b23c","red":"#c4442a","magenta":"#94853f",
+               "cyan":"#b6e027","green":"#7fbf3f","amber":"#e3b23c","red":"#d75c43","magenta":"#94853f",
                "text":"#e7efd6","muted":"#9ea994" },
       sheet:"SURVIVOR PROFILE", sheetTitle:"Your Survivor",
       words:{ tier:"GRADE", loadout:"SUPPLY RUN", quest:"TASK", journal:"RATIONS", stat:"READOUT", inventory:"STASH",
@@ -133,7 +133,7 @@
       sizes:{ "fs-6":"10px","fs-7":"11px","fs-8":"12px","fs-9":"13px","fs-10":"15px","fs-11":"16px","fs-12":"17px","fs-13":"18px","fs-18":"26px","fs-body":"13px" },
       glow:"0 1px 0 rgba(0,0,0,.5)", accentSoft:"rgba(226,138,58,.12)", accentLine:"rgba(226,138,58,.45)",
       colors:{ "bg-0":"#0d1512","bg-1":"#131e1a","panel":"#182620","panel-2":"#131e1a","line":"#2a3a32",
-               "cyan":"#e28a3a","green":"#7fb069","amber":"#e0b445","red":"#c35b4a","magenta":"#8ab6c9",
+               "cyan":"#e28a3a","green":"#7fb069","amber":"#e0b445","red":"#cb7061","magenta":"#8ab6c9",
                "text":"#eef2ec","muted":"#a1b1a8" },
       sheet:"FIELD CARD", sheetTitle:"Your License",
       words:{ tier:"TAG", loadout:"KIT", quest:"OUTING", journal:"MESS", stat:"READING", inventory:"COOLER",
@@ -148,8 +148,18 @@
       fonts:{ display:"'Metamorphous', Georgia, serif", body:"'Crimson Text', Georgia, serif", scale:1, spacing:"1px" },
       sizes:{ "fs-6":"10px","fs-7":"11px","fs-8":"12px","fs-9":"13px","fs-10":"14px","fs-11":"16px","fs-12":"17px","fs-13":"18px","fs-18":"25px","fs-body":"15px" },
       glow:"0 0 14px rgba(200,60,60,.20)", accentSoft:"rgba(197,58,58,.14)", accentLine:"rgba(197,58,58,.50)",
-      colors:{ "bg-0":"#0b0709","bg-1":"#120d0f","panel":"#181113","panel-2":"#120d0f","line":"#332226",
-               "cyan":"#e05a5a","green":"#8fae76","amber":"#d19a3c","red":"#e04a4a","magenta":"#9a6ba8",
+      /* The two BOX fills carry the crimson; the page and the panel surface
+         do not. --bg-0 fills inputs, meters, slot pickers and recessed
+         plates; --panel-2 fills day chips, meal strips, bar tracks and
+         choice buttons. Both keep the luminance they had — 0.0024 and
+         0.0045 — so nothing changes weight, only hue: almost-black infected
+         blood rather than a neutral void.
+
+         The page background is a literal in styles.css, not this token, so
+         it stays exactly as it was. --panel (#181113) is the panel surface
+         and is left alone for the same reason. */
+      colors:{ "bg-0":"#140307","bg-1":"#120d0f","panel":"#181113","panel-2":"#1d060b","line":"#332226",
+               "cyan":"#e05a5a","green":"#8fae76","amber":"#d19a3c","red":"#e04a4a","magenta":"#9a6ca8",
                "text":"#ece2e2","muted":"#ab9c9e" },
       sheet:"CASE FILE", sheetTitle:"Your Case File",
       words:{ tier:"CHAPTER", loadout:"SUPPLIES", quest:"NIGHT", journal:"INTAKE", stat:"VITALS", inventory:"SATCHEL",
@@ -178,7 +188,7 @@
       name:"Retro Arcade", icon:"invader",
       blurb:"Bright, loud, and one more credit",
       fonts:{ display:"'Press Start 2P', monospace", body:"'Chakra Petch', 'Trebuchet MS', sans-serif", scale:1, spacing:"1px" },
-      sizes:{ "fs-6":"6px", "fs-7":"7px", "fs-8":"8px", "fs-9":"8px", "fs-10":"9px", "fs-11":"10px", "fs-12":"11px", "fs-13":"12px", "fs-18":"14px", "fs-body":"13px" },
+      sizes:{ "fs-6":"8px", "fs-7":"8px", "fs-8":"8px", "fs-9":"8px", "fs-10":"9px", "fs-11":"10px", "fs-12":"11px", "fs-13":"12px", "fs-18":"14px", "fs-body":"13px" },
       glow:"none", accentSoft:"rgba(0,229,255,.12)", accentLine:"rgba(0,229,255,.50)",
       colors:{ "bg-0":"#12042a","bg-1":"#1b0740","panel":"#250b52","panel-2":"#1e0844","line":"#3d1780",
                "cyan":"#00e5ff","green":"#4dff5a","amber":"#ffd93d","red":"#ff4d6d","magenta":"#ff5cf0",
@@ -199,11 +209,28 @@
     farm:'cozy',         racing:'race'
   };
 
+  /* "#39ff88" -> "57,255,136". Tints are the one thing a palette variable
+     cannot express on its own: a rule that wants the accent at 10% has to
+     write the channels out, and writing them out is exactly how a hardcoded
+     colour ends up surviving a theme change. Publishing the channels
+     alongside the colour lets a rule say rgba(var(--green-rgb),.10) and
+     recolour with everything else. */
+  function rgbTriplet(hex){
+    let h = String(hex).trim().replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)).join(',');
+  }
+
   function applyTheme(key){
     const t = THEMES[key] || THEMES.cyberpunk;
     state.theme = key;
     const r = document.documentElement.style;
-    Object.entries(t.colors).forEach(([k,v]) => r.setProperty('--' + k, v));
+    Object.entries(t.colors).forEach(([k,v]) => {
+      r.setProperty('--' + k, v);
+      const rgb = rgbTriplet(v);
+      if (rgb) r.setProperty('--' + k + '-rgb', rgb);
+    });
     r.setProperty('--font-display', t.fonts.display);
     r.setProperty('--font-body', t.fonts.body);
     r.setProperty('--display-spacing', t.fonts.spacing);

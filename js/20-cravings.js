@@ -49,7 +49,7 @@
     FAV_CATS.forEach(cat=>{
       favKeys(cat.slot).forEach(k=>{
         const f = listFor(cat.slot).find(x=>x.key===k);
-        if (f) bits.push(`<button class="chip on" data-fav="${cat.slot}|${f.key}"><svg class="px" aria-hidden="true"><use href="#i-star"></use></svg> ${f.name} <svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>`);
+        if (f) bits.push(`<button class="chip on" data-fav="${cat.slot}|${f.key}"><svg class="px" aria-hidden="true"><use href="#i-star"></use></svg> ${escapeHtml(f.name)} <svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>`);
       });
     });
     host.innerHTML = bits.join('');
@@ -90,7 +90,7 @@
         const on = chosen.includes(f.key);
         const locked = full && !on;
         const hand = onHandKeys.includes(f.key);
-        return `<button class="chip${on?' on':''}${locked?' locked':''}${hand?' hashand':''}" data-fav="${cat.slot}|${f.key}">${on?'<svg class="px" aria-hidden="true"><use href="#i-star"></use></svg> ':''}${hand?'<svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> ':''}${f.name}</button>`;
+        return `<button class="chip${on?' on':''}${locked?' locked':''}${hand?' hashand':''}" data-fav="${cat.slot}|${f.key}">${on?'<svg class="px" aria-hidden="true"><use href="#i-star"></use></svg> ':''}${hand?'<svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> ':''}${escapeHtml(f.name)}</button>`;
       }).join('');
 
       return `
@@ -177,10 +177,10 @@
       const asUnits = (f.unit && qty) ? ` ≈ ${(qty / f.unit.g).toFixed(1)} ${unitHint}` : '';
       return `
         <div class="onhand-row">
-          <span class="onhand-name"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> ${f.name}</span>
+          <span class="onhand-name"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> ${escapeHtml(f.name)}</span>
           <input type="number" class="onhand-qty" data-mustqty="${k}" value="${qty}" placeholder="any" inputmode="numeric" min="0" max="5000">
           <span class="onhand-unit">g${asUnits}</span>
-          <button class="mini-btn remove" aria-label="Remove ${f.name}" data-unmust="${k}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+          <button class="mini-btn remove" aria-label="Remove ${escapeHtml(f.name)}" data-unmust="${k}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
         </div>`;
     }).join('');
     mustChosen.querySelectorAll('[data-unmust]').forEach(btn=>{
@@ -264,7 +264,7 @@
       return;
     }
     mustResults.innerHTML = `<div class="fav-chips" style="padding:4px 0;">` +
-      hits.slice(0,40).map(f=>`<button class="chip" data-must="${f.key}">${f.name}</button>`).join('') + `</div>`;
+      hits.slice(0,40).map(f=>`<button class="chip" data-must="${f.key}">${escapeHtml(f.name)}</button>`).join('') + `</div>`;
     mustResults.querySelectorAll('[data-must]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const k = btn.getAttribute('data-must');
@@ -297,7 +297,7 @@
     dislikeChosen.innerHTML = (state.dislikes || []).map(k=>{
       for (const sl of ALL_SLOTS){
         const f = listFor(sl).find(x=>x.key===k);
-        if (f) return `<button class="chip on" data-undislike="${k}"><svg class="px" aria-hidden="true"><use href="#i-ban"></use></svg> ${f.name} <svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>`;
+        if (f) return `<button class="chip on" data-undislike="${k}"><svg class="px" aria-hidden="true"><use href="#i-ban"></use></svg> ${escapeHtml(f.name)} <svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>`;
       }
       return '';
     }).join('');
@@ -335,7 +335,7 @@
     }
     dislikeResults.innerHTML = `<div class="fav-chips" style="padding:4px 0;">` +
       hits.slice(0, 40).map(({food}) =>
-        `<button class="chip" data-dislike="${food.key}">${food.name}</button>`).join('') + `</div>`;
+        `<button class="chip" data-dislike="${food.key}">${escapeHtml(food.name)}</button>`).join('') + `</div>`;
     dislikeResults.querySelectorAll('[data-dislike]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const k = btn.getAttribute('data-dislike');

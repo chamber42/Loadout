@@ -448,7 +448,7 @@
      protein:["grndturk93", "grndchick", "beef93", "meatball"], carb:["propasta", "wwpasta", "pasta", "lentilpasta", "sourdough"], fat:["oil", "butter"],
      veg:["onion", "mushrooms", "spinach", "zucchini", "cherrytom"], fruit:[], sauce:["marinara", "pizzasauce", "pesto"],
      steps:[
-       "Mix the mince with breadcrumb, egg and seasoning using your hands, briefly. Overworking makes them dense.",
+       "Mix the ground meat with breadcrumb, egg and seasoning using your hands, briefly. Overworking makes them dense.",
        "Grated onion or courgette in the mix keeps lean turkey from drying out.",
        "Roll them all the same size and chill 15 minutes so they hold shape.",
        "Bake at 200C/400F for 15 minutes to brown, then finish them in the simmering sauce for 10.",
@@ -457,7 +457,7 @@
      protein:["beef93", "grndturk93", "grndchick", "beef85"], carb:["rice", "whiterice", "brownrice", "caulirice", "quinoa"], fat:["oil", "sourcream", "avocado"],
      veg:["onion", "peppers", "corn", "tomatoes", "spinach"], fruit:[], sauce:["salsa", "hotsauce", "chipotle", "enchilada"],
      steps:[
-       "Brown the mince hard in a dry pan and leave it alone long enough to catch color.",
+       "Brown the ground meat hard in a dry pan and leave it alone long enough to catch color.",
        "Drain the fat if you are using anything fattier than 93/7.",
        "Cook the onion and peppers in the same pan and scrape the bottom.",
        "Add cooked rice and sauce, then press it flat and leave it 3 minutes to crisp underneath.",
@@ -502,7 +502,7 @@
      protein:["grndturk93", "beef93", "grndchick", "cheddarff", "bison"], carb:["whitepot", "potato", "rice", "sandthin", "sweetpotfries"], fat:["avocado", "mayolight", "oil"],
      veg:["romaine", "tomatoes", "onion", "pickles", "cucumber"], fruit:[], sauce:["thousand", "ketchup", "mustard", "ranchlight","bbqyog","boomboom"],
      steps:[
-       "Season the mince and shape patties wider than you want them — they shrink and dome.",
+       "Season the ground meat and shape patties wider than you want them — they shrink and dome.",
        "Press a thumbprint into the center of each so they cook flat.",
        "Sear 4 minutes a side without pressing them. Pressing squeezes out what keeps them juicy.",
        "Lean turkey is done at 74C/165F and dry at 80C, so check rather than guess.",
@@ -515,7 +515,7 @@
      steps:[
        "Use cold day-old rice. Fresh rice steams and turns to mush — this is the whole trick.",
        "Get the pan as hot as it goes. Fried rice is a heat dish, not a time dish.",
-       "Scramble the egg first, remove it, then cook the prawns 60 seconds and remove those too.",
+       "Scramble the egg first, remove it, then cook the shrimp 60 seconds and remove those too.",
        "Fry the rice in a thin layer, pressing it down, until you hear it crackle.",
        "Return everything, add the sauce down the side of the hot pan, toss 30 seconds, done."]},
     {name:"Tuna Melt", season:["blackpepper", "dill", "lemonjuice"], pattern:"{P} Melt on {C}", form:"Sandwich", slots:["lunch", "snack"], crave:["comfort", "savory", "creamy"],
@@ -536,7 +536,7 @@
        "Cook the grits in stock, not water, whisking hard for the first minute to stop lumps.",
        "Stir every few minutes for 20 minutes. Quick grits cooked slowly still beat fast grits.",
        "Beat in the cheese and butter off the heat.",
-       "Season the prawns and sear them 60–90 seconds a side in a hot pan. Remove immediately.",
+       "Season the shrimp and sear them 60–90 seconds a side in a hot pan. Remove immediately.",
        "Build a pan sauce with the fond, lemon and hot sauce and pour it over the lot."]},
     {name:"Tuna Pasta Salad", season:["dill", "blackpepper", "lemonjuice"], pattern:"{P} & {C} Salad", form:"Salad", slots:["lunch", "snack"], crave:["nocook", "fresh", "light"],
      protein:["tunacan", "tunapouch", "chicken", "wholeegg", "feta"], carb:["propasta", "macaroni", "pasta", "wwpasta", "chickpeas"], fat:["mayolight", "oil", "olives"],
@@ -553,11 +553,11 @@
      protein:["grndturk93", "grndchick", "pork", "tofu", "shrimp"], carb:["rice", "caulirice", "whiterice", "ricenoodle"], fat:["sesameoil", "oil", "peanuts"],
      veg:["cabbage", "carrots", "napa", "scallion", "mushrooms", "broccolislaw"], fruit:[], sauce:["soy", "sriracha", "aminos", "gochujang", "chilicrisp"],
      steps:[
-       "Brown the mince first and break it up small.",
+       "Brown the ground meat first and break it up small.",
        "Add ginger and garlic for 30 seconds only — any longer and they burn into bitterness.",
        "Cabbage goes in over high heat and gets tossed, not stirred, for 4–5 minutes.",
        "Stop while it still has bite. Soft cabbage is where this dish goes wrong.",
-       "Sauce at the end, off the heat, then sesame oil and spring onion."]},
+       "Sauce at the end, off the heat, then sesame oil and green onion."]},
     {name:"Chickpea Curry", core:["sauce"], season:["currypwd", "turmeric", "garammasala"], pattern:"{P} Curry with {V}", form:"Curry", slots:["lunch", "dinner"], crave:["warmbowl", "comfort", "spicy"],
      protein:["whitebeans", "lentils", "tofu", "paneer", "chicken"], carb:["rice", "basmati", "naan", "chickpeas", "quinoa"], fat:["coconutmilk", "oil", "cashews"],
      veg:["spinach", "tomatoes", "onion", "cauliflower", "peppers"], fruit:[], sauce:["curry", "tikka", "hotsauce", "mole"],
@@ -626,7 +626,7 @@
        "Brown the meat hard in the pot and leave the browned bits stuck to the base.",
        "Add the charred veg, cumin and oregano, then stock, scraping the base clean.",
        "Simmer 45 minutes uncovered so it reduces and darkens.",
-       "Beans in for the last 15 minutes. Lime and coriander off the heat only."]},
+       "Beans in for the last 15 minutes. Lime and cilantro off the heat only."]},
 
     // ---------- SNACKS (added) ----------
     {name:"Cottage Cheese Snack Plate", season:["blackpepper", "everything", "dill"], pattern:"{P} with {V}", form:"Plate", slots:["snack", "lunch"], crave:["nocook", "fresh", "creamy"],
@@ -642,7 +642,7 @@
      protein:["jerky", "beefstick", "turkeyjerky", "porkrind", "cheesestick"], carb:["popcorn", "proteinchips", "lentilchips", "crackers"], fat:["almonds", "peanuts", "pumpkinseeds", "cashews"],
      veg:[], fruit:["raisins", "mangodry", "apricotdry"], sauce:[],
      steps:[
-       "Air-pop the corn rather than buying it pre-flavoured; you control the whole calorie cost that way.",
+       "Air-pop the corn rather than buying it pre-flavored; you control the whole calorie cost that way.",
        "Mist very lightly with oil — just enough to make seasoning stick, not enough to weigh it down.",
        "Toss with nutritional yeast, paprika and salt in a big bowl or a lidded container.",
        "Add the nuts and dried fruit only once the popcorn is completely cool.",
@@ -825,7 +825,7 @@
      protein:["beef80","beef85","american","cheddar","bison"], carb:["burgerbun","potatobun","brioche","pretzelbun","protbun"], fat:["mayo","butter","oil"],
      veg:["shreddedlettuce","tomatoslice","grillonion","dillspears","redonion"], fruit:[], sauce:["burgersauce","chipotlemayo","thousand","ketchup","boomboom"],
      steps:[
-       "Handle the mince as little as possible. Compacted patties cook up dense and gray.",
+       "Handle the ground meat as little as possible. Compacted patties cook up dense and gray.",
        "Salt the outside of the patty only, and only right before it hits the pan; salt mixed in makes it springy.",
        "Get the pan or plate ripping hot, press once at the start, then leave it alone until the edges are lacy.",
        "Cheese on, a splash of water in the pan, lid on for 20 seconds to steam it molten.",
@@ -960,7 +960,7 @@
      fruit:["bananamed","berries","dates","figsdried"], veg:[], sauce:[],
      steps:[
        "Cook the oats in milk rather than water. It is the single easiest calorie upgrade in the bowl.",
-       "Salt the oats. Unsalted porridge tastes of nothing however much sugar goes in.",
+       "Salt the oats. Unsalted oatmeal tastes of nothing however much sugar goes in.",
        "Stir the protein or gainer powder in off the heat — boiled whey goes grainy and rubbery.",
        "Fold the nut butter through while it is hot so it melts into ribbons instead of sitting in a lump.",
        "Fruit and crunchy toppings at the end.",
@@ -1024,15 +1024,15 @@
        "Salt the zoodles and let them drain 15 minutes, then squeeze. Skipping this gives you a puddle instead of a plate.",
        "Do not cook the zoodles in the sauce. Warm them 60 seconds at the end and no more.",
        "Prawns need 90 seconds a side over high heat. The moment they curl into a tight C they are past it.",
-       "Build the pan sauce after the prawns come out — garlic, chili, lemon, a splash of stock.",
+       "Build the pan sauce after the shrimp come out — garlic, chili, lemon, a splash of stock.",
        "Everything back together off the heat and tossed once.",
        "This does not hold. Prep the components, assemble at eating."]},
     {name:"Turkey Lettuce Wraps", goals:["extreme_loss","loss","maintain"], season:["gingerfresh","garlicpwd","fivespice","chiliflake"], pattern:"{P} Lettuce Wraps", form:"Wraps", slots:["lunch","dinner"], crave:["light","fresh","savory","crunchy"],
      protein:["grndturk99","grndturk93","grndchick","tofu","chicken"], carb:["riceballs","rice","caulirice","glassnoodle"], fat:["sesameoil","peanuts","cashews"],
      veg:["butterlettuce","iceberg","scallion","mushrooms","carrots","waterchest"], fruit:[], sauce:["hoisin","soy","sriracha","peanutlight"],
      steps:[
-       "Brown the mince hard and dry, breaking it fine. Wet mince makes the lettuce collapse instantly.",
-       "Aromatics after the meat has color, never before — garlic in a cold pan with mince just steams.",
+       "Brown the ground meat hard and dry, breaking it fine. Wet ground meat makes the lettuce collapse instantly.",
+       "Aromatics after the meat has color, never before — garlic in a cold pan with ground meat just steams.",
        "Sauce in at the end and reduced until it clings rather than pools.",
        "Chill the lettuce cups in ice water for 10 minutes and dry them; cold crisp leaves are half the dish.",
        "Water chestnuts or chopped celery go in off the heat so they stay crunchy.",
@@ -1145,7 +1145,7 @@
      steps:[
        "Par-cook the sweet potato — microwave 5 minutes or boil 6 — before it hits the pan. Raw dice never cooks through before the outside burns.",
        "Get the pan hot and spread the potato in one layer. Leave it alone for 4 minutes at a stretch.",
-       "Brown the mince separately and add it back at the end, or it steams the potato.",
+       "Brown the ground meat separately and add it back at the end, or it steams the potato.",
        "Onions and peppers go in once the potato has real color, not before.",
        "Make wells and crack eggs straight in, lid on for 3 minutes, if you want it as a one-pan meal.",
        "Hot sauce at the table. Sweet potato needs the acid."]},
@@ -1165,7 +1165,7 @@
      veg:["onion","peppers","celery","carrots"], fruit:[], sauce:["bbq","ketchup","mustard","bbqyog"],
      steps:[
        "Grate the carrot rather than dicing it. It disappears into the sauce and does the sweetening that sugar otherwise would.",
-       "Brown the mince and drain it, then return it — sloppy joes should be saucy, not greasy.",
+       "Brown the ground meat and drain it, then return it — sloppy joes should be saucy, not greasy.",
        "Cook the tomato paste in the pan for a minute until it darkens before liquid goes in.",
        "Simmer 20 minutes uncovered. Undersimmered sloppy joe filling runs straight out of the bun.",
        "It should mound on a spoon, not slide off it. Keep going until it does.",
@@ -1216,7 +1216,7 @@
      steps:[
        "Marinate the chicken in chipotle, lime and cumin for 30 minutes minimum.",
        "Cook it over high heat and let it char at the edges, then rest and slice — do not slice first.",
-       "Cook the rice with a bay leaf, then fork lime juice and chopped coriander through it while it is hot.",
+       "Cook the rice with a bay leaf, then fork lime juice and chopped cilantro through it while it is hot.",
        "Char the corn dry in a hot pan until it takes black spots. Raw corn in a warm bowl tastes of nothing.",
        "Build cold things on one side and hot things on the other rather than mixing.",
        "Everything keeps separately for 4 days; assemble at eating and it will not go soggy."]},
@@ -1304,7 +1304,7 @@
     /* ==================== CHILI ====================
        Chili is a sauce with things in it, which is why every one of these
        carries `core:['sauce']` — served without the chile base it is just
-       a bowl of mince and beans. */
+       a bowl of ground meat and beans. */
     {name:"White Chicken Chili", season:["cumin","coriander","oregano","limejuice"], pattern:"White {P} Chili", form:"Chili", slots:["lunch","dinner"], crave:["warmbowl","comfort","spicy"],
      core:["sauce"],
      protein:["chicken","chickthigh","grndchick","greatnorth","whitebeans","rotisserie"], carb:["hominy","rice","cornbread","corntort6"], fat:["sourcream","oil","avocado","butter"],
@@ -1325,14 +1325,14 @@
        "Onions and peppers next, cooked down properly soft — they are carrying the body that meat would otherwise provide.",
        "Spices in the fat, off to one side of the pot, for 30 seconds until fragrant.",
        "Tomatoes, then the beans. Use three different beans and leave one of them slightly under so there is some texture left.",
-       "Simmer at least 40 minutes uncovered. A short-cooked bean chili tastes like tinned beans in spiced water.",
+       "Simmer at least 40 minutes uncovered. A short-cooked bean chili tastes like canned beans in spiced water.",
        "Finish with vinegar or lime — meatless chili almost always needs acid at the end, not more chili powder."]},
     {name:"Chili Con Carne", season:["chiliseason","cumin","oregano","chilipwd"], pattern:"{P} Chili Con Carne", form:"Chili", slots:["lunch","dinner"], crave:["warmbowl","comfort","spicy","savory"],
      core:["sauce"],
      protein:["chuckroast","beef85","beef93","brisket","bison","steak"], carb:["rice","cornbread","hominy","masa","brownrice"], fat:["oil","tallow","sourcream","avocado"],
      veg:["onion","firetom","poblano","jalapeno","garlic","tompaste"], fruit:[], sauce:["chipotle","enchilada","salsaroja","nachocheese","protqueso"],
      steps:[
-       "Cut the chuck into cubes rather than using mince. Real chili con carne has pieces of beef in it that you can identify.",
+       "Cut the chuck into cubes rather than using ground meat. Real chili con carne has pieces of beef in it that you can identify.",
        "Brown in batches in a properly hot dry pot. Crowding steams the meat gray and you never get that flavor back.",
        "Onion and garlic in the rendered fat, then the chile paste or powder cooked for a full minute.",
        "Return the beef with stock barely to cover. Low and slow, at least 2 hours — the collagen in chuck is the whole point and it needs time to turn to gelatin.",
@@ -1344,7 +1344,7 @@
      veg:["tomatillo","greentom","poblano","onion","jalapeno","greenchilecan"], fruit:[], sauce:["salsaverde","ajiverde","greenchilequeso","chipotlecrema"],
      steps:[
        "Char the tomatillos, poblanos and onion under a hot grill until blackened in patches. Boiling them gives you a flat, sour sauce.",
-       "Blend the charred veg with coriander and lime into the salsa base.",
+       "Blend the charred veg with cilantro and lime into the salsa base.",
        "Brown the pork shoulder hard in a separate pot. Every bit of color here shows up in the finished pot.",
        "Pour the green sauce over the pork, barely covering, and simmer covered 90 minutes to 2 hours.",
        "Uncover for the last 20 minutes to reduce. It should coat the meat, not swim around it.",
@@ -1354,7 +1354,7 @@
      protein:["beef93","beef85","grndturk93","kidneycan"], carb:["pasta","propasta","linguine","macaroni"], fat:["oil","butter"],
      veg:["onion","dicedtom","tompaste"], fruit:[], sauce:["bolognesejar","marinara","nachocheese","protcheddarsc"],
      steps:[
-       "Do not brown the mince. Cincinnati chili starts with raw beef simmered in liquid — that is what gives it the fine, almost smooth texture. Browning it makes a bolognese instead.",
+       "Do not brown the ground meat. Cincinnati chili starts with raw beef simmered in liquid — that is what gives it the fine, almost smooth texture. Browning it makes a bolognese instead.",
        "Break the raw beef into cold water or stock and bring it up slowly, stirring to keep it separated.",
        "Cinnamon, allspice, cocoa and a bay leaf go in early. It sounds like a dessert and tastes like nothing else.",
        "Simmer uncovered at least an hour until it is thick and dark.",
@@ -1369,7 +1369,7 @@
        "Get real color on it, then push it aside and cook the tomato paste and spices in the bare pan.",
        "Fire-roasted tomatoes rather than plain — with a lean protein you need the smoke from somewhere.",
        "Beans and stock in, then 30 minutes minimum at a lazy simmer.",
-       "Taste for salt only at the end; tinned beans and tinned tomatoes both bring their own.",
+       "Taste for salt only at the end; canned beans and canned tomatoes both bring their own.",
        "Lime juice, then a spoonful of yogurt or high-protein queso. Roughly 45g of protein a bowl without much fat."]},
     {name:"Chili Cheese Fries", season:["chiliseason","garlicpwd","onionpwd"], pattern:"Chili Cheese {C}", form:"Plate", slots:["dinner"], crave:["comfort","savory","crunchy","carbheavy"],
      core:["sauce"],
@@ -1380,7 +1380,7 @@
        "Spread them in a single layer on the tray. Piled up they steam each other.",
        "The chili wants to be thick, closer to a sloppy joe than a soup, or the whole plate turns to mush.",
        "Layer rather than dump: fries, cheese sauce, chili, more cheese sauce.",
-       "Jalapeños, spring onion and a little raw onion on top for something sharp against all that fat.",
+       "Jalapeños, green onion and a little raw onion on top for something sharp against all that fat.",
        "Eat it standing up in the kitchen. It does not travel and it does not wait."]},
 
     /* ==================== SANDWICHES ====================
@@ -1506,7 +1506,7 @@
        "Horseradish cream on the top slice, mustard on the bottom. Two different sharp things beats a double dose of one.",
        "Sharp cheddar, not mild — this sandwich is built on strong flavors arguing with each other.",
        "Pickled red onion cuts through the fat better than raw onion and does not repeat on you all afternoon.",
-       "Rocket rather than lettuce; its pepperiness belongs with beef.",
+       "Arugula rather than lettuce; its pepperiness belongs with beef.",
        "Griddle it if you want it hot, but keep the salad out until after."]},
     {name:"Egg Salad Sandwich", season:["dill","blackpepper","mustardpwd","celeryseed"], pattern:"Egg Salad Sandwich", form:"Sandwich", slots:["breakfast","lunch"], crave:["creamy","comfort","nocook"],
      core:["sauce"],
@@ -1524,7 +1524,7 @@
      protein:["beef80","beef85","beef93","american","grndturk85"], carb:["hoagie","kaiser","ciabatta"], fat:["oil","mayo","butter"],
      veg:["onion","shreddedlettuce","tomatoslice","grillonion"], fruit:[], sauce:["burgersauce","chipotlemayo","thousand","ketchup"],
      steps:[
-       "Break the mince into a hot flat pan and let it sit undisturbed for a minute before you touch it. Color first, chopping second.",
+       "Break the ground meat into a hot flat pan and let it sit undisturbed for a minute before you touch it. Color first, chopping second.",
        "Chop it with two spatulas as it cooks — properly chop, until it is coarse crumbles rather than a patty.",
        "Onions go in with the meat, not before, so they take on the fat.",
        "Lay the cheese slices straight over the top of the pile in the pan and let them melt into it. Fold the whole thing together.",
@@ -1588,7 +1588,7 @@
        "Build the cheese sauce separately and stir a few spoons of buffalo sauce into it at the end — enough to turn it orange.",
        "Do not put all the hot sauce in the cheese sauce. Vinegar plus dairy plus heat is how you split a sauce.",
        "Fold pasta, sauce and chicken together, then bake 20 minutes at 200C/400F.",
-       "Celery and spring onion raw over the top after baking. Cooked celery in this is unpleasant.",
+       "Celery and green onion raw over the top after baking. Cooked celery in this is unpleasant.",
        "Blue cheese crumbled over at the end if you like it. Ranch drizzled if you do not."]},
     {name:"Green Chile Mac", season:["cumin","coriander","garlicpwd","limejuice"], pattern:"Green Chile Mac", form:"Bake", slots:["lunch","dinner"], crave:["spicy","comfort","creamy"],
      core:["sauce"],
@@ -1597,16 +1597,16 @@
      steps:[
        "Drain the green chiles hard. Their liquid will thin the sauce and turn it sour in the oven.",
        "Monterey Jack and pepper jack melt far better here than cheddar and let the chile flavor through.",
-       "Roast fresh poblano if you have the time — 10 minutes under a hot grill, skin off, chopped. It is a different dish from the tinned version.",
+       "Roast fresh poblano if you have the time — 10 minutes under a hot grill, skin off, chopped. It is a different dish from the canned version.",
        "Lime juice into the finished sauce, not into the bake. Acid on top of dairy in a hot oven is asking for trouble.",
        "Crushed corn chips on top instead of breadcrumbs.",
-       "Coriander over the finished dish. Serve with something acidic on the side."]},
+       "Cilantro over the finished dish. Serve with something acidic on the side."]},
     {name:"Cheeseburger Mac", season:["onionpwd","garlicpwd","paprika","mustardpwd"], pattern:"Cheeseburger Mac", form:"Skillet", slots:["lunch","dinner"], crave:["comfort","savory","creamy"],
      core:["sauce"],
      protein:["beef85","beef93","grndturk93","american","cheddarsharp"], carb:["macaroni","cavatappi","shellpasta","promacaroni","propasta"], fat:["butter","oil","sourcream"],
      veg:["onion","dillspears","tomatoslice","grillonion"], fruit:[], sauce:["cheesesauce","whitecheddarsc","protcheddarsc","burgersauce","mornay"],
      steps:[
-       "Brown the mince hard and do not drain all the fat — a spoonful of it going into the sauce is most of what makes this taste like a cheeseburger.",
+       "Brown the ground meat hard and do not drain all the fat — a spoonful of it going into the sauce is most of what makes this taste like a cheeseburger.",
        "Onions into the beef fat until properly soft.",
        "Cook the pasta in the same pan with stock rather than separately. The starch it releases thickens the sauce and there is one less pan.",
        "Cheese in off the heat, stirred until it disappears.",
@@ -1632,7 +1632,7 @@
        "Single layer, plenty of space, 220C/425F. Pile them up and they steam.",
        "Cheese sauce, not shredded cheese. Shreds on fries give you a few molten patches and a lot of dry chips.",
        "Layer in two passes — half the fries, half the toppings, then repeat. Otherwise the bottom half is naked.",
-       "Everything cold goes on last: spring onion, sour cream, jalapeño.",
+       "Everything cold goes on last: green onion, sour cream, jalapeño.",
        "This does not keep, does not travel and does not reheat. Make it for now."]},
     {name:"Beer Cheese Pretzel Plate", season:["mustardpwd","seasalt","blackpepper"], pattern:"Beer Cheese {C} Plate", form:"Plate", slots:["lunch","dinner","snack"], crave:["comfort","savory","creamy"],
      core:["sauce"],
@@ -1650,7 +1650,7 @@
      protein:["chicken","beef93","chickthigh","blackbeancan","pintocan","chorizo"], carb:["rice","brownrice","calrose","quinoa"], fat:["avocado","sourcream","oil","guac"],
      veg:["peppers","onion","corn","firetom","jalapeno","greenchilecan"], fruit:[], sauce:["protqueso","quesoblanco","greenchilequeso","nachocheese","salsaroja"],
      steps:[
-       "Season the rice itself — lime juice, salt and coriander stirred through hot. Plain rice under a sauce is filler.",
+       "Season the rice itself — lime juice, salt and cilantro stirred through hot. Plain rice under a sauce is filler.",
        "Char the corn and peppers in a dry pan until they take color before anything else joins them.",
        "The queso goes on last and hot. Poured over cold rice it seizes into a lid.",
        "If you are prepping these ahead, keep the queso in a separate pot and add it on reheating.",

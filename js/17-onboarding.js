@@ -543,10 +543,20 @@
     let carbs = Math.round((kcal - protein*4 - fat*9) / 4);
     const carbMin = Math.round((kcal * L.carbMinPct) / 4);
     if (carbs < carbMin){
-      const fatFloor = state.bodyweight > 0
-        ? Math.max(Math.round(state.bodyweight * L.fatFloorPerLb), Math.round((kcal * 0.18) / 9))
-        : Math.round((kcal * 0.18) / 9);
+      /* The per-pound floor is an absolute in grams, so on a heavy frame
+         against a very low pasted target it can ask for more calories than
+         the whole day has — at which point protein and carbs are left with
+         nothing and the floor has stopped protecting anyone. Cap it at a
+         share of the budget so fat can never crowd the other two out: a
+         floor that eats the entire target is not a floor, it is the plan. */
+      const fatCeil = Math.round((kcal * L.fatMaxPct) / 9);
+      const fatFloor = Math.min(
+        state.bodyweight > 0
+          ? Math.max(Math.round(state.bodyweight * L.fatFloorPerLb), Math.round((kcal * 0.18) / 9))
+          : Math.round((kcal * 0.18) / 9),
+        fatCeil);
       fat = Math.max(fatFloor, Math.round((kcal - protein*4 - carbMin*4) / 9));
+      fat = Math.min(fat, fatCeil);
       carbs = Math.round((kcal - protein*4 - fat*9) / 4);
     }
     // 4. Last resort — an extreme deficit on a large frame can still squeeze;
@@ -555,6 +565,14 @@
       protein = Math.round((kcal - fat*9) / 4 * 0.7);
       carbs = Math.round((kcal - protein*4 - fat*9) / 4);
     }
-    return {kcal, protein, carbs:Math.max(carbs,0), fat:Math.max(fat,0)};
+    /* A pasted target is not floored the way a calculated one is, so a very
+       low number on a heavy frame can drive the fat floor past the whole
+       budget and leave step 4 with nothing to give protein back. Every macro
+       is clamped, not just carbs and fat: a negative gram target is never a
+       truthful answer, and the plate it produces is the honest one — small. */
+    return {kcal,
+            protein:Math.max(protein,0),
+            carbs:Math.max(carbs,0),
+            fat:Math.max(fat,0)};
   }
 

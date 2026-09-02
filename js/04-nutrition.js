@@ -13,7 +13,7 @@
 
      Values are per 100g and assigned by food class, with overrides where a
      specific food differs sharply from its class. They are ESTIMATES, not
-     label data â€” good enough to tell "this day is low on fibre" from "this
+     label data — good enough to tell "this day is low on fibre" from "this
      day is fine", which is what the number is for. Anything packaged should
      be read off the box.
 
@@ -164,7 +164,7 @@
      sugar, fibre, sodium, potassium, calcium, iron, magnesium, zinc and
      vitamins A, C and D.
 
-     IMPORTANT â€” these are modelled by food class, not looked up per product.
+     IMPORTANT — these are modelled by food class, not looked up per product.
      Each family carries a typical per-100g profile and individual foods
      override it where they differ sharply (liver for iron and vitamin A,
      citrus for vitamin C, dairy for calcium). They're accurate enough to
@@ -348,8 +348,8 @@
      NUTRITION-ONLY FAMILIES
 
      FAMILY (05-food-families.js) is NOT a nutrition map. It decides which
-     foods count as the same thing on a plate â€” two members of a family can
-     only appear once per meal â€” and it drives ingredient substitution and the
+     foods count as the same thing on a plate — two members of a family can
+     only appear once per meal — and it drives ingredient substitution and the
      suggested loadout. Around 150 foods are deliberately left out of it so
      that, say, shrimp and crab can share a plate.
 
@@ -1613,14 +1613,14 @@
   /* =========================================================
      DAILY MICRONUTRIENT GOALS
 
-     DISPLAY ONLY. Meal planning â€” portioning, food choice, goal-fit scoring â€”
+     DISPLAY ONLY. Meal planning — portioning, food choice, goal-fit scoring —
      runs on calories, macros and fibre alone, exactly as it always has. None
      of the figures below feed computeTargets or the loadout builder. They
      exist so a person can see what they are reaching for.
 
      Values are the RDA (or AI where no RDA exists) published by the NIH Office
      of Dietary Supplements, which vary by AGE and SEX. They do NOT scale with
-     bodyweight â€” a heavier person does not need more vitamin C. Only the
+     bodyweight — a heavier person does not need more vitamin C. Only the
      calorie-linked figures below move with the target.
 
      Bands are 14-18, 19-30, 31-50, 51-70 and 71+. Pregnancy and lactation
@@ -1648,7 +1648,7 @@
     potassium: {'14':[3000,2300],'19':[3400,2600],'31':[3400,2600],'51':[3400,2600],'71':[3400,2600]},
   };
 
-  /* Ceilings rather than targets â€” the point is to stay under them.
+  /* Ceilings rather than targets — the point is to stay under them.
      Sodium is the CDRR; cholesterol has no DRI, so the FDA label value stands
      in; saturated fat follows the Dietary Guidelines' "under 10% of calories". */
   const SODIUM_CEILING = 2300;   // mg

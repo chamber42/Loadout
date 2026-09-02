@@ -661,7 +661,11 @@
       {key:"sesameseeds",name:"Sesame Seeds",               kcal:573, protein:18, carbs:23, fat:50,  tags:[], crave:["crunchy","savory"]},
       {key:"pepitas",   name:"Roasted Pepitas",             kcal:574, protein:30, carbs:15, fat:49,  tags:[], crave:["crunchy","savory","nocook"]},
       {key:"coconutflake",name:"Unsweetened Coconut Flakes",kcal:660, protein:6.9,carbs:24, fat:65,  tags:[], crave:["sweet","crunchy"]},
-      {key:"cacaonibs", name:"Cacao Nibs",                  kcal:654, protein:14, carbs:36, fat:52,  tags:[], crave:["crunchy","sweet"]},
+      /* Carbs trimmed from 36 to 33: at 36 the three macros summed to 102g
+         per 100g, which no food can do. Carbohydrate is the by-difference
+         field in every source these figures come from, so it is the one that
+         absorbs the rounding. Calories are untouched. */
+      {key:"cacaonibs", name:"Cacao Nibs",                  kcal:654, protein:14, carbs:33, fat:52,  tags:[], crave:["crunchy","sweet"]},
       {key:"nutella",   name:"Chocolate Hazelnut Spread",   kcal:539, protein:6,  carbs:58, fat:31,  tags:["nuts","dairy"], crave:["sweet","creamy"]},
       {key:"pbpowder",  name:"Powdered Peanut Butter",      kcal:400, protein:50, carbs:30, fat:10,  tags:["nuts","legume"], crave:["sweet","nocook"]},
       {key:"mayo",      name:"Mayonnaise",                  kcal:680, protein:1,  carbs:0.6,fat:75,  tags:["egg"], crave:["creamy"]},
@@ -817,9 +821,9 @@
       {key:"roastedgarlic",name:"Roasted Garlic",           kcal:149, protein:6.4, carbs:33,  fat:0.5, tags:[], crave:["savory","comfort"]},
       {key:"nopales",    name:"Nopales (cactus paddles)",   kcal:16,  protein:1.3, carbs:3.3, fat:0.1, tags:[], crave:["fresh","light"]},
 
-      /* SANDWICH AND CHILI VEGETABLES — the pickled, jarred and tinned
+      /* SANDWICH AND CHILI VEGETABLES — the pickled, jarred and canned
          things that turn a pile of filling into an actual sandwich, and a
-         pot of mince into an actual chili. */
+         pot of ground meat into an actual chili. */
       {key:"pickledonion",name:"Pickled Red Onion",        kcal:30,  protein:0.8, carbs:6,   fat:0.1, tags:[], crave:["fresh","savory"]},
       {key:"giardiniera",name:"Giardiniera",               kcal:35,  protein:1,   carbs:5,   fat:1.2, tags:[], crave:["spicy","crunchy","savory"]},
       {key:"firetom",    name:"Fire-Roasted Tomatoes (can)",kcal:28, protein:1.3, carbs:6,   fat:0.2, tags:["nightshade"], crave:["savory","warmbowl","comfort"]},

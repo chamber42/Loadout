@@ -53,7 +53,7 @@
       "Marinate and grill the protein until it has real char on the edges.",
       "Hollow out some of the bread inside the roll so the filling fits.",
       "Spread the mayo or pate on both cut faces.",
-      "Layer protein, pickles, cucumber, coriander and chili. Press the roll shut hard."
+      "Layer protein, pickles, cucumber, cilantro and chili. Press the roll shut hard."
     ],
     "Beef & Barley Soup": [
       "Cut the beef into 2cm cubes and dry the surfaces on paper towel — wet meat steams instead of browning.",
@@ -103,7 +103,7 @@
     "Black Bean Bowl": [
       "Cook the onion, garlic and cumin, then add the beans with some of their liquid.",
       "Simmer 10 minutes and mash a quarter of them to thicken the rest.",
-      "Cook the rice with lime and coriander.",
+      "Cook the rice with lime and cilantro.",
       "Char the corn and peppers in a dry pan until spotted.",
       "Build, then add the cold toppings and hot sauce."
     ],
@@ -159,7 +159,7 @@
       "Roll tight, then griddle the seam down for 30 seconds."
     ],
     "Burrito Bowl": [
-      "Cook the rice and stir lime juice and coriander through it while hot.",
+      "Cook the rice and stir lime juice and cilantro through it while hot.",
       "Cook the protein hot and fast with the taco seasoning until the edges catch.",
       "Warm the beans with a little of their own liquid, don't drain them dry.",
       "Layer rice, beans, protein, then the cold toppings so they stay cold.",
@@ -226,7 +226,7 @@
     ],
     "Chicken Burrito Bowl": [
       "Toss the protein in taco seasoning and a little oil, then sear it hard in a hot pan.",
-      "Cook the rice and finish it with lime juice and coriander off the heat.",
+      "Cook the rice and finish it with lime juice and cilantro off the heat.",
       "Char the peppers and onion until spotted, not soft.",
       "Warm the beans separately.",
       "Layer rice, beans, protein, char, then cold toppings and salsa last."
@@ -290,7 +290,7 @@
       "Rest 10 minutes before serving. Rice or naan, not both."
     ],
     "Chili Mac": [
-      "Brown the mince in a dry pan and break it up small. Drain the fat if you are watching the number.",
+      "Brown the ground meat in a dry pan and break it up small. Drain the fat if you are watching the number.",
       "Onion and pepper into the same pan, then the chili powder and cumin — toast the spice in the fat for 30 seconds.",
       "Add tomato and stock, bring to a simmer, then stir the dry pasta straight in.",
       "Cook uncovered, stirring often, until the pasta is done and the liquid has thickened around it, 10–12 minutes.",
@@ -298,7 +298,7 @@
       "Cheese and hot sauce at the table."
     ],
     "Chipotle Grain Bowl": [
-      "Cook the grain in stock, then fork through lime and coriander.",
+      "Cook the grain in stock, then fork through lime and cilantro.",
       "Rub the protein with the chipotle and roast or sear it hard.",
       "Char the peppers, onion and corn in a dry hot pan until spotted black.",
       "Build grain, veg, protein.",
@@ -729,21 +729,21 @@
       "Squeeze lemon over the hot tray and scrape it all up with the juices."
     ],
     "Shepherd's Pie": [
-      "Brown the mince hard, then cook the onion, carrot and celery in the same pot.",
+      "Brown the ground meat hard, then cook the onion, carrot and celery in the same pot.",
       "Add stock and herbs and simmer until it is thick, not soupy — 20 minutes.",
       "Boil and mash the potato dry, then beat in butter or yogurt for the topping.",
       "Spread the mash over the cooled filling and rough the top with a fork.",
       "Bake 200C/400F for 25 minutes until the ridges brown."
     ],
     "Shrimp Scampi": [
-      "Pat the prawns dry and season them. Wet prawns steam instead of searing.",
+      "Pat the shrimp dry and season them. Wet shrimp steam instead of searing.",
       "Cook them 60–90 seconds a side in butter and oil, then remove immediately.",
-      "Overcooked prawns cannot be rescued, so pull them early.",
+      "Overcooked shrimp cannot be rescued, so pull them early.",
       "Cook the garlic gently, deglaze with lemon or wine, and let it reduce by half.",
-      "Return the prawns with the drained pasta and a splash of pasta water. Toss and serve."
+      "Return the shrimp with the drained pasta and a splash of pasta water. Toss and serve."
     ],
     "Smash Burger Plate": [
-      "Roll the mince into loose balls. Do not compact them.",
+      "Roll the ground meat into loose balls. Do not compact them.",
       "Get the pan or plate ripping hot with a scrape of oil.",
       "Put the ball down and smash it flat for 10 seconds, then leave it completely alone.",
       "Flip once at 2 minutes, when the crust is dark. Cheese on immediately.",
@@ -764,7 +764,7 @@
       "Arrange the toppings in lines and eat immediately."
     ],
     "Spaghetti & Meat Sauce": [
-      "Brown the mince properly in batches until it is genuinely brown, not gray.",
+      "Brown the ground meat properly in batches until it is genuinely brown, not gray.",
       "Soften onion, carrot and celery in the fat, then add garlic and herbs.",
       "Add the tomato and simmer 30 minutes minimum, low, partly covered.",
       "Cook the pasta short and finish it in the sauce with a splash of pasta water.",
@@ -808,7 +808,7 @@
       "Wet the bare edge to seal. Cut with a wet knife in one stroke."
     ],
     "Taco Bowl": [
-      "Brown the mince, drain the excess fat, then add seasoning and a splash of water.",
+      "Brown the ground meat, drain the excess fat, then add seasoning and a splash of water.",
       "Simmer 5 minutes until it is saucy rather than dry.",
       "Warm the beans and cook the rice.",
       "Build hot to cold: rice, beans, meat, then cheese, then cold toppings.",
@@ -819,7 +819,7 @@
       "Sear the protein in a hot dry-ish pan until browned on all sides.",
       "Add the teriyaki in the last 2 minutes — added early, the sugar burns.",
       "Steam or stir-fry the veg separately so it stays bright.",
-      "Assemble over rice and finish with sesame seeds and spring onion."
+      "Assemble over rice and finish with sesame seeds and green onion."
     ],
     "Thai Green Curry": [
       "Fry the curry paste in a spoonful of the thick coconut cream for 2 minutes until it splits.",
@@ -830,7 +830,7 @@
     ],
     "Tofu Scramble": [
       "Press the tofu at least 20 minutes under something heavy. Unpressed tofu will not brown, it will only steam.",
-      "Crumble it by hand into uneven pieces so it reads like egg rather than mince.",
+      "Crumble it by hand into uneven pieces so it reads like egg rather than ground meat.",
       "Turmeric goes in early for color; nutritional yeast and black salt go in at the end for flavor.",
       "Get the pan hot and leave the tofu alone in between stirs so some faces catch and crisp.",
       "Cook the vegetables separately if they are watery — mushrooms and spinach will flood the pan otherwise.",
@@ -861,7 +861,7 @@
       "Drain the tuna properly, pressing the lid down hard.",
       "Mix the dressing separately, then fold it in with a fork rather than mashing.",
       "Add the crunch — celery, onion, pickle — last.",
-      "Season heavily; tinned tuna takes more salt and acid than you expect.",
+      "Season heavily; canned tuna takes more salt and acid than you expect.",
       "Serve on leaves or crackers with the veg alongside."
     ],
     "Turkey Roll-Ups": [
@@ -872,9 +872,9 @@
       "Serve with mustard or hot sauce for dipping."
     ],
     "Turkey Taco Salad": [
-      "Brown the turkey in a dry pan until it has real color before adding any seasoning — pale mince tastes of pale mince.",
+      "Brown the turkey in a dry pan until it has real color before adding any seasoning — pale turkey tastes of pale turkey.",
       "Add taco seasoning plus a splash of water and simmer it down so the spice coats rather than dusts.",
-      "Cool the meat slightly. Hot mince on lettuce turns the whole bowl to slop.",
+      "Cool the meat slightly. Hot ground meat on lettuce turns the whole bowl to slop.",
       "Chop the lettuce fine, more finely than feels right; it should be a bed, not leaves.",
       "Layer lettuce, meat, beans, corn, tomato, then avocado. Chips go on at the table.",
       "Lime over everything at the end and a spoon of yogurt-based sauce rather than sour cream."

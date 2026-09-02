@@ -440,7 +440,11 @@
       var original = window.renderTiers;
       window.renderTiers = function(){
         var out = original.apply(this, arguments);
-        refresh();
+        /* Guarded like every other panel that hooks this: the hooks form a
+           chain, and each one calls the previous render outside its own try.
+           An unguarded throw here would therefore take the weight,
+           expenditure, health-write and reminder panels down with it. */
+        try{ refresh(); }catch(e){ console.error('Loadout: steps panel', e); }
         return out;
       };
     }
