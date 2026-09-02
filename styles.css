@@ -938,19 +938,34 @@
   body[data-material="salvage"] .screen:not(#screen-quest) .kv{
     border-color:rgba(182,224,39,.16);
   }
-  body[data-material="salvage"] .screen:not(#screen-quest) .chip{
+  /* Salvage rounds nothing much: scrap is cut, not moulded. The five controls
+     below were left on their default radii for the same reason the other
+     materials missed them — they were added after this rule was written. */
+  body[data-material="salvage"] .screen:not(#screen-quest) .chip,
+  body[data-material="salvage"] .screen:not(#screen-quest) .day-chip,
+  body[data-material="salvage"] .screen:not(#screen-quest) .var-step,
+  body[data-material="salvage"] .screen:not(#screen-quest) .pip,
+  body[data-material="salvage"] .screen:not(#screen-quest) .back-link,
+  body[data-material="salvage"] .screen:not(#screen-quest) .off-hit{
     border-radius:2px;
   }
 
   /* -- the chrome above and below the app -------------------------------- */
   /* The bar is no longer a slab, so there is no top edge to tint. The
      wasteland's colour lives on the buttons instead. */
+  /* Written as the palette slots rather than survival's literals. Only one
+     theme uses this material today, so the two spellings resolve the same —
+     but a second salvage theme would have inherited the wasteland's green. */
   body[data-material="salvage"] .tab{
-    border-color:#36421f;
-    box-shadow:inset 0 1px 0 rgba(182,224,39,.12), 0 4px 14px rgba(0,0,0,.45);
+    border-color:var(--line);
+    box-shadow:inset 0 1px 0 rgba(var(--cyan-rgb),.12), 0 4px 14px rgba(0,0,0,.45);
   }
-  body[data-material="salvage"] .tab.active .lbl,
-  body[data-material="salvage"] .tab.active .ico{ color:var(--wl-toxic); }
+  /* .on, not .active — 16-tabs.js toggles 'on' for tabs and reserves 'active'
+     for the visible .screen. Written as .active this never matched, so the
+     one theme with its own active-tab colour was the only theme not getting
+     one. */
+  body[data-material="salvage"] .tab.on .lbl,
+  body[data-material="salvage"] .tab.on .ico{ color:var(--wl-toxic); }
 
   @media print{
     body{ background:#fff!important; color:#000!important; }
@@ -4592,6 +4607,41 @@
     box-shadow:inset 0 0 0 2px var(--pp-seal);
     color:var(--pp-ink);
   }
+  /* The same treatment for the controls that are NOT .chip/.btn-ghost/.choice.
+
+     The rule above is an allow-list, and the app grew components it was never
+     told about: a day chip, a portion stepper, a serving pip, a back link, a
+     search result. Each paints var(--panel-2) — which is right on a dark
+     material and wrong here, where it reads as a hole cut in the sheet.
+
+     Scoped to .screen rather than .panel because only two of these sit inside
+     a panel; the pip and the back link sit on the page itself. Modals are
+     siblings of #app rather than children of a .screen, so they keep their
+     own dark plane, which is what every other material does with them too. */
+  body[data-material="paper"] .screen:not(#screen-quest) .day-chip,
+  body[data-material="paper"] .screen:not(#screen-quest) .var-step,
+  body[data-material="paper"] .screen:not(#screen-quest) .pip,
+  body[data-material="paper"] .screen:not(#screen-quest) .back-link,
+  body[data-material="paper"] .screen:not(#screen-quest) .off-hit{
+    background:rgba(0,0,0,.05);
+    border:1px solid var(--pp-rule);
+    color:var(--pp-ink);
+    box-shadow:none;
+  }
+  /* ...and their selected state, matching .chip.on above rather than the
+     accent glow, which has nothing to sit on once the surface is paper. */
+  body[data-material="paper"] .screen:not(#screen-quest) .day-chip.on,
+  body[data-material="paper"] .screen:not(#screen-quest) .var-step.on{
+    background:rgba(0,0,0,.10);
+    box-shadow:inset 0 0 0 2px var(--pp-seal);
+    border-color:var(--pp-seal);
+    color:var(--pp-ink);
+  }
+  /* A filled pip is the one thing here that should stay solid — it is a count,
+     not a surface. It inherits currentColor, so ink is all it needs. */
+  body[data-material="paper"] .screen:not(#screen-quest) .pip.full{
+    background:var(--pp-ink); border-color:var(--pp-ink);
+  }
   body[data-material="paper"] .screen:not(#screen-quest) .panel hr,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .rsep,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .divider{
@@ -4638,7 +4688,16 @@
   body[data-material="pixel"] .screen:not(#screen-quest) .panel .chip,
   body[data-material="pixel"] .screen:not(#screen-quest) .panel .btn-ghost,
   body[data-material="pixel"] .screen:not(#screen-quest) .panel select,
-  body[data-material="pixel"] .screen:not(#screen-quest) .panel input{ border-radius:0; }
+  body[data-material="pixel"] .screen:not(#screen-quest) .panel input,
+  /* Same omission as the paper material had: these five are controls too, and
+     a rounded corner next to a squared one is the whole tell on a pixel
+     theme. Screen-scoped for the same reason — the pip and the back link do
+     not live inside a panel. */
+  body[data-material="pixel"] .screen:not(#screen-quest) .day-chip,
+  body[data-material="pixel"] .screen:not(#screen-quest) .var-step,
+  body[data-material="pixel"] .screen:not(#screen-quest) .pip,
+  body[data-material="pixel"] .screen:not(#screen-quest) .back-link,
+  body[data-material="pixel"] .screen:not(#screen-quest) .off-hit{ border-radius:0; }
   body[data-theme="arcade"] .screen:not(#screen-quest) .paper-fx{
     background:
       repeating-linear-gradient(90deg,
@@ -5668,3 +5727,234 @@
      under each line are the swaps that still make the same dish. */
   .ringred li{ color:var(--text); margin:0 0 7px; }
   .ralt{ display:block; color:var(--muted); font-size:12px; line-height:1.5; margin-top:2px; }
+
+  /* =========================================================================
+     MATERIALS — THE ACTION BAR BUTTONS AND THE MODAL SHEET
+
+     Two surfaces the materials never reached. Both sat on the base palette,
+     so on a light material they were the one part of the app that had not
+     been dressed: plastic keycaps and a dark sheet sliding up over a page
+     made of paper.
+
+     The shapes are not reinvented. A tab stays a keycap and a modal stays a
+     bottom sheet — only what they are MADE of changes, taken from the recipe
+     each material already uses for .panel, so the buttons, the page and the
+     sheet read as one set.
+
+     Note what is NOT here: .tab-bar. The bar itself is deliberately nothing
+     — no background, no border, no shadow — so the buttons read as floating
+     over the page rather than sitting on a black band. Dressing the bar
+     would put the slab back. The material goes on the buttons, which is
+     what the salvage rule further up was already doing alone.
+
+     Only .modal-card is styled: the .modal-back/.modal pair defined earlier
+     is older markup that nothing renders any more.
+     ========================================================================= */
+
+  /* ---- DIGITAL (cyberpunk) — dark glass, accent-lit edge ----------------- */
+  body[data-material="digital"] .modal-card{
+    background:radial-gradient(ellipse 120% 90% at 50% 0%, #0a1a22 0%, #050c11 66%, #03070a 100%);
+    border-color:rgba(var(--cyan-rgb),.24);
+  }
+  body[data-material="digital"] .tab{
+    background:linear-gradient(180deg, rgba(var(--cyan-rgb),.05), rgba(255,255,255,0)), #050c11;
+    border-color:rgba(var(--cyan-rgb),.24);
+  }
+  body[data-material="digital"] .modal-head{ border-bottom-color:rgba(var(--cyan-rgb),.24); }
+
+  /* ---- PIXEL (arcade, craft) — hard square keycap, no soft bevel --------- */
+  body[data-material="pixel"] .modal-card{
+    border-radius:0; border:3px solid #05060a;
+    background:var(--panel-2);
+    box-shadow:inset 2px 2px 0 rgba(255,255,255,.12),
+               inset -2px -2px 0 rgba(0,0,0,.5);
+  }
+  body[data-material="pixel"] .tab{
+    border-radius:0; border:2px solid #05060a; border-bottom-width:2px;
+    background:var(--panel);
+    box-shadow:inset 1px 1px 0 rgba(255,255,255,.14),
+               inset -1px -1px 0 rgba(0,0,0,.55);
+  }
+  /* A pixel key does not travel — it inverts its bevel instead. */
+  body[data-material="pixel"] .tab:active{
+    transform:none; margin-bottom:0; border-bottom-width:2px;
+    box-shadow:inset 1px 1px 0 rgba(0,0,0,.5);
+  }
+  body[data-material="pixel"] .modal-x{ border-radius:0; }
+
+  /* ---- STEEL (fps) — brushed plate --------------------------------------- */
+  body[data-material="steel"] .modal-card{
+    border-radius:2px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(255,255,255,.028) 0 1px, transparent 1px 2px,
+        rgba(0,0,0,.04)        2px 3px, transparent 3px 5px),
+      linear-gradient(180deg, #242a2d 0%, #1a1e21 44%, #14181a 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.12),
+               inset 0 -1px 0 rgba(0,0,0,.65);
+  }
+  body[data-material="steel"] .tab{
+    border-radius:2px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(255,255,255,.03) 0 1px, transparent 1px 2px),
+      linear-gradient(180deg, #232829 0%, #171a1c 100%);
+  }
+
+  /* ---- LEDGER (outdoors) — a filing card with a bound edge --------------- */
+  body[data-material="ledger"] .modal-card{
+    border-radius:2px 8px 8px 2px;
+    background:
+      repeating-linear-gradient(0deg,
+        transparent 0 25px, rgba(var(--cyan-rgb),.08) 25px 26px),
+      linear-gradient(90deg, #0d1613 0 22px, transparent 22px),
+      linear-gradient(180deg, #1b2a23, #0f1815);
+    box-shadow:inset 24px 0 18px -19px rgba(0,0,0,.8);
+  }
+  body[data-material="ledger"] .tab{
+    border-radius:2px;
+    background:linear-gradient(180deg, #1d2c25, #131d19);
+  }
+
+  /* ---- COZY (farm) — soft, borderless, no hard edges --------------------- */
+  body[data-material="cozy"] .modal-card{
+    border:0; border-radius:16px 16px 0 0;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,.028) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #2a3d1d 0%, #223217 45%, #18240f 100%);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.10);
+  }
+  body[data-material="cozy"] .tab{
+    border:0; border-radius:12px;
+    background:linear-gradient(180deg, #33491f, #223217);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 0 rgba(0,0,0,.28);
+  }
+  body[data-material="cozy"] .tab:active{ transform:translateY(1px); margin-bottom:1px; }
+
+  /* ---- RACE (racing) — carbon weave -------------------------------------- */
+  body[data-material="race"] .modal-card{
+    border-radius:2px;
+    background-color:#121316;
+    background-image:
+      linear-gradient(27deg,  #191b1f 3.5px, transparent 3.5px),
+      linear-gradient(207deg, #191b1f 3.5px, transparent 3.5px),
+      linear-gradient(27deg,  #212429 3.5px, transparent 3.5px),
+      linear-gradient(207deg, #212429 3.5px, transparent 3.5px),
+      linear-gradient(90deg,  #1b1d21 7px, transparent 7px),
+      linear-gradient(180deg, #202329 25%, #191b20 25%, #191b20 50%,
+        transparent 50%, transparent 75%, #262a30 75%, #262a30);
+    background-position:0 3.5px, 7px 0, 0 7px, 7px 3.5px, 0 0, 0 0;
+    background-size:14px 14px;
+  }
+  body[data-material="race"] .tab{
+    border-radius:2px;
+    background:linear-gradient(180deg, #212429, #16181b);
+  }
+
+  /* ---- SALVAGE (survival) — scrap plate ---------------------------------- */
+  /* The rule further up tints the button's edge and rail but left the face on
+     the base plastic, so salvage was the one material whose keycap was not
+     actually made of anything. Same stock as its panel. */
+  body[data-material="salvage"] .tab{
+    border-radius:3px;
+    background:
+      linear-gradient(180deg, rgba(var(--cyan-rgb),.05), transparent 26%),
+      linear-gradient(180deg, var(--panel), var(--panel-2));
+  }
+  body[data-material="salvage"] .modal-card{
+    border-color:#3d4a25; border-radius:3px;
+    background:
+      linear-gradient(180deg, rgba(var(--cyan-rgb),.05), transparent 26%),
+      radial-gradient(ellipse 42% 30% at 88% 6%, rgba(138,69,38,.17), transparent 70%),
+      linear-gradient(180deg, var(--panel), var(--panel-2));
+    box-shadow:inset 0 1px 0 rgba(var(--cyan-rgb),.1),
+               inset 0 -2px 0 rgba(0,0,0,.5);
+  }
+
+  /* ---- PAPER (fantasy, horror) ------------------------------------------
+     The one material where this is not a texture swap. The stock is light,
+     so every child that inherits a pale colour has to come back to ink —
+     the same inversion the page panels already do, applied to the buttons
+     and the sheet. Without it the modal would be light paper carrying light
+     type, which is the worst of both. */
+  body[data-material="paper"] .tab{
+    background:rgba(0,0,0,.05);
+    border:1px solid var(--pp-rule);
+    border-bottom-width:3px; border-bottom-color:rgba(0,0,0,.28);
+    color:var(--pp-soft);
+  }
+  body[data-material="paper"] .tab.on{
+    background:rgba(0,0,0,.10);
+    border-color:var(--pp-seal);
+    border-bottom-color:var(--pp-seal);
+    color:var(--pp-ink);
+  }
+  body[data-material="paper"] .tab.on::before{ background:var(--pp-seal); }
+
+  body[data-material="paper"] .modal-card{
+    color:var(--pp-ink);
+    border:1px solid rgba(0,0,0,.28);
+    /* uneven along the top corners only — the foot is off-screen */
+    border-radius:11px 5px 0 0 / 6px 12px 0 0;
+    background:
+      radial-gradient(ellipse 55% 38% at 18% 14%, var(--pp-stain), transparent 62%),
+      radial-gradient(ellipse 48% 32% at 82% 72%, var(--pp-stain), transparent 62%),
+      repeating-linear-gradient(92deg, rgba(0,0,0,.03) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg, var(--pp-1), var(--pp-2));
+    box-shadow:inset 0 0 26px rgba(90,62,25,.14), 0 -3px 18px rgba(0,0,0,.5);
+  }
+  body[data-material="paper"] .modal-head{ border-bottom-color:rgba(0,0,0,.24); }
+  /* type */
+  body[data-material="paper"] .modal-card .modal-title,
+  body[data-material="paper"] .modal-card .title,
+  body[data-material="paper"] .modal-card .eyebrow,
+  body[data-material="paper"] .modal-card .field-label,
+  body[data-material="paper"] .modal-card strong,
+  body[data-material="paper"] .modal-card b,
+  body[data-material="paper"] .modal-card li,
+  body[data-material="paper"] .modal-card p{ color:var(--pp-ink); }
+  body[data-material="paper"] .modal-card .subtitle,
+  body[data-material="paper"] .modal-card .desc,
+  body[data-material="paper"] .modal-card small,
+  body[data-material="paper"] .modal-card .onhand-unit{ color:var(--pp-soft); }
+  /* controls, same hand as the ones on the page */
+  body[data-material="paper"] .modal-card .btn-ghost,
+  body[data-material="paper"] .modal-card .btn-primary,
+  body[data-material="paper"] .modal-card .mini-btn,
+  body[data-material="paper"] .modal-card .modal-x,
+  body[data-material="paper"] .modal-card .chip,
+  body[data-material="paper"] .modal-card .choice-btn,
+  body[data-material="paper"] .modal-card .photo-btn,
+  body[data-material="paper"] .modal-card .fav-search,
+  body[data-material="paper"] .modal-card .fav-clear,
+  body[data-material="paper"] .modal-card .amt-btn,
+  body[data-material="paper"] .modal-card .amt-input,
+  body[data-material="paper"] .modal-card .fp-row,
+  body[data-material="paper"] .modal-card .off-hit,
+  body[data-material="paper"] .modal-card .theme-btn,
+  body[data-material="paper"] .modal-card select,
+  body[data-material="paper"] .modal-card input,
+  body[data-material="paper"] .modal-card textarea{
+    background:rgba(0,0,0,.05);
+    border:1px solid var(--pp-rule);
+    color:var(--pp-ink);
+    box-shadow:none;
+  }
+  body[data-material="paper"] .modal-card input::placeholder,
+  body[data-material="paper"] .modal-card textarea::placeholder{
+    color:var(--pp-soft); opacity:.75;
+  }
+  body[data-material="paper"] .modal-card .chip.on,
+  body[data-material="paper"] .modal-card .choice-btn.selected,
+  body[data-material="paper"] .modal-card .theme-btn.selected,
+  body[data-material="paper"] .modal-card .fp-row.on{
+    background:rgba(0,0,0,.10);
+    box-shadow:inset 0 0 0 2px var(--pp-seal);
+    border-color:var(--pp-seal);
+    color:var(--pp-ink);
+  }
+  body[data-material="paper"] .modal-card hr,
+  body[data-material="paper"] .modal-card .divider{
+    border-color:var(--pp-rule); background:var(--pp-rule);
+  }
