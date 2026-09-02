@@ -6462,3 +6462,68 @@
      flag. The kerb alone says motorsport and says it once. */
   body[data-material="race"] .screen > .panel::before,
   body[data-material="race"] .panel::before{ display:none; }
+
+  /* =========================================================================
+     REFERENCE PASS
+
+     Two things the best game interfaces do, taken from how they are actually
+     built rather than from taste:
+
+     1. They are DIEGETIC. The Pip-Boy is a wrist computer, Metroid Prime's
+        HUD is the inside of a helmet, Death Stranding's map is a cuff link.
+        The interface is an object from that world, not a surface with a
+        texture on it. The four themes that already read well here are the
+        four that are objects — a case file, a parchment, a screen, a cabinet.
+
+     2. They spend their accent SPARINGLY. Discord reserves its blurple for
+        the brand, primary actions, mentions and "you", against muted
+        neutrals, which is why it reads at all. A genre colour smeared across
+        every surface stops being a signal and becomes the wallpaper.
+     ========================================================================= */
+
+  /* ---- SALVAGE (Post-Apocalyptic) — the readout is a CRT ------------------
+     The canonical post-apocalyptic interface is the Pip-Boy: a green
+     monochrome phosphor screen, scanlines, an old tube behind glass. This
+     theme already had the toxic green and the typewriter, but its readouts
+     were plain recessed plates, so the green had nowhere to be a screen.
+
+     The plate stays scavenged metal — the screen is bolted INTO it, which is
+     what a Pip-Boy actually is — and the numeric plates become little tubes:
+     scanlined, phosphor-lit, darker at the corners the way a curved screen
+     falls off. */
+  body[data-material="salvage"] .vital,
+  body[data-material="salvage"] .modal-card .vital{
+    position:relative; overflow:hidden;
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(0,0,0,.34) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse 120% 130% at 50% 50%,
+        rgba(var(--cyan-rgb),.10) 0 38%, rgba(0,0,0,.30) 100%),
+      linear-gradient(180deg, #10160c, #0a0e07);
+    border-color:rgba(var(--cyan-rgb),.16);
+    box-shadow:
+      inset 0 0 12px rgba(var(--cyan-rgb),.07),
+      inset 0 1px 0 rgba(var(--cyan-rgb),.09),
+      0 1px 0 rgba(255,255,255,.05);
+  }
+  /* the phosphor bloom sits on the glass, above the scanlines */
+  body[data-material="salvage"] .vital strong,
+  body[data-material="salvage"] .vital input{
+    color:var(--cyan);
+    text-shadow:0 0 7px rgba(var(--cyan-rgb),.55);
+  }
+  body[data-material="salvage"] .vital .vital-lbl,
+  body[data-material="salvage"] .vital .vital-unit{
+    color:rgba(var(--cyan-rgb),.62);
+  }
+  /* and the same tube for the fields inside a panel */
+  body[data-material="salvage"] .screen .panel input,
+  body[data-material="salvage"] .screen .panel select{
+    background:
+      repeating-linear-gradient(0deg,
+        rgba(0,0,0,.30) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #10160c, #0a0e07);
+    border:1px solid rgba(var(--cyan-rgb),.16);
+    color:var(--cyan);
+    text-shadow:0 0 5px rgba(var(--cyan-rgb),.35);
+  }
