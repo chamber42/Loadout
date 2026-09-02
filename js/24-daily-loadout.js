@@ -1646,7 +1646,7 @@
       produceNote.innerHTML = `Tier ${tier.id} — ${tier.name}. <strong class="n-amber">All weights are dry unless specified by packaging.</strong>`;
     }
 
-    MEALS.forEach((meal, mealIdx)=>{
+    MEALS.forEach(meal=>{
       const sel = state.selections[meal.key];
 
       const bud = mealBudget(meal.key);
@@ -1697,8 +1697,6 @@
       quest.innerHTML = `
         <button type="button" class="bench-head" data-meal-toggle="${meal.key}"
                 aria-expanded="${open}" aria-controls="body-${meal.key}">
-          <span class="bench-no">${String(mealIdx + 1).padStart(2,'0')}</span>
-          <div class="quest-node" id="node-${meal.key}"></div>
           <div class="quest-title">${meal.label}${meal.required ? '' : ' <span class="opt">optional</span>'}</div>
           <span class="bench-pips">${pips}</span>
           <span class="bench-chev"><svg class="px" aria-hidden="true"><use href="#i-chevron-d"></use></svg></span>
