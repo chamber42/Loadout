@@ -6009,7 +6009,7 @@
      a ruled grid, a torn edge and a seal — and a second set of rules
      underneath a table reads as a printing fault rather than as stationery.
      ---------------------------------------------------------------------- */
-  body[data-theme="horror"] #screen-quest .panel:not(.cal-panel){
+  body[data-theme="horror"] #screen-quest .panel{
     padding-left:34px;
     background:
       linear-gradient(90deg, transparent 0 25px,
@@ -6248,9 +6248,9 @@
     background:
       conic-gradient(rgba(233,238,245,.85) 25%, rgba(20,22,26,.9) 0 50%,
                      rgba(233,238,245,.85) 0 75%, rgba(20,22,26,.9) 0)
-        0 100%/12px 12px repeat-x,
+        0 100%/9px 9px repeat-x,
       linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.01));
-    padding-bottom:18px;
+    padding-bottom:15px;
   }
 
   /* ---- STEEL (Tactical FPS) — matte polymer, not a machine shop -----------
@@ -6406,4 +6406,127 @@
   }
   body[data-material="cozy"] .tab{
     background:linear-gradient(180deg, #4f4425, #3a331c);
+  }
+
+
+  /* =========================================================================
+     THE QUEST LOG IS THE SAME APP
+
+     Five materials had no #screen-quest panel rule at all, so on those
+     themes every box on the quest tab fell back to the base dark panel while
+     the rest of the app wore the material. That is the odd-one-out screen.
+
+     The declarations below are copied from each material's own panel rule
+     rather than reinvented, so the two screens cannot drift again.
+
+     Paper and salvage are deliberately absent: their quest sheet is a
+     different construction on purpose — a torn, stained page with its own
+     edge — and it is the one place those two materials should differ.
+
+     .cal-panel is included. It carries .panel too, and leaving it out was
+     the whole complaint: on race it kept the old carbon weave after that
+     weave had been retired everywhere else, so the calendar was visibly a
+     different app from the page holding it. The grid and the day cells keep
+     their own per-material rules; only the sheet under them changes.
+     ========================================================================= */
+  body[data-material="digital"] #screen-quest .panel{
+    background:
+      radial-gradient(ellipse 120% 90% at 50% 0%, #0a1a22 0%, #050c11 66%, #03070a 100%);
+    border-color:rgba(0,255,242,.24);
+  }
+  body[data-material="pixel"] #screen-quest .panel{
+    border-radius:0; border:3px solid #05060a;
+    background:var(--panel-2);
+    box-shadow:
+      inset 2px 2px 0 rgba(255,255,255,.12),
+      inset -2px -2px 0 rgba(0,0,0,.5),
+      5px 5px 0 rgba(0,0,0,.45);
+  }
+  body[data-material="steel"] #screen-quest .panel{
+    border:1px solid #2f3538;
+    border-radius:2px;
+    background:linear-gradient(180deg, #1f2427 0%, #171b1d 58%, #121517 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.055),
+      inset 0 -1px 0 rgba(0,0,0,.6),
+      0 4px 12px rgba(0,0,0,.6);
+  }
+  body[data-material="ledger"] #screen-quest .panel{
+    padding-left:var(--pad);
+    border:1px solid rgba(var(--cyan-rgb),.22);
+    border-radius:3px;
+    background:
+      /* two contour sets, off-centre so the rings never look concentric */
+      repeating-radial-gradient(ellipse 120% 90% at 16% 6%,
+        transparent 0 25px, rgba(127,176,105,.11) 25px 26px),
+      repeating-radial-gradient(ellipse 100% 130% at 90% 82%,
+        transparent 0 21px, rgba(127,176,105,.085) 21px 22px),
+      /* waxed canvas */
+      repeating-linear-gradient(90deg, rgba(0,0,0,.06) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(0deg, rgba(255,255,255,.022) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #263b31, #16241e);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.07),
+      0 5px 14px rgba(0,0,0,.5);
+  }
+  body[data-material="cozy"] #screen-quest .panel{
+    border:1px solid rgba(255,238,196,.20);
+    background:
+      /* gingham, in the blossom accent, barely there */
+      repeating-linear-gradient(90deg,
+        rgba(var(--cyan-rgb),.055) 0 13px, transparent 13px 26px),
+      repeating-linear-gradient(0deg,
+        rgba(var(--cyan-rgb),.055) 0 13px, transparent 13px 26px),
+      /* straw grain */
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,.028) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #4a4023 0%, #3f3720 48%, #322c18 100%);
+    box-shadow:
+      inset 0 2px 0 rgba(255,238,196,.15),
+      inset 0 -3px 0 rgba(0,0,0,.30),
+      0 7px 18px rgba(0,0,0,.42);
+  }
+  body[data-material="race"] #screen-quest .panel{
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:3px;
+    background-color:transparent;
+    background-image:
+      repeating-linear-gradient(90deg,
+        rgba(var(--cyan-rgb),.9) 0 15px, rgba(226,232,240,.85) 15px 30px),
+      repeating-linear-gradient(0deg,
+        rgba(255,255,255,.014) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, #23272e 0%, #1a1d22 55%, #131519 100%);
+    background-size:100% 3px, auto, auto;
+    background-position:0 0, 0 0, 0 0;
+    background-repeat:no-repeat, repeat, no-repeat;
+    box-shadow:
+      inset 0 4px 0 rgba(0,0,0,.35),
+      0 6px 16px rgba(0,0,0,.55);
+  }
+
+
+  /* The relit plate has to reach the quest screen too. Same fault as the
+     surfaces above, one level down: a material that turns --readout into an
+     impression did it only for .screen:not(#screen-quest), so the weight and
+     activity rows stayed --bg-0 and punched black holes through a straw
+     cloth or a filing card. */
+  body[data-material="cozy"] #screen-quest .panel{
+    --readout:rgba(0,0,0,.22);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.32), inset 0 -1px 0 rgba(255,238,196,.10);
+  }
+  body[data-material="ledger"] #screen-quest .panel{
+    --readout:rgba(0,0,0,.22);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.4), inset 0 -1px 0 rgba(255,255,255,.06);
+  }
+  body[data-material="race"] #screen-quest .panel{
+    --readout:rgba(0,0,0,.30);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.5), inset 0 -1px 0 rgba(255,255,255,.05);
+  }
+  body[data-material="steel"] #screen-quest .panel{
+    --readout:rgba(0,0,0,.34);
+    --sunk:inset 0 1px 2px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.07);
+  }
+  body[data-theme="craft"] #screen-quest .panel{
+    --readout:#241d14;
+    --sunk:inset 2px 2px 0 rgba(0,0,0,.6), inset -2px -2px 0 rgba(255,240,214,.10);
   }
