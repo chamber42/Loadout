@@ -79,27 +79,49 @@ the delay in front of the first scan. See `js/21-food-lookup.js`.
 ### Open Food Facts
 
 Product and nutrition information for scanned barcodes and food searches comes
-from Open Food Facts (https://world.openfoodfacts.org/), used under the
-**Open Database License (ODbL) v1.0**. https://opendatacommons.org/licenses/odbl/
+from Open Food Facts. https://world.openfoodfacts.org/
 
-Loadout queries the Open Food Facts API at runtime and displays the results. It
-does not redistribute the database or any adapted copy of it, so the app is a
-"Produced Work" under the ODbL rather than a Derivative Database. Product
-photographs, where shown, are licensed CC-BY-SA by their contributors.
+Open Food Facts publishes under three licences, and which one applies is the
+whole question:
 
-Results for barcodes already scanned are kept on the person's own device — in
-`state.offCache`, and in any product seated into a meal or the pantry — so a
-rescan does not ask again. That store never leaves the device and is never
-conveyed to anyone, so it is not a Public Use of a Derivative Database and
-carries no share-alike obligation. Anything that would publish or transmit
-that store, rather than keeping it on the device that fetched it, would change
-that and this notice would have to be revised.
+| What | Licence |
+|---|---|
+| The database, as a database | Open Database License (ODbL) v1.0 — https://opendatacommons.org/licenses/odbl/ |
+| The individual contents | Database Contents License (DbCL) v1.0 — https://opendatacommons.org/licenses/dbcl/ |
+| Product photographs | CC BY-SA 3.0 |
+
+**Loadout only ever touches individual contents.** It asks the API for one
+product at a time, by barcode, and displays what comes back. Those individual
+records are licensed under the DbCL, which grants the right to use them and
+attaches no share-alike obligation. The ODbL's share-alike governs the
+*database* — substantial extracts of it, and Derivative Databases built from
+it — and Loadout takes no substantial extract.
+
+Records for barcodes already scanned are kept on the person's own device, in
+`state.offCache` and in any product seated into a meal or the pantry, so a
+rescan does not ask again. Open Food Facts encourages this: their guidance to
+reusers recommends caching rather than re-querying, and larger reusers are
+told to run a shared server cache, which retains far more than one phone does.
+
+Even reading that store as a Derivative Database rather than as individual
+contents, no share-alike attaches: it never leaves the device and is never
+conveyed to anyone, so there is no Public Use to trigger it. Anything that
+published or transmitted that store, rather than keeping it on the device that
+fetched it, would change that and this notice would have to be revised.
+
+Attribution is required and is given. Open Food Facts asks reusers to "mention
+the licence and to attribute the authorship to Open Food Facts with a link";
+the app does so on the lookup panel itself, in Legal & credits, and in the
+privacy policy. No product photographs are displayed, so the CC BY-SA terms
+covering them are not engaged.
 
 **If a snapshot of Open Food Facts data is ever bundled into the app, that
 bundled database falls under the ODbL's share-alike terms and this notice must
 be revised accordingly.** The bundled table in `js/42-usda-data.js` is drawn
 from USDA and contains no Open Food Facts data, precisely so that this stays
 true.
+
+---
 
 ### U.S. Government nutrition data
 
