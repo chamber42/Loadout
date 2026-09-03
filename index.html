@@ -362,6 +362,25 @@
 <!-- Legal, credits and attribution. Open Food Facts is ODbL-licensed and REQUIRES
      visible attribution; ZXing and the typefaces carry their own notices. Keep
      this modal reachable from the System menu. -->
+<!-- The privacy policy, shown inside the app. Opening it in a new window
+     did nothing: it is same-origin, so it would need a second webview inside
+     the app and nothing implements that. An external address is fine through
+     window.open — it reaches the host's navigation policy and lands in the
+     system browser — but a bundled document has nowhere to go. The page is
+     self-contained, so an iframe renders it exactly as authored without its
+     stylesheet leaking into the app. -->
+<div class="modal-wrap" id="modalPrivacy" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalPrivacyTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="modalPrivacyTitle">PRIVACY POLICY</span>
+      <button class="modal-x" data-close="modalPrivacy" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <iframe id="privacyFrame" class="doc-frame" title="Loadout privacy policy" src="about:blank"></iframe>
+    </div>
+  </div>
+</div>
+
 <div class="modal-wrap" id="modalLegal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalLegalTitle">
     <div class="modal-head">

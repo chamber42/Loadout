@@ -613,8 +613,17 @@
   });
 
   /* One way in. START and SELECT both opened the library, which is two
-     controls for one outcome. */
-  document.getElementById('btnStart').addEventListener('click', ()=> showScreen('screen-library'));
+     controls for one outcome.
+
+     The health notice sits here rather than at launch: by this point somebody
+     has decided to use the app, and nothing it warns about has happened yet.
+     showDisclaimerIfNeeded returns false once it has been acknowledged, so
+     this is a straight-through call on every run after the first. */
+  document.getElementById('btnStart').addEventListener('click', ()=>{
+    const go = ()=> showScreen('screen-library');
+    if (typeof showDisclaimerIfNeeded === 'function' && showDisclaimerIfNeeded(go)) return;
+    go();
+  });
   document.getElementById('attractContinue').addEventListener('click', ()=>{
     renderTiers(); renderEatenPanel(); renderMealTimeline(); refreshTargets();
     showScreen('screen-loadout');

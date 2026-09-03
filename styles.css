@@ -694,6 +694,14 @@
              font-family:var(--font-body); font-size:15px; }
   .var-step.wide{ min-width:64px; font-size:13px; }
   .var-step.on{ border-color:var(--cyan); color:var(--cyan); background:var(--accent-soft); }
+  /* A bundled document shown inside the app. Sized to the modal rather than
+     its content because the policy is long and the card must not grow past
+     the screen. */
+  .doc-frame{
+    display:block; width:100%; height:min(66vh, 560px);
+    border:1px solid var(--line); border-radius:6px; background:#0a0e14;
+  }
+
   /* ---- attract screen ----
      Deliberately outside the theme system: a console looks the same whatever
      cartridge is in it, so this stays black-and-pixel regardless. The tube
