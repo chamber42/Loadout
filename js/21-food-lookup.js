@@ -302,21 +302,31 @@
      also decodes more reliably than a video stream: no dropped frames, no
      autofocus race, one sharp image is enough.
 
-     Two decoders: the browser's own where it exists, then ZXing fetched from
-     a CDN only when actually needed, so nobody pays for the download unless
-     they use the feature.
+     Two decoders: the browser's own where it exists, then ZXing, which ships
+     with the app. It used to come from a CDN on demand, on the reasoning that
+     nobody should pay for the download unless they scan. In practice iPhones
+     have no BarcodeDetector, so ZXing is the only decoder there and everybody
+     paid — 328KB and a fifteen-second timeout in front of the first scan, at
+     the moment somebody is stood in a shop holding a packet. Shipping it puts
+     that cost in the install instead, where it is paid once and invisibly,
+     and removes the last third party the app talks to.
+
+     Still loaded on demand rather than in a script tag, so the parse cost
+     falls on the first scan rather than on every launch.
   ========================================================= */
-  const ZXING_CDN = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+  const ZXING_SRC = 'vendor/zxing.min.js';
   let zxingReady = null;
 
   function loadZxing(){
     if (zxingReady) return zxingReady;
     zxingReady = new Promise(function(resolve, reject){
       const tag = document.createElement('script');
-      tag.src = ZXING_CDN;
+      tag.src = ZXING_SRC;
       tag.onload = function(){ resolve(window.ZXing); };
-      tag.onerror = function(){ zxingReady = null; reject(new Error('cdn')); };
+      tag.onerror = function(){ zxingReady = null; reject(new Error('load')); };
       document.head.appendChild(tag);
+      /* A local file cannot hang on a network, but a corrupt or missing one
+         would otherwise leave the promise pending forever. */
       setTimeout(function(){ reject(new Error('timeout')); }, 15000);
     });
     return zxingReady;

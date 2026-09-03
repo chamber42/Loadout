@@ -56,8 +56,10 @@ copyright lines below and must not be used by derivative works.
 Barcode decoding. Licensed under the **Apache License, Version 2.0**.
 Copyright © the ZXing-js authors. https://github.com/zxing-js/library
 
-This library is not bundled with the app; it is fetched on demand from the
-jsDelivr CDN when a barcode decoder is needed. See `js/21-food-lookup.js`.
+This library **is** bundled with the app, as `vendor/zxing.min.js`, and its
+licence is included alongside it as `vendor/zxing-LICENSE.txt`. It used to be
+fetched from the jsDelivr CDN on demand; shipping it removes that request and
+the delay in front of the first scan. See `js/21-food-lookup.js`.
 
 ---
 

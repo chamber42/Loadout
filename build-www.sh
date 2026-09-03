@@ -26,7 +26,7 @@ for f in index.html styles.css fonts.css icons.js privacy.html \
 done
 
 # Directories copied whole.
-for d in js fonts app-icons licenses; do
+for d in js fonts app-icons licenses vendor; do
   cp -R "$d" www/
 done
 
