@@ -181,6 +181,68 @@
 
   const looksLikeBarcode = q => /^\d{8,14}$/.test(q.replace(/\s/g,''));
 
+  /* =========================================================
+     PRODUCTS ALREADY LOOKED UP
+
+     A barcode always means the same product, so the second scan of a tub of
+     yoghurt has nothing to ask anybody. Every parsed result is kept against
+     its barcode and answered from here first: instant, and one fewer request
+     against a database run by volunteers.
+
+     Nutrition on Open Food Facts does get corrected, though, so an entry that
+     is never revisited would serve a wrong figure forever. Anything older
+     than OFF_CACHE_FRESH_DAYS is still answered immediately — waiting on the
+     network to re-confirm what we already know helps nobody — and then quietly
+     refreshed behind the scenes so the next scan is right. A failed refresh
+     changes nothing; the cached answer stands.
+
+     Bounded, because this lives in the same localStorage as everything else:
+     the oldest entries fall off once the cache is full.
+  ========================================================= */
+  const OFF_CACHE_MAX = 300;
+  const OFF_CACHE_FRESH_DAYS = 14;
+
+  function offCacheKey(code){ return String(code || '').replace(/\D/g, ''); }
+
+  /* {hit, fresh} for a barcode we have seen, or null. */
+  function offCacheGet(code){
+    const k = offCacheKey(code);
+    const rec = k && (state.offCache || {})[k];
+    if (!rec || !rec.hit) return null;
+    const ageDays = (Date.now() - (+rec.at || 0)) / 86400000;
+    return {hit: rec.hit, fresh: ageDays < OFF_CACHE_FRESH_DAYS};
+  }
+
+  function offCachePut(code, hit){
+    const k = offCacheKey(code);
+    if (!k || !hit) return;
+    state.offCache = state.offCache || {};
+    state.offCache[k] = {hit: hit, at: Date.now()};
+
+    const keys = Object.keys(state.offCache);
+    if (keys.length > OFF_CACHE_MAX){
+      keys.sort((a, b) => (+state.offCache[a].at || 0) - (+state.offCache[b].at || 0))
+          .slice(0, keys.length - OFF_CACHE_MAX)
+          .forEach(old => { delete state.offCache[old]; });
+    }
+    saveState();
+  }
+
+  /* Re-confirm a stale entry without touching the screen. Deliberately does
+     NOT bump offSeq: that counter exists to let a newer user-initiated
+     request invalidate an older one, and a background refresh must never
+     make somebody's live lookup come back stale. */
+  function offCacheRefresh(code){
+    const k = offCacheKey(code);
+    if (!k) return;
+    offFetchJson(OFF_PRODUCT + k + '.json?fields=' + OFF_FIELDS, offSeq).then(function(r){
+      if (!r || r.netError || r.httpError || r.stale) return;
+      if (!r.data || r.data.status === 0 || !r.data.product) return;
+      const hit = offParseProduct(r.data.product);
+      if (hit) offCachePut(k, hit);
+    }).catch(function(){ /* the cached answer stands */ });
+  }
+
   async function offFetchJson(url, seq){
     const ctrl = new AbortController();
     const bail = setTimeout(()=>ctrl.abort(), 12000);

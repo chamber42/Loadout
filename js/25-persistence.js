@@ -22,7 +22,7 @@
     'mealPlan','mealWeights','skipBreakfast','breakfastForDinner','breakfastAllDay',
     'uniqueMeals','uniqueSnacks','prep','activeDay','portionOverrides','variety',
     'log','weights','healthWeights','journalMeals','calMode','calSel','calDate',
-    'eaten','prepServings','pantry','cupboard','pantryUse','customFoods','importedRecipes'];
+    'eaten','prepServings','pantry','cupboard','pantryUse','offCache','customFoods','importedRecipes'];
 
   let saveTimer = null;
   /* Whether the last attempt to write to storage failed. Read by nothing yet;

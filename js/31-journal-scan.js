@@ -145,6 +145,15 @@
     if (q.length < 8){ jfStatus('Keep going — barcodes are 8 to 14 digits (' + q.length + ' so far).'); return; }
     if (q.length > 14){ jfStatus('That’s longer than any barcode. Check the number on the packet.'); return; }
 
+    /* Answer from what we already know before asking anybody. A barcode
+       always means the same product, so a rescan needs no request at all. */
+    const known = offCacheGet(q);
+    if (known){
+      if (!known.fresh) offCacheRefresh(q);
+      jfUseHit(known.hit);
+      return;
+    }
+
     jfStatus('Looking up barcode…');
     /* offFetchJson marks a response stale by comparing against offSeq, the
        shared counter in 21-food-lookup.js. It has to be bumped through that
@@ -166,6 +175,7 @@
         jfStatus('That product is listed but has no usable nutrition data — a common gap in a volunteer database. Add it by hand below.');
         return;
       }
+      offCachePut(q, hit);
       jfUseHit(hit);
     }).catch(function(){
       jfStatus('That lookup failed. Check your connection, or add the item by hand below.');

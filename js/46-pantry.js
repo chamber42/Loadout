@@ -322,6 +322,15 @@
     if (q.length < 8){ pantryScanStatus('Keep going — barcodes are 8 to 14 digits (' + q.length + ' so far).'); return; }
     if (q.length > 14){ pantryScanStatus('That’s longer than any barcode. Check the number on the packet.'); return; }
 
+    /* Answer from what we already know before asking anybody. A barcode
+       always means the same product, so a rescan needs no request at all. */
+    const known = offCacheGet(q);
+    if (known){
+      if (!known.fresh) offCacheRefresh(q);
+      pantryUseHit(known.hit);
+      return;
+    }
+
     pantryScanStatus('Looking up barcode…');
     /* Through the shared offSeq counter, not a private one: offFetchJson
        decides a response is stale by comparing against it, so a counter of
@@ -340,6 +349,7 @@
         pantryScanStatus('That product is listed but has no usable nutrition data — a common gap in a volunteer database. Search for it by name below.');
         return;
       }
+      offCachePut(q, hit);
       pantryUseHit(hit);
     }).catch(function(){
       pantryScanStatus('That lookup failed. Check your connection, or search for it by name below.');

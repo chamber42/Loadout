@@ -60,6 +60,10 @@
     pantry:{},
     cupboard:{},      // seasoning name -> true; a jar is owned, not weighed
     pantryUse:true,   // whether the pantry steers what gets suggested
+    /* barcode -> {hit, at}: products already looked up, so a rescan is
+       instant and Open Food Facts is asked once per product rather than
+       once per scan. Bounded and self-refreshing; see 21-food-lookup.js. */
+    offCache:{},
     onHandUsed:[], onHandUnused:[],       // ingredients on hand — every one of these has to appear
     mealPlan:'3+1',       // which meal configuration
     mealCount:4,          // derived: total sittings

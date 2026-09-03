@@ -51,6 +51,17 @@ copyright lines below and must not be used by derivative works.
 
 ## Software
 
+### Capacitor (`@capacitor/core`, `@capacitor/ios`, `@capacitor/filesystem`)
+
+The native shell Loadout runs inside. Licensed under the **MIT License**.
+Copyright © 2017-present Drifty Co. https://capacitorjs.com
+
+Capacitor's runtime is compiled into the iOS app, so it is distributed with
+it and the MIT notice is reproduced here and in `licenses/MIT-Capacitor.txt`.
+The web build in `www/` contains no Capacitor code and runs without it.
+
+---
+
 ### ZXing-js (`@zxing/library`)
 
 Barcode decoding. Licensed under the **Apache License, Version 2.0**.
@@ -75,6 +86,14 @@ Loadout queries the Open Food Facts API at runtime and displays the results. It
 does not redistribute the database or any adapted copy of it, so the app is a
 "Produced Work" under the ODbL rather than a Derivative Database. Product
 photographs, where shown, are licensed CC-BY-SA by their contributors.
+
+Results for barcodes already scanned are kept on the person's own device — in
+`state.offCache`, and in any product seated into a meal or the pantry — so a
+rescan does not ask again. That store never leaves the device and is never
+conveyed to anyone, so it is not a Public Use of a Derivative Database and
+carries no share-alike obligation. Anything that would publish or transmit
+that store, rather than keeping it on the device that fetched it, would change
+that and this notice would have to be revised.
 
 **If a snapshot of Open Food Facts data is ever bundled into the app, that
 bundled database falls under the ODbL's share-alike terms and this notice must
