@@ -612,8 +612,9 @@
       : 'Nothing left to buy — your pantry already covers this list', 'home');
   });
 
+  /* One way in. START and SELECT both opened the library, which is two
+     controls for one outcome. */
   document.getElementById('btnStart').addEventListener('click', ()=> showScreen('screen-library'));
-  document.getElementById('btnSelect').addEventListener('click', ()=> showScreen('screen-library'));
   document.getElementById('attractContinue').addEventListener('click', ()=>{
     renderTiers(); renderEatenPanel(); renderMealTimeline(); refreshTargets();
     showScreen('screen-loadout');

@@ -33,7 +33,7 @@
      with the stylesheet instead of after it. Every face is font-display:swap,
      so without this the title screen paints in the fallback and relayouts when
      the real font arrives — and Press Start 2P is a pixel font whose metrics
-     are nothing like monospace, so the cabinet visibly jumps. Only the latin
+     are nothing like monospace, so the title screen visibly jumps. Only the latin
      subsets, 12KB each: the other 64 faces can keep arriving late.
      crossorigin is required even same-origin, because fonts are always
      fetched anonymously and a preload without it is simply fetched twice. -->
@@ -468,38 +468,22 @@
 
   <!-- SCREEN 0: ATTRACT -->
   <section class="screen active" id="screen-attract">
-    <div class="attract">
-      <div class="cabinet">
-        <div class="cab-crown" aria-hidden="true"></div>
-        <div class="cab-header">
-          <div class="cab-plate">
-            <span class="attract-logo">LOADOUT</span>
-            <span class="attract-sub">MEAL PREP CALCULATOR</span>
-          </div>
+    <!-- A console coming on, not a cabinet standing in a room. The tube
+         strikes as a line, opens, and the name resolves on the phosphor. The
+         whole picture is the tap target — a title screen that asks you to
+         find a button has already lost. -->
+    <div class="crt">
+      <div class="crt-tube">
+        <div class="crt-content">
+          <span class="attract-logo">LOADOUT</span>
+          <span class="attract-sub">MEAL PREP CALCULATOR</span>
+          <span class="attract-blink">TAP TO START</span>
+          <button class="btn-ghost crt-continue" id="attractContinue" style="display:none;">CONTINUE</button>
         </div>
-        <div class="cab-grille" aria-hidden="true"><i></i></div>
-        <div class="cab-bezel">
-          <div class="cab-glass">
-            <div class="cab-screen">
-              <div class="attract-blink">PRESS START<br>TO PLAY</div>
-            </div>
-          </div>
-        </div>
-        <div class="cab-deck">
-          <span class="cab-stick" aria-hidden="true"></span>
-          <span class="cab-btns">
-            <button class="arcade-btn ab-start" id="btnStart" aria-label="Press start">START</button>
-            <button class="arcade-btn ab-select" id="btnSelect" aria-label="Select game">SELECT</button>
-          </span>
-        </div>
-        <div class="cab-lip" aria-hidden="true"></div>
-        <div class="cab-body">
-          <div class="cab-coin" aria-hidden="true"></div>
-          <div class="attract-credit">INSERT PROTEIN &mdash; 1 CREDIT</div>
-        </div>
-        <div class="cab-base" aria-hidden="true"></div>
+        <div class="crt-glass" aria-hidden="true"><i></i></div>
       </div>
-      <button class="btn-ghost" id="attractContinue" style="display:none; max-width:260px; margin-top:22px;">CONTINUE SAVED GAME</button>
+      <div class="crt-beam" aria-hidden="true"></div>
+      <button class="crt-hit" id="btnStart" aria-label="Tap to start"></button>
     </div>
   </section>
 
