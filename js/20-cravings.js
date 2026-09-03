@@ -82,7 +82,7 @@
 
       // anything already flagged as on hand sorts to the front of its
       // category, so you can star it without hunting for it
-      const onHandKeys = (state.mustUse || []);
+      const onHandKeys = planPantryKeys();
       foods = foods.slice().sort((a,b)=>
         (onHandKeys.includes(b.key) ? 1 : 0) - (onHandKeys.includes(a.key) ? 1 : 0));
 
@@ -160,129 +160,92 @@
     discoveryNote.style.color = "var(--muted)";
   }
 
-  const mustSearch = document.getElementById('mustSearch');
-  const mustClear = document.getElementById('mustClear');
-  const mustResults = document.getElementById('mustResults');
-  const mustChosen = document.getElementById('mustChosen');
-  const mustWarn = document.getElementById('mustWarn');
-  let mustQuery = '';
-
+  /* WHAT YOU ALREADY HAVE
+     This screen used to carry a second, separate list of ingredients on
+     hand — its own search box, its own weights — which is how the app came
+     to hold two disagreeing accounts of one fridge. The pantry is the one
+     account now, and this is a window onto it: what it holds, whether it is
+     steering the plan, and a way through to edit it. */
   function renderMustUse(){
-    mustChosen.innerHTML = (state.mustUse || []).map(k=>{
-      const sl = slotOf(k);
-      const f = sl && listFor(sl).find(x=>x.key===k);
-      if (!f) return '';
-      const qty = (state.mustQty || {})[k] ?? '';
-      const unitHint = f.unit ? f.unit.many : 'g';
-      const asUnits = (f.unit && qty) ? ` ≈ ${(qty / f.unit.g).toFixed(1)} ${unitHint}` : '';
-      return `
-        <div class="onhand-row">
-          <span class="onhand-name"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> ${escapeHtml(f.name)}</span>
-          <input type="number" class="onhand-qty" data-mustqty="${k}" value="${qty}" placeholder="any" inputmode="numeric" min="0" max="5000">
-          <span class="onhand-unit">g${asUnits}</span>
-          <button class="mini-btn remove" aria-label="Remove ${escapeHtml(f.name)}" data-unmust="${k}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
-        </div>`;
-    }).join('');
-    mustChosen.querySelectorAll('[data-unmust]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const k = btn.getAttribute('data-unmust');
-        state.mustUse = state.mustUse.filter(x=>x !== k);
-        delete state.mustQty[k];
-        renderMustUse();
-      });
-    });
-    mustChosen.querySelectorAll('[data-mustqty]').forEach(inp=>{
-      inp.addEventListener('input', ()=>{
-        const k = inp.getAttribute('data-mustqty');
-        const v = parseFloat(inp.value);
-        if (v > 0) state.mustQty[k] = v; else delete state.mustQty[k];
-      });
-    });
+    const host = document.getElementById('mustSummary');
+    if (!host) return;
+    const items = pantryItems();
+    const wanted = items.filter(i=>i.use);
+    const toggle = document.getElementById('pantryUseToggle');
+    if (toggle){
+      toggle.classList.toggle('selected', !!state.pantryUse);
+      toggle.setAttribute('aria-pressed', state.pantryUse ? 'true' : 'false');
+    }
+
+    if (!items.length){
+      host.innerHTML = `<div class="fav-nores">Your pantry is empty. Add what you already
+        have and the plan will build around it instead of ignoring it.</div>`;
+      return;
+    }
+
+    const names = wanted.map(i=>i.food.name);
+    host.innerHTML = `
+      <div class="onhand-summary">
+        <span class="onhand-count">${items.length} item${items.length === 1 ? '' : 's'} in the pantry</span>
+        ${wanted.length
+          ? `<span class="onhand-using">${names.length > 4
+              ? names.slice(0,4).join(' · ') + ` and ${names.length - 4} more`
+              : names.join(' · ')} — being worked in</span>`
+          : `<span class="onhand-using muted">None of it is marked to use up, so the plan
+             is being built from scratch.</span>`}
+      </div>`;
+    renderMustWarn(wanted);
+  }
+
+  /* The conflicts worth naming before a day is built around them. Same rules
+     as before the merge, reading the pantry's `use` items rather than the
+     old mustUse list. */
+  function renderMustWarn(wanted){
+    const mustWarn = document.getElementById('mustWarn');
+    if (!mustWarn) return;
+    if (!state.pantryUse || !wanted.length){ mustWarn.style.display = 'none'; return; }
 
     // Same-family items need a meal each — four breads can't share three
     // sittings without doubling up, which is exactly what we avoid elsewhere
     const famCount = {};
-    (state.mustUse || []).forEach(k=>{
-      const sl = slotOf(k);
-      const f = sl && listFor(sl).find(x=>x.key===k);
-      const fam = f && strictFamilyOf(f);
+    wanted.forEach(i=>{
+      const fam = strictFamilyOf(i.food);
       if (fam) famCount[fam] = (famCount[fam] || 0) + 1;
     });
     const crowded = Object.entries(famCount).filter(([,n]) => n > MEALS.length);
 
     // flag quantities too small to matter — 30g of chicken isn't a meal
-    const skimpy = (state.mustUse || []).filter(k=>{
-      const q = (state.mustQty || {})[k];
-      const sl = slotOf(k);
-      if (!q || !sl) return false;
-      return q < (sl === 'protein' ? 80 : sl === 'carb' ? 40 : sl === 'fat' ? 10 : 50);
+    const skimpy = wanted.filter(i=>{
+      const sl = i.slot;
+      if (!i.grams || !sl) return false;
+      return i.grams < (sl === 'protein' ? 80 : sl === 'carb' ? 40 : sl === 'fat' ? 10 : 50);
     });
 
-    // more on-hand items than the day has slots is a real conflict — say so
-    const n = (state.mustUse || []).length;
+    const n = wanted.length;
     const capacity = MEALS.length * 4;
+    mustWarn.style.display = '';
     if (n > capacity){
-      mustWarn.style.display = '';
-      mustWarn.innerHTML = `<span style="color:var(--red)">${n} ingredients won't all fit into ${MEALS.length} sittings. Some will be left out — remove a few or add another meal.</span>`;
+      mustWarn.innerHTML = `<span style="color:var(--red)">${n} ingredients won't all fit into ${MEALS.length} sittings. Some will be left out — unmark a few or add another meal.</span>`;
     } else if (n > MEALS.length * 2){
-      mustWarn.style.display = '';
       mustWarn.innerHTML = `<span style="color:var(--amber)">${n} ingredients across ${MEALS.length} sittings will fill most of your day, leaving little room for variety.</span>`;
     } else if (crowded.length){
       const [fam, cnt] = crowded[0];
-      mustWarn.style.display = '';
-      mustWarn.innerHTML = `<span style="color:var(--amber)">You've listed ${cnt} kinds of ${fam} for ${MEALS.length} sittings. Only one kind goes in a meal, so some will have to share a plate — drop one or add a meal.</span>`;
+      mustWarn.innerHTML = `<span style="color:var(--amber)">You've marked ${cnt} kinds of ${fam} for ${MEALS.length} sittings. Only one kind goes in a meal, so some will have to share a plate — unmark one or add a meal.</span>`;
     } else if (skimpy.length){
-      const names = skimpy.map(k=>{ const sl=slotOf(k); const f=sl&&listFor(sl).find(x=>x.key===k); return f?f.name:k; });
-      mustWarn.style.display = '';
+      const names = skimpy.map(i=>i.food.name);
       mustWarn.innerHTML = `<span style="color:var(--muted)">You've only got a little ${names.join(' and ')} — it'll be worked in, but the rest of the meal will carry the load.</span>`;
     } else {
       mustWarn.style.display = 'none';
     }
-
-    const q = mustQuery.trim().toLowerCase();
-    if (!q){ mustResults.innerHTML = ''; return; }
-    const hits = [];
-    ALL_SLOTS.forEach(sl=>{
-      listFor(sl).forEach(f=>{
-        if (matchesQuery(f.name, q)
-            && !(state.mustUse||[]).includes(f.key)
-            && !isDisliked(f) && passesPrefs(f)) hits.push(f);
-      });
-    });
-    if (!hits.length){
-      // strict pass found nothing — try the loose one before giving up
-      ALL_SLOTS.forEach(sl=>{
-        listFor(sl).forEach(f=>{
-          if (looseMatchesQuery(f.name, q)
-              && !(state.mustUse||[]).includes(f.key)
-              && !isDisliked(f) && passesPrefs(f)) hits.push(f);
-        });
-      });
-    }
-    if (!hits.length){
-      mustResults.innerHTML = `<div class="fav-nores">Nothing matches “${mustQuery}”. Check whether a dietary filter or a blocked food is hiding it.</div>`;
-      return;
-    }
-    mustResults.innerHTML = `<div class="fav-chips" style="padding:4px 0;">` +
-      hits.slice(0,40).map(f=>`<button class="chip" data-must="${f.key}">${escapeHtml(f.name)}</button>`).join('') + `</div>`;
-    mustResults.querySelectorAll('[data-must]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const k = btn.getAttribute('data-must');
-        if (!state.mustUse.includes(k)) state.mustUse.push(k);
-        renderMustUse();
-      });
-    });
   }
 
-  mustSearch.addEventListener('input', ()=>{
-    mustQuery = mustSearch.value;
-    mustClear.style.display = mustQuery ? '' : 'none';
+  document.getElementById('pantryUseToggle').addEventListener('click', ()=>{
+    state.pantryUse = !state.pantryUse;
+    saveState();
     renderMustUse();
+    renderFavPicker();
   });
-  mustClear.addEventListener('click', ()=>{
-    mustQuery=''; mustSearch.value=''; mustClear.style.display='none';
-    renderMustUse(); mustSearch.focus();
-  });
+  document.getElementById('mustOpen').addEventListener('click', ()=> showScreen('screen-pantry'));
 
   const dislikeSearch = document.getElementById('dislikeSearch');
   const dislikeClear = document.getElementById('dislikeClear');
@@ -340,8 +303,8 @@
       btn.addEventListener('click', ()=>{
         const k = btn.getAttribute('data-dislike');
         if (!state.dislikes.includes(k)) state.dislikes.push(k);
-        state.mustUse = (state.mustUse||[]).filter(x=>x !== k);
-        state.mustUse = state.mustUse.filter(x=>x !== k);
+        // nor can it sit in the pantry waiting to be worked into a meal
+        if (state.pantry) delete state.pantry[k];
         // a blocked food can't also be a favourite
         ALL_SLOTS.forEach(sl=>{
           state.favorites[sl] = state.favorites[sl].filter(x=>x !== k);

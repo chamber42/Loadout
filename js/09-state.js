@@ -48,8 +48,18 @@
     favorites:{protein:[], carb:[], fat:[], veg:[], fruit:[], sauce:[]},
     discoveryMode:'favorites',   // 'favorites' | 'new'
     dislikes:[],      // food keys the person never wants suggested
-    mustUse:[],
-    mustQty:{},       // key -> grams available (blank = unlimited)
+    /* THE PANTRY - one record of what you own, read by both the planner
+       and the shopping list. key -> {g, use}. `g` is grams, with 0 meaning
+       "some, amount unknown". `use` marks food you want worked into the
+       plan rather than merely owned, which is what keeps a standing bag of
+       flour out of Tuesday's dinner while still keeping it off the list.
+
+       This began as two stores - mustUse/mustQty on the cravings screen for
+       the planner, pantry/cupboard on the shopping list for the buying -
+       which meant the same fridge could be described twice and disagree. */
+    pantry:{},
+    cupboard:{},      // seasoning name -> true; a jar is owned, not weighed
+    pantryUse:true,   // whether the pantry steers what gets suggested
     onHandUsed:[], onHandUnused:[],       // ingredients on hand — every one of these has to appear
     mealPlan:'3+1',       // which meal configuration
     mealCount:4,          // derived: total sittings

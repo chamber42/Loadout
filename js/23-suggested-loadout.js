@@ -85,8 +85,12 @@
     yogurt0:["skyr","cottage1","kefir"],
   };
 
+  /* Food the pantry says to build around — owned, marked to be used up, and
+     only while the pantry is switched into the plan. Everything planner-side
+     goes through planPantryKeys() in 26-shopping-pantry.js so the switch
+     can't be honoured here and forgotten three functions down. */
   function isMustUse(food){
-    return !!food && (state.mustUse || []).includes(food.key);
+    return !!food && planPantryKeys().includes(food.key);
   }
 
   /* Which slot does a given food key live in? */
@@ -633,14 +637,15 @@
     // whatever came up last time steps aside so a second press changes things
     if (LAST_DRAW.recipes.has(recipe.name)) score -= 4;
     // on-hand ingredients outrank favourites — they have to be used up
-    (state.mustUse || []).forEach(k=>{
+    const onHand = planPantryKeys();
+    onHand.forEach(k=>{
       const sl = slotOf(k);
       if (sl && (recipe[sl] || []).includes(k)) score += 12;
     });
     ['protein','carb','fat','veg','fruit','sauce'].forEach(slot=>{
       // ingredients the person already has weigh heaviest — a dish that can
       // absorb them naturally beats one we'd have to force them into
-      const onHandHits = (recipe[slot] || []).filter(k => (state.mustUse||[]).includes(k)).length;
+      const onHandHits = (recipe[slot] || []).filter(k => onHand.includes(k)).length;
       score += onHandHits * 6;
       const favs = favKeys(slot);
       if (!favs.length) return;
@@ -1519,7 +1524,14 @@
      however many meals ended up using that food, so three meals sharing
      400g of chicken get roughly 133g each rather than 250g apiece. */
   function onHandCapFor(key){
-    const total = (state.mustQty || {})[key];
+    /* Only food you've committed to using is capped. Owning 200g of rice
+       is not a promise to eat only 200g of rice — you'll buy more — so a
+       pantry entry without `use` set caps nothing, and neither does one
+       whose owner has switched the pantry out of the plan. Asked through
+       planPantryKeys rather than pantryWanted because five call sites reach
+       this function and only one of them checked the switch itself. */
+    if (!planPantryKeys().includes(key)) return null;
+    const total = pantryGrams(key);
     if (!total || total <= 0) return null;
     let uses = 0;
     MEALS.forEach(m=>{
@@ -1536,7 +1548,7 @@
        time of day, no clash with what's already on the plate, no dietary
        violation. Anything that can't be placed cleanly is reported as
        "didn't fit" on the review screen instead of being forced in. */
-    const want = (state.mustUse || []).filter(k=>{
+    const want = planPantryKeys().filter(k=>{
       const sl = slotOf(k);
       const f = sl && listFor(sl).find(x=>x.key===k);
       return f && passesPrefs(f) && !isDisliked(f);
@@ -1611,8 +1623,9 @@
     const used = new Set();
     MEALS.forEach(m=>SLOT_DEFS.forEach(d=>
       (state.selections[m.key][d.slot]||[]).filter(Boolean).forEach(k=>used.add(k))));
-    state.onHandUsed = (state.mustUse||[]).filter(k=>used.has(k));
-    state.onHandUnused = (state.mustUse||[]).filter(k=>!used.has(k));
+    const listed = planPantryKeys();
+    state.onHandUsed = listed.filter(k=>used.has(k));
+    state.onHandUnused = listed.filter(k=>!used.has(k));
   }
 
   const STYLE_BLURB = {
@@ -1644,7 +1657,7 @@
   function renderOnHandReview(){
     const host = document.getElementById('onHandReview');
     if (!host) return;
-    const listed = (state.mustUse || []);
+    const listed = planPantryKeys();
     if (!listed.length){ host.style.display = 'none'; return; }
     host.style.display = '';
 

@@ -574,6 +574,44 @@
   .onhand-name{ flex:1; font-family:var(--font-body); font-size:13px; color:var(--amber); line-height:1.3; }
   .onhand-qty{ width:80px; margin-bottom:0!important; padding:7px 8px; font-size:16px; text-align:center; }
   .onhand-unit{ font-family:var(--font-body); font-size:11px; color:var(--muted); white-space:nowrap; min-width:34px; }
+  /* THE PANTRY SCREEN
+     One row per food you own: what it is, how much, whether the planner
+     should build around it, and a way to drop it. The weight and the
+     "use up" mark are the two things that used to live in separate
+     stores on separate screens, so they sit side by side here. */
+  .pantry-edit{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 0;
+                border-bottom:1px solid var(--line); }
+  .pantry-edit:last-of-type{ border-bottom:0; }
+  .pe-name{ flex:1 1 100%; font-family:var(--font-body); font-size:var(--fs-body); line-height:1.3; }
+  /* Selector written against input[type=number] for the same reason
+     .cf-unit-row is: the global rule sets width:100% at 0,1,1 and would
+     otherwise give the number box the whole row, wrapping the unit and both
+     buttons onto a line of their own. */
+  .pantry-edit input[type=number]{ flex:0 0 88px; width:88px; min-width:0;
+                                   margin-bottom:0!important; }
+  .pantry-edit .onhand-unit{ flex:1 1 auto; min-width:0; }
+  /* Off by default: owning something is not a promise to cook it tonight,
+     and the unlit state has to read as a real choice rather than a
+     disabled button. */
+  .mini-btn.use{ flex:0 0 auto; padding:7px 10px; border:1px dashed rgba(var(--amber-rgb),0.45);
+                 color:var(--muted); }
+  .mini-btn.use.on{ border-style:solid; border-color:var(--amber); color:var(--amber);
+                    background:rgba(var(--amber-rgb),0.10); }
+  @media (min-width:420px){ .pe-name{ flex:1 1 auto; min-width:0; } }
+
+  /* A match you already own, in the journal's food picker */
+  .fp-row.has-pantry .kc{ color:var(--amber); }
+
+  /* Said on the row that caused it. An inventory that moves without saying
+     why is one people stop believing. */
+  .jpantry{ color:var(--amber); }
+
+  /* The summary of the pantry that sits in the build flow */
+  .onhand-summary{ font-family:var(--font-body); font-size:var(--fs-body); line-height:1.6; }
+  .onhand-count{ display:block; color:var(--amber); }
+  .onhand-using{ display:block; color:var(--fg); margin-top:2px; }
+  .onhand-using.muted{ color:var(--muted); }
+
   .onhand-chosen .chip{ border-color:var(--amber)!important; color:var(--amber)!important; background:rgba(var(--amber-rgb),0.10)!important; }
   .dislike-chosen .chip{ border-color:var(--red)!important; color:var(--red)!important; background:rgba(var(--red-rgb),0.10)!important; }
   .fav-nores{ font-size:11px; color:var(--muted); padding:10px 2px; line-height:1.6; }
@@ -638,6 +676,10 @@
   .footer-nav .btn-ghost{ margin-top:0; }
 
   .top-strip{ display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+  /* display:flex above out-specifies the UA's [hidden] rule, so a strip asked
+     to hide stays put without this. The pantry hides its back link when it was
+     opened from the tab bar rather than from inside a task. */
+  .top-strip[hidden]{ display:none; }
   .back-link{ font-size:10px; color:var(--muted); background:none; border:none; cursor:pointer; letter-spacing:1px; padding:8px 0; min-height:44px; }
   .back-link:active{ color:var(--cyan); }
 

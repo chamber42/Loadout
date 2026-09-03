@@ -18,11 +18,11 @@
     'activity','sex','units','bodyweight','heightIn','age','exerciseMode','exerciseRaw','exerciseKcal',
     'tdee','tdeeMeasured','tdeeMeasuredAt','finalKcal','restKcal','trainKcal','trainingDays','sheetDayView',
     'assignedTierId','selectedTierId','preferences','cravings','mealCount',
-    'favorites','discoveryMode','dislikes','mustUse','mustQty','eatingStyle','selections',
+    'favorites','discoveryMode','dislikes','eatingStyle','selections',
     'mealPlan','mealWeights','skipBreakfast','breakfastForDinner','breakfastAllDay',
     'uniqueMeals','uniqueSnacks','prep','activeDay','portionOverrides','variety',
     'log','weights','healthWeights','journalMeals','calMode','calSel','calDate',
-    'eaten','prepServings','pantry','cupboard','customFoods','importedRecipes'];
+    'eaten','prepServings','pantry','cupboard','pantryUse','customFoods','importedRecipes'];
 
   let saveTimer = null;
   /* Whether the last attempt to write to storage failed. Read by nothing yet;
@@ -92,9 +92,58 @@
     [].concat(prep.meals || [], prep.snacks || []).forEach(sel=>{
       if (sel && Array.isArray(sel.sauce)) sel.sauce = sel.sauce.filter(k=>!seasonKeys.has(k));
     });
-    ['favorites','dislikes','mustUse'].forEach(k=>{
+    ['favorites','dislikes'].forEach(k=>{
       if (Array.isArray(state[k])) state[k] = state[k].filter(x=>!seasonKeys.has(x));
     });
+    Object.keys(state.pantry || {}).forEach(k=>{
+      if (seasonKeys.has(k)) delete state.pantry[k];
+    });
+  }
+
+  /* Two stores used to describe the same fridge. `mustUse` plus `mustQty`
+     was what the planner built around, edited on the cravings screen;
+     `pantry` was what the shopping list subtracted, edited on the list. A
+     person could tell one of them about a bag of rice and be told by the
+     other to go and buy rice.
+
+     They fold into a single record here. Each kept a bit the other lacked,
+     and both survive the fold rather than one overwriting the other:
+
+       from mustUse   `use` — you said you were prepared to cook with it, so
+                      the planner keeps building around it exactly as before
+       from pantry    a weight with no such promise, which still comes off
+                      the shopping list and still leaves the plan alone
+
+     Where both named the same food, the larger weight wins. Both were the
+     person saying "I have at least this much", neither is timestamped, and
+     the pantry screen shows every number for correcting by hand. */
+  function migratePantry(data){
+    const hadOld = Array.isArray(data.mustUse) || (data.mustQty && typeof data.mustQty === 'object')
+                   || (data.pantry && typeof data.pantry === 'object');
+    if (!hadOld) return;
+
+    const merged = {};
+    const put = (key, grams, use)=>{
+      const g = Math.round(+grams || 0);
+      const prev = merged[key];
+      merged[key] = {
+        g: Math.max(prev ? prev.g : 0, g > 0 ? g : 0),
+        use: (prev ? prev.use : false) || !!use,
+      };
+    };
+
+    /* Straight grams, or already-merged entries if this runs twice */
+    Object.entries(data.pantry || {}).forEach(([key, v])=>{
+      if (v && typeof v === 'object') put(key, v.g, v.use);
+      else put(key, v, false);
+    });
+    (data.mustUse || []).forEach(key=> put(key, (data.mustQty || {})[key], true));
+
+    state.pantry = merged;
+    state.cupboard = data.cupboard || {};
+    if (typeof data.pantryUse !== 'boolean') state.pantryUse = true;
+    delete state.mustUse;
+    delete state.mustQty;
   }
 
   function migrateDayType(data){
@@ -144,6 +193,9 @@
          long-standing user they have never weighed themselves. */
       if (typeof seedWeightHistory === 'function') seedWeightHistory();
       migrateDayType(data);
+      /* Before migrateSeasonings, which now scrubs seasoning keys out of
+         the pantry: they have to be in the pantry before it can. */
+      migratePantry(data);
       migrateSeasonings();
       // after migrateDayType: it is what decides whether this prep has a split
       migratePortionOverrides();

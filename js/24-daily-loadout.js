@@ -279,13 +279,11 @@
     Object.values(state.selections || {}).forEach(strip);
     const prep = state.prep || {};
     [].concat(prep.meals || [], prep.snacks || []).forEach(strip);
-    ['dislikes','mustUse'].forEach(f=>{
-      if (Array.isArray(state[f])) state[f] = state[f].filter(k=>k !== key);
-    });
+    if (Array.isArray(state.dislikes)) state.dislikes = state.dislikes.filter(k=>k !== key);
     if (state.favorites && Array.isArray(state.favorites[slot])){
       state.favorites[slot] = state.favorites[slot].filter(k=>k !== key);
     }
-    if (state.mustQty) delete state.mustQty[key];
+    if (state.pantry) delete state.pantry[key];
   }
 
   function removeScannedFood(slot, key){
@@ -1171,7 +1169,7 @@
   }
 
   function capOnHandPortions(grams, sel){
-    if (!state.mustQty || !Object.keys(state.mustQty).length) return;
+    if (!planPantryKeys().length) return;
     SLOT_DEFS.forEach(def=>{
       sel[def.slot].forEach((key, i)=>{
         if (!key || grams[def.slot][i] == null) return;

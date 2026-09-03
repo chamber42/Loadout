@@ -223,6 +223,7 @@
                 <span class="jname">${escapeHtml(it.name)}
                   <small style="display:block;color:var(--muted);font-size:11px;">P${Math.round(+it.protein||0)} C${Math.round(+it.carbs||0)} F${Math.round(+it.fat||0)}${
                     (it._food || it._foodData) ? ` · <button class="amt-tap tiny" data-jamtedit="${escapeHtml(sl.name)}|${i}">change amount <svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg></button>` : ''}${
+                    it._pantryTook ? ` · <span class="jpantry">−${it._pantryTook}g from pantry</span>` : ''}${
                     it._partial ? ` · <span class="label-warn-inline">a missing macro counts as zero</span>` : ''}${
                     it._suspect ? ` · <span class="label-warn-inline">label works out to ${Math.round(it._impliedKcal)} kcal</span>` : ''}</small>
                 </span>
@@ -287,7 +288,9 @@
     }));
     body.querySelectorAll('[data-jdel]').forEach(b=>b.addEventListener('click', ()=>{
       const [meal, idx] = b.getAttribute('data-jdel').split('|');
-      (log.meals[meal] || []).splice(parseInt(idx,10), 1);
+      const gone = (log.meals[meal] || []).splice(parseInt(idx,10), 1)[0];
+      // whatever this row took out of the pantry goes back on the shelf
+      if (gone) pantryReturnForEntry(gone);
       renderJournal(); saveState();
     }));
     body.querySelectorAll('[data-jplan]').forEach(b=>b.addEventListener('click', ()=>{
@@ -371,17 +374,45 @@
        to show. */
     if (!q){
       const recents = (typeof journalRecents === 'function') ? journalRecents() : [];
-      if (!recents.length){
+      /* What you own, in front of what you usually eat. Logging out of the
+         pantry is the case that keeps the pantry honest — the grams come
+         straight back off the shelf — and it is also the shortest route to
+         the answer on the days somebody is eating down what is left rather
+         than cooking a prep. */
+      const held = (typeof pantryItems === 'function') ? pantryItems() : [];
+      const pantryHtml = held.length
+        ? `<div class="fp-group">${ic('home')} IN YOUR PANTRY</div>` +
+          held.map((it,i)=>`
+            <button class="fp-row" data-jp="${i}">
+              <span class="nm">${escapeHtml(it.food.name)}</span>
+              <span class="kc">${it.grams ? it.grams + ' g left' : 'some'}</span>
+            </button>`).join('')
+        : '';
+
+      if (!recents.length && !held.length){
         host.innerHTML = `<div class="fav-nores">Start typing to search ${items.length} foods —
           “chicken”, “bread”, “rice”…</div>`;
         return;
       }
-      host.innerHTML = `<div class="fp-group">YOURS</div>` +
+      host.innerHTML = pantryHtml +
+        (recents.length ? `<div class="fp-group">YOURS</div>` +
         recents.map((r,i)=>`
           <button class="fp-row" data-jr="${i}">
             <span class="nm">${ic(r.icon)} ${escapeHtml(r.label)}</span>
             <span class="kc">${r.uses}&times;${r.kind === 'food' && r.grams ? ' · ' + r.grams + ' g' : ''}</span>
-          </button>`).join('');
+          </button>`).join('') : '');
+
+      host.querySelectorAll('[data-jp]').forEach(b=>b.addEventListener('click', ()=>{
+        const it = held[parseInt(b.getAttribute('data-jp'),10)];
+        const hit = foodIndex().find(x => x.food.key === it.key);
+        if (!hit) return;
+        jfoodTarget.pick = hit;
+        /* Offer the usual portion, but never more than is on the shelf — the
+           point of logging from here is that this is what you actually have. */
+        const usual = defaultLogGrams(hit.slot, hit.food);
+        jfoodTarget.grams = it.grams ? Math.min(usual, it.grams) : usual;
+        renderJournalFoodAmount();
+      }));
 
       host.querySelectorAll('[data-jr]').forEach(b=>b.addEventListener('click', ()=>{
         const r = recents[parseInt(b.getAttribute('data-jr'),10)];
@@ -392,7 +423,13 @@
           const log = dayLog(state.journalDate || todayKey());
           const meal = jfoodTarget.mealName;
           log.meals[meal] = log.meals[meal] || [];
-          log.meals[meal].push(Object.assign({}, r.entry));
+          /* A fresh eating, not the old one: the previous take belonged to the
+             row it was copied from and must not be inherited, or deleting this
+             copy would credit the pantry with grams it never lost. */
+          const copy = Object.assign({}, r.entry);
+          delete copy._pantryTook;
+          log.meals[meal].push(copy);
+          pantryTakeForEntry(copy);
           renderJournal();
           saveState();
           closeModal('modalJournalFood');
@@ -418,12 +455,23 @@
     items.sort((a,b)=>
       rank(a.food.name) - rank(b.food.name) || a.food.name.length - b.food.name.length);
 
+    /* Anything already on the shelf sorts above the rest of the match list.
+       Searching "chicken" when you own chicken should not make you hunt past
+       nine other chickens to find your own. */
+    const inPantry = k => (typeof pantryHas === 'function') && pantryHas(k);
+    items.sort((a,b)=> (inPantry(b.food.key) ? 1 : 0) - (inPantry(a.food.key) ? 1 : 0));
+
     host.innerHTML = `<div class="fp-group">${items.length} MATCH${items.length===1?'':'ES'}</div>` +
-      items.slice(0, 60).map((x,i)=>`
-        <button class="fp-row" data-jf="${i}">
+      items.slice(0, 60).map((x,i)=>{
+        const g = inPantry(x.food.key) && typeof pantryGrams === 'function'
+          ? pantryGrams(x.food.key) : 0;
+        return `<button class="fp-row${inPantry(x.food.key) ? ' has-pantry' : ''}" data-jf="${i}">
           <span class="nm">${ic(x.icon)} ${escapeHtml(x.food.name)}</span>
-          <span class="kc">${x.food.kcal} kcal/100g${x.food.unit ? ' · per ' + escapeHtml(x.food.unit.one) : ''}</span>
-        </button>`).join('');
+          <span class="kc">${inPantry(x.food.key)
+            ? (g ? g + ' g in pantry' : 'in pantry')
+            : x.food.kcal + ' kcal/100g' + (x.food.unit ? ' · per ' + escapeHtml(x.food.unit.one) : '')}</span>
+        </button>`;
+      }).join('');
 
     host.querySelectorAll('[data-jf]').forEach(b=>b.addEventListener('click', ()=>{
       const x = items[parseInt(b.getAttribute('data-jf'),10)];
@@ -549,10 +597,19 @@
       _suspect: food._suspect || undefined,
       _impliedKcal: food._suspect ? food._impliedKcal : undefined,
     };
-    if (replaceIndex != null && log.meals[mealName][replaceIndex]) log.meals[mealName][replaceIndex] = entry;
-    else log.meals[mealName].push(entry);
+    /* Correcting an amount is one take replacing another, so the old one is
+       handed back before the new one is made — otherwise fixing 500g to 50g
+       would cost the pantry both. */
+    if (replaceIndex != null && log.meals[mealName][replaceIndex]){
+      pantryReturnForEntry(log.meals[mealName][replaceIndex]);
+      log.meals[mealName][replaceIndex] = entry;
+    } else {
+      log.meals[mealName].push(entry);
+    }
+    const took = pantryTakeForEntry(entry);
     renderJournal();
     saveState();
+    if (took) toast('Took ' + took + 'g of ' + food.name + ' out of your pantry', 'home');
   }
 
   /* Search box wiring for the journal food picker */
@@ -642,6 +699,9 @@
           carbs: Math.round(f.carbs * mult),
           fat: Math.round(f.fat * mult),
           _food: f.key, _grams: g,
+          /* The cook already took these out of the pantry. Marked so eating
+             them cannot take them out a second time. */
+          _fromPlan: true,
         });
         added++;
       });

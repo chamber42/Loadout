@@ -77,20 +77,91 @@
      The pantry is what you own, in grams, kept between preps: the list
      subtracts it and asks you to buy only the difference.
 
+     It is also what the planner builds around. Those used to be two
+     separate stores — mustUse/mustQty for the planner, pantry for the
+     shopping — so saying "I have 400g of chicken" on one screen left the
+     other screen still telling you to buy chicken. One store now answers
+     both, and each entry carries the bit that told them apart:
+
+       g    grams held. 0 means "some, amount unknown" — worth knowing for
+            the shopping list, not precise enough to portion against.
+       use  work it into the plan, rather than merely own it. A carton of
+            eggs going off next week is `use`; the standing bag of flour
+            behind it is not, and the planner should not build dinner
+            around either one just because you happen to have it.
+
      Seasonings are their own thing — they're bought as a jar and used to
      taste, so owning one is a yes/no rather than a weight. Those live in
      the cupboard, which is why paprika stops reappearing every week.
   ========================================================= */
-  function pantryGrams(key){
-    const g = +((state.pantry || {})[key]);
-    return isFinite(g) && g > 0 ? g : 0;
+
+  /* One entry, normalised. Saves written before the two stores merged hold
+     a bare number of grams here, so read those as an owned-but-not-wanted
+     amount rather than letting `.g` come back undefined. */
+  function pantryEntry(key){
+    const e = (state.pantry || {})[key];
+    if (e == null) return null;
+    if (typeof e === 'number'){
+      const g = isFinite(e) && e > 0 ? Math.round(e) : 0;
+      return {g, use:false};
+    }
+    const g = +e.g;
+    return {g: isFinite(g) && g > 0 ? Math.round(g) : 0, use: !!e.use};
   }
 
-  function setPantryGrams(key, grams){
+  function pantryHas(key){ return !!pantryEntry(key); }
+
+  /* Grams held, 0 for both "not in the pantry" and "in it, amount unknown".
+     Callers that need to tell those apart ask pantryHas or pantryVague. */
+  function pantryGrams(key){
+    const e = pantryEntry(key);
+    return e ? e.g : 0;
+  }
+
+  /* In the pantry, but without a weight against it */
+  function pantryVague(key){
+    const e = pantryEntry(key);
+    return !!e && e.g === 0;
+  }
+
+  /* Marked to be worked into the plan */
+  function pantryWanted(key){
+    const e = pantryEntry(key);
+    return !!e && e.use;
+  }
+
+  /* Add or update. `grams` of 0, null or nonsense means "some, unknown".
+     `use` is left alone when omitted, so editing a weight on the shopping
+     list can't quietly change what the planner does with it. */
+  function pantryPut(key, grams, use){
     state.pantry = state.pantry || {};
-    const g = Math.max(0, Math.round(+grams || 0));
-    if (g > 0) state.pantry[key] = g; else delete state.pantry[key];
+    const prev = pantryEntry(key);
+    const n = Math.round(+grams || 0);
+    state.pantry[key] = {
+      g: n > 0 ? n : 0,
+      use: use === undefined ? (prev ? prev.use : false) : !!use,
+    };
     saveState();
+  }
+
+  function pantryDrop(key){
+    if (state.pantry) delete state.pantry[key];
+    saveState();
+  }
+
+  function setPantryUse(key, on){
+    const e = pantryEntry(key);
+    if (!e) return;
+    pantryPut(key, e.g, !!on);
+  }
+
+  /* Kept for the shopping list's editor, where a weight is the whole point:
+     clearing it there means the food is gone, not that its amount became a
+     mystery. Adding something you own without a weight is the pantry
+     screen's job. */
+  function setPantryGrams(key, grams){
+    const g = Math.round(+grams || 0);
+    if (g > 0) pantryPut(key, g); else pantryDrop(key);
   }
 
   function pantryItems(){
@@ -99,8 +170,18 @@
        blank row with a weight next to it. */
     return Object.keys(state.pantry || {}).map(key=>{
       const hit = foodIndex().find(x => x.food.key === key);
-      return hit ? {key, food:hit.food, grams: pantryGrams(key)} : null;
+      const e = pantryEntry(key);
+      return hit && e ? {key, food:hit.food, slot:hit.slot, grams:e.g, use:e.use} : null;
     }).filter(Boolean).sort((a,b)=> a.food.name.localeCompare(b.food.name));
+  }
+
+  /* The keys the planner is allowed to build around: owned, marked to be
+     used up, and only while the pantry is switched into the plan at all.
+     Every planner-side read goes through here, so the master switch cannot
+     be honoured in one place and forgotten in another. */
+  function planPantryKeys(){
+    if (!state.pantryUse) return [];
+    return Object.keys(state.pantry || {}).filter(pantryWanted);
   }
 
   function hasCupboard(name){ return !!((state.cupboard || {})[name]); }
@@ -111,11 +192,87 @@
     saveState();
   }
 
-  /* What the list needs, what you own, and what's actually left to buy */
+  /* What the list needs, what you own, and what's actually left to buy.
+     An unknown amount is reported but never subtracted: "you have some
+     rice" is a reason to look in the cupboard before shopping, not grounds
+     for the app to decide you have enough. */
   function shopLine(food, needGrams){
-    const have = pantryGrams(food.key);
-    const buy = Math.max(0, needGrams - have);
-    return {need:needGrams, have, buy, covered: buy < 1};
+    const e = pantryEntry(food.key);
+    if (!e) return {need:needGrams, have:0, buy:needGrams, covered:false, vague:false};
+    if (!e.g) return {need:needGrams, have:0, buy:needGrams, covered:false, vague:true};
+    const buy = Math.max(0, needGrams - e.g);
+    return {need:needGrams, have:e.g, buy, covered: buy < 1, vague:false};
+  }
+
+  /* ---------------------------------------------------------
+     EATING OUT OF THE PANTRY
+
+     A prep is not the only thing that empties a cupboard. Between one prep
+     finishing and the next being built, people still eat, and that food comes
+     out of the same pantry — so a meal logged in the journal that is not part
+     of a prep depletes it, the way it does in the kitchen.
+
+     Meals copied from the prep plan are the exception, and only because the
+     prep already took its ingredients out at cook time. Depleting them again
+     at eating time would charge the pantry twice for one purchase.
+
+     Every take is recorded on the journal entry that caused it, in
+     `_pantryTook`. That is what makes it reversible: deleting a mistyped row,
+     or correcting its amount, hands the grams straight back. Without the
+     record the only honest option would be to refuse to deplete at all,
+     because a typo would quietly cost somebody real food.
+  --------------------------------------------------------- */
+
+  /* Take what this entry ate, but never more than the pantry actually holds.
+     Eating food you were not tracking leaves the pantry alone rather than
+     inventing a negative balance. */
+  function pantryTakeForEntry(entry){
+    if (!entry || entry._fromPlan) return 0;
+    const key = entry._food;
+    const want = Math.round(+entry._grams || 0);
+    if (!key || want <= 0) return 0;
+    const held = pantryGrams(key);
+    if (!held) return 0;                       // untracked, or amount unknown
+    const took = Math.min(held, want);
+    const left = held - took;
+    if (left >= 1) pantryPut(key, left); else pantryDrop(key);
+    entry._pantryTook = took;
+    return took;
+  }
+
+  /* Undo one take, for a row that was deleted or re-weighed. The food may have
+     left the pantry entirely in the meantime, in which case it comes back
+     carrying only what this entry had removed. */
+  function pantryReturnForEntry(entry){
+    if (!entry) return 0;
+    const back = Math.round(+entry._pantryTook || 0);
+    delete entry._pantryTook;
+    if (!back || !entry._food) return 0;
+    const e = pantryEntry(entry._food);
+    /* A holding recorded as "some, amount unknown" stays unknown: adding a
+       number to it would state a total nobody ever measured. */
+    if (e && !e.g) return 0;
+    pantryPut(entry._food, (e ? e.g : 0) + back);
+    return back;
+  }
+
+  /* Shopping replenishes the pantry, which is what lets the next cook take the
+     full amount back out of it. Only the shortfall is added: the grams already
+     on the shelf are the reason the list asked for less than the prep needs. */
+  function pantryReplenishFromList(){
+    const mult = shoppingMultiplier();
+    let added = 0, items = 0;
+    Object.values(aggregateIngredients()).forEach(t=>{
+      const L = shopLine(t.food, t.grams * mult);
+      /* A holding nobody has weighed cannot be added to — "some plus 600g" is
+         not a number. Those are left for the person to state on the pantry
+         screen. */
+      if (L.vague || L.buy < 1) return;
+      pantryPut(t.food.key, pantryGrams(t.food.key) + Math.round(L.buy));
+      added += Math.round(L.buy);
+      items++;
+    });
+    return {items, added};
   }
 
   /* Cooking the prep eats into the pantry. Explicit rather than automatic:
@@ -125,9 +282,11 @@
     const mult = shoppingMultiplier();
     let touched = 0;
     Object.values(aggregateIngredients()).forEach(t=>{
-      const have = pantryGrams(t.food.key);
-      if (!have) return;
-      setPantryGrams(t.food.key, have - t.grams * mult);
+      const e = pantryEntry(t.food.key);
+      // nothing to take away from an amount nobody has stated
+      if (!e || !e.g) return;
+      const left = e.g - t.grams * mult;
+      if (left >= 1) pantryPut(t.food.key, left); else pantryDrop(t.food.key);
       touched++;
     });
     return touched;
@@ -145,7 +304,8 @@
       <div class="panel">
         <div style="font-family:var(--font-body); font-size:15px; margin-bottom:6px;">${escapeHtml(food.name)}</div>
         <div class="ctn-count" style="margin-bottom:12px;">This prep needs
-          <strong class="n-green">${needGrams.toFixed(0)}g</strong>${ul ? ' · ' + ul : ''}.</div>
+          <strong class="n-green">${needGrams.toFixed(0)}g</strong>${ul ? ' · ' + ul : ''}.${
+          pantryVague(food.key) ? ' You\'ve got some, but haven\'t said how much.' : ''}</div>
         <label class="field-label">HOW MUCH DO YOU ALREADY HAVE? (GRAMS)</label>
         <input type="number" id="pantryInput" inputmode="numeric" min="0" max="100000"
           value="${have || ''}" placeholder="0">
@@ -169,7 +329,7 @@
       done();
     });
     const none = document.getElementById('pantryNone');
-    if (none) none.addEventListener('click', ()=>{ setPantryGrams(food.key, 0); done(); });
+    if (none) none.addEventListener('click', ()=>{ pantryDrop(food.key); done(); });
     openModal('modalPantry');
   }
 
@@ -178,29 +338,46 @@
     if (!host) return;
     const items = pantryItems();
     const cup = Object.keys(state.cupboard || {});
-    if (!items.length && !cup.length){ host.innerHTML = ''; return; }
 
+    /* An empty pantry still gets a way in. Before there was a screen the
+       only way to put anything in one was to tap an ingredient the current
+       list happened to include, so a full cupboard of food the plan didn't
+       mention was unrecordable. */
+    if (!items.length && !cup.length){
+      host.innerHTML = `<div class="panel">
+        <div class="season-hint" style="margin:0;">
+          Nothing in your pantry yet — anything you add is taken off this list.
+        </div>
+        <button class="mini-btn add" id="pantryOpen" style="margin-top:10px;">${ic('home')} OPEN PANTRY</button>
+      </div>`;
+      host.querySelector('#pantryOpen').addEventListener('click', ()=> showScreen('screen-pantry'));
+      return;
+    }
+
+    const n = items.length + cup.length;
     host.innerHTML = `<div class="panel">
       <div class="eaten-head">
-        <span class="eaten-title"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg> YOUR PANTRY</span>
-        <span class="eaten-total">${items.length + cup.length} item${items.length + cup.length === 1 ? '' : 's'}</span>
+        <span class="eaten-title">${ic('home')} YOUR PANTRY</span>
+        <span class="eaten-total">${n} item${n === 1 ? '' : 's'}</span>
       </div>
       ${items.map(it=>`<div class="pantry-row">
         <span class="pn">${escapeHtml(it.food.name)}</span>
-        <span class="pq">${it.grams}g</span>
+        <span class="pq">${it.grams ? it.grams + 'g' : 'some'}</span>
         <button class="mini-btn remove" data-pantry-del="${escapeHtml(it.key)}"
-          aria-label="Remove ${escapeHtml(it.food.name)} from the pantry"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+          aria-label="Remove ${escapeHtml(it.food.name)} from the pantry">${ic('close')}</button>
       </div>`).join('')}
       ${cup.length ? `<div class="season-hint" style="margin-top:10px;">
-        <svg class="px" aria-hidden="true"><use href="#i-season"></use></svg> In the cupboard: <strong class="n-amber">${cup.map(escapeHtml).join(' · ')}</strong>
+        ${ic('season')} In the cupboard: <strong class="n-amber">${cup.map(escapeHtml).join(' · ')}</strong>
       </div>` : ''}
-      ${items.length ? `<button class="mini-btn add" id="pantryCooked"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> I'VE COOKED THIS PREP — TAKE IT OUT OF THE PANTRY</button>` : ''}
+      ${items.some(it=>it.grams) ? `<button class="mini-btn add" id="pantryCooked">${ic('egg')} I'VE COOKED THIS PREP — TAKE IT OUT OF THE PANTRY</button>` : ''}
+      <button class="mini-btn add" id="pantryOpen">${ic('home')} OPEN PANTRY</button>
     </div>`;
 
     host.querySelectorAll('[data-pantry-del]').forEach(b=>b.addEventListener('click', ()=>{
-      setPantryGrams(b.getAttribute('data-pantry-del'), 0);
+      pantryDrop(b.getAttribute('data-pantry-del'));
       renderShoppingList();
     }));
+    host.querySelector('#pantryOpen').addEventListener('click', ()=> showScreen('screen-pantry'));
     const cooked = document.getElementById('pantryCooked');
     if (cooked) cooked.addEventListener('click', ()=>{
       const n = deductPrepFromPantry();
@@ -229,12 +406,16 @@
           (hasSplit() && nTrain ? ` (${nTrain} training, ${days - nTrain} rest)` : '') + '.';
     }
 
+    /* Drawn before the empty-list bail, not after. The pantry panel is a way
+       through to the pantry screen, and hiding it until meals exist meant
+       the one screen that links there was blank exactly when somebody is
+       stocking up before building anything. */
+    renderPantryPanel();
+
     if (!Object.keys(totals).length){
       host.innerHTML = '<div class="panel"><div class="fav-nores">No ingredients selected yet. Build your meals first.</div></div>';
       return;
     }
-
-    renderPantryPanel();
 
     let covered = 0;
     host.innerHTML = SLOT_DEFS.map(d=>{
@@ -250,14 +431,16 @@
           return `<div class="shop-row${L.covered ? ' covered' : ''}">
             <label class="shop-main">
               <input type="checkbox" class="shop-tick"${L.covered ? ' checked' : ''}>
-              <span class="shop-name">${t.food.name}${L.have
+              <span class="shop-name">${t.food.name}${L.vague
+                ? `<span class="shop-have">you have some — check before you buy</span>`
+                : L.have
                 ? `<span class="shop-have">${L.covered
                     ? `already have ${L.have}g — needs ${g.toFixed(0)}g`
                     : `have ${L.have}g of ${g.toFixed(0)}g`}</span>` : ''}</span>
               <span class="shop-qty">${L.covered ? 'covered'
                 : `${ul ? ul + ' · ' : ''}${L.buy.toFixed(0)}g`}</span>
             </label>
-            <button class="pantry-tap${L.have ? ' on' : ''}" data-pantry-set="${escapeHtml(t.food.key)}|${g.toFixed(1)}"
+            <button class="pantry-tap${L.have || L.vague ? ' on' : ''}" data-pantry-set="${escapeHtml(t.food.key)}|${g.toFixed(1)}"
               aria-label="Say how much ${escapeHtml(t.food.name)} you already have"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg></button>
           </div>`;
         }).join('')}
@@ -336,8 +519,9 @@
       out += 'SEASONINGS\n';
       seasonings.forEach(n=>{ out += `  [ ] ${n} — to taste\n`; });
     }
-    const pantryCovered = pantryItems().length;
-    if (pantryCovered) out += `\nAlready in the pantry: ${pantryItems().map(i=>i.food.name + ' ' + i.grams + 'g').join(', ')}\n`;
+    const held = pantryItems();
+    if (held.length) out += `\nAlready in the pantry: ${held.map(i=>
+      i.food.name + (i.grams ? ' ' + i.grams + 'g' : '')).join(', ')}\n`;
     return out;
   }
 
@@ -416,6 +600,17 @@
   });
 
   document.getElementById('btnPrintList').addEventListener('click', ()=> window.print());
+
+  /* Buying is what puts the shortfall on the shelf. Without it the pantry can
+     only ever go down, and the cook would find 500g where the prep needs 1050
+     however recently somebody had been to the shop. */
+  document.getElementById('btnBoughtList').addEventListener('click', ()=>{
+    const r = pantryReplenishFromList();
+    renderShoppingList();
+    toast(r.items
+      ? 'Pantry stocked — ' + r.added + 'g across ' + r.items + ' item' + (r.items === 1 ? '' : 's')
+      : 'Nothing left to buy — your pantry already covers this list', 'home');
+  });
 
   document.getElementById('btnStart').addEventListener('click', ()=> showScreen('screen-library'));
   document.getElementById('btnSelect').addEventListener('click', ()=> showScreen('screen-library'));

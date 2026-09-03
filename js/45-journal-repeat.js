@@ -38,8 +38,18 @@
   /* Entries are deep-copied on the way out. A shallow copy would leave the
      new day sharing objects with the old one, so correcting an amount today
      would silently rewrite what the person ate last Tuesday. */
+  /* Repeating a meal is eating it again, so each copy takes its own bite out
+     of today's pantry. The original's take is stripped rather than copied:
+     it belongs to the row that made it, and inheriting it would let deleting
+     the copy credit back grams the pantry never lost. Meals copied from a
+     prep plan carry _fromPlan and so take nothing, here as everywhere. */
   function cloneEntries(list){
-    return (list || []).map(function(it){ return JSON.parse(JSON.stringify(it)); });
+    return (list || []).map(function(it){
+      const copy = JSON.parse(JSON.stringify(it));
+      delete copy._pantryTook;
+      if (typeof pantryTakeForEntry === 'function') pantryTakeForEntry(copy);
+      return copy;
+    });
   }
 
   /* Day keys with anything logged, newest first, strictly before `beforeKey`

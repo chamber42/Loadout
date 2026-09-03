@@ -157,6 +157,10 @@
       name,
       brand: brandOf(p),
       serving: (p.serving_size || '').trim(),
+      /* What the packet holds, as printed — "500 g", "1 kg", "6 x 40 g".
+         Freehand, so nothing may depend on parsing it; the pantry reads it to
+         offer a starting weight when a shopping bag is scanned in. */
+      quantity: (p.quantity || '').trim(),
       servingG: offServingGrams(p),
       kcal,
       protein: protein == null ? 0 : protein,
@@ -393,6 +397,7 @@
   function useScannedCode(code){
     if (scanTarget === 'journal'){ journalScanLookup(code); return; }
     if (scanTarget === 'slot'){ slotScanLookup(code); return; }
+    if (scanTarget === 'pantry'){ pantryScanLookup(code); return; }
     const input = document.getElementById('offSearch');
     input.value = code;
     document.getElementById('offClear').style.display = '';

@@ -88,10 +88,21 @@
      something is vegan or contains gluten — guessing would silently break
      someone's dietary filter, and an empty list means "unknown", which is the
      truth. crave is empty for the same reason. */
+  /* "Nutella (Nutella)" is not a better label than "Nutella". Open Food Facts
+     often repeats the brand in the product name, so the brand is appended only
+     when it says something the name does not. */
+  function productLabel(hit){
+    const name  = String(hit.name  || '').trim();
+    const brand = String(hit.brand || '').trim();
+    if (!brand) return name;
+    const n = name.toLowerCase(), b = brand.toLowerCase();
+    return (n === b || n.indexOf(b) >= 0) ? name : name + ' (' + brand + ')';
+  }
+
   function slotFoodFromHit(hit, slot){
     const food = {
       key: scannedKeyFor(slot, hit.code),
-      name: hit.brand ? (hit.name + ' (' + hit.brand + ')') : hit.name,
+      name: productLabel(hit),
       kcal: hit.kcal,
       protein: hit.protein,
       carbs: hit.carbs,

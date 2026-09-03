@@ -33,6 +33,7 @@
   const TABS = {
     you:      {screen:'screen-tiers'},
     prep:     {screen:'screen-prefs'},
+    pantry:   {screen:'screen-pantry'},
     today:    {screen:'screen-journal'},
     progress: {screen:'screen-quest'},
   };
@@ -47,6 +48,16 @@
     'screen-prefs':'prep', 'screen-cravings':'prep', 'screen-style':'prep',
     'screen-suggest':'prep', 'screen-loadout':'prep', 'screen-shop':'prep',
     'screen-prep':'prep', 'screen-recipes':'prep',
+
+    /* The pantry began inside `prep`, on the reasoning that a pantry is a
+       thing you have rather than something you do. What settled it the other
+       way was building it: shopping, the kitchen questions and the journal
+       each needed their own door into it, and the back link had to learn who
+       had opened it. A page that needs three entrances and has to remember
+       which one you used is not a sub-page of anything — and the pantry is no
+       longer prep's, since half its traffic is the journal depleting it on
+       days when no prep is being cooked at all. */
+    'screen-pantry':'pantry',
 
     'screen-journal':'today',
     'screen-quest':'progress',
@@ -96,6 +107,16 @@
     /* Same for the calendar. "Log" reads better than the bare noun, so keep
        it wherever the pair still fits the column — "Objective Log" does not,
        and drops the suffix rather than the meaning. */
+    /* The genre's own word for a store of things — Larder, Stash, Armory.
+       Five columns at 9px will not seat a two-word name, and the two genres
+       that have one say for themselves which half to keep: the Root Cellar
+       becomes the Cellar, Item Select becomes Items. Shortening those by rule
+       would have picked "Select", which names the menu rather than the food. */
+    const pLbl = document.getElementById('tabPantryLbl');
+    if (pLbl){
+      const w = t.words || {};
+      pLbl.textContent = tabWord(w.inventoryTab || w.inventory, 'Pantry');
+    }
     const qLbl = document.getElementById('tabQuestLbl');
     if (qLbl){
       const q = tabWord(t.words && t.words.quest, 'Quest');
@@ -124,12 +145,40 @@
       }
       renderPrefs();
     }
+    if (name === 'pantry')   renderPantry();
     if (name === 'progress') renderCalendar();
     if (name === 'today')    renderJournal();
     showScreen(t.screen);
   }
 
+  /* Where the pantry's back link should return to. It is reached from the
+     shopping list, the kitchen questions and the journal, so a fixed target
+     would strand two of the three callers on a screen they were not on. */
+  const PANTRY_FROM = {'screen-shop':'SHOPPING LIST', 'screen-cravings':'CRAVINGS',
+                       'screen-journal':'JOURNAL'};
+
   function showScreen(id){
+    if (id === 'screen-pantry'){
+      const from = document.querySelector('.screen.active');
+      const label = from && PANTRY_FROM[from.id];
+      const strip = document.querySelector('#screen-pantry .top-strip');
+      const back = strip && strip.querySelector('[data-back]');
+      /* Reached from a button mid-task, the back link returns you to the task.
+         Reached from the tab bar there is no task to return to, and a link
+         claiming otherwise would send you somewhere you had not been. */
+      if (back && label){
+        back.setAttribute('data-back', from.id);
+        back.textContent = label;
+      }
+      if (strip) strip.hidden = !label;
+      if (typeof renderPantry === 'function') renderPantry();
+    } else if (typeof scanTarget !== 'undefined' && scanTarget === 'pantry'){
+      /* Leaving the pantry hands the scanner back, so a scan started later
+         from the loadout tab is not still pointed at a screen you have left.
+         The same handback the food picker does when its modal closes. */
+      scanTarget = 'eaten';
+      if (typeof resetPantryScanRow === 'function') resetPantryScanRow();
+    }
     // the attract screen is a black cabinet, not a themed page
     document.body.classList.toggle('attract-mode', id === 'screen-attract');
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));

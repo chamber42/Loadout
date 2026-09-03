@@ -20,6 +20,7 @@ const SUITES = [
   './data-export.test.js',
   './recipe-import.test.js',
   './recipe-place.test.js',
+  './pantry.test.js',
 ];
 
 let passed = 0, failed = 0;

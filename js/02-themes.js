@@ -99,7 +99,7 @@
                "cyan":"#f5b8d0","green":"#8fd46a","amber":"#ffd166","red":"#ef6f6c","magenta":"#7fb8e8",
                "text":"#f6f2e4","muted":"#a9b898" },
       sheet:"FARMER ALMANAC", sheetTitle:"Your Farmer",
-      words:{ tier:"SEASON", loadout:"HARVEST", quest:"CHORE", journal:"DAYBOOK", stat:"YIELD", inventory:"ROOT CELLAR",
+      words:{ tier:"SEASON", loadout:"HARVEST", quest:"CHORE", journal:"DAYBOOK", stat:"YIELD", inventory:"ROOT CELLAR", inventoryTab:"Cellar",
               build:"Plan Your Harvest", charCreate:"NEW FARMER", hp:"STAMINA", playstyle:"FARMING STYLE",
               meals:"Lay Out Your Table", tierPick:"Choose Your Season" }
     },
@@ -194,7 +194,7 @@
                "cyan":"#00e5ff","green":"#4dff5a","amber":"#ffd93d","red":"#ff4d6d","magenta":"#ff5cf0",
                "text":"#fdf3ff","muted":"#b69dd7" },
       sheet:"PLAYER CARD", sheetTitle:"Your Player",
-      words:{ tier:"STAGE", loadout:"POWER-UPS", quest:"ROUND", journal:"REFUEL", stat:"SCORE", inventory:"ITEM SELECT",
+      words:{ tier:"STAGE", loadout:"POWER-UPS", quest:"ROUND", journal:"REFUEL", stat:"SCORE", inventory:"ITEM SELECT", inventoryTab:"Items",
               build:"Pick Your Power-Ups", charCreate:"PLAYER SELECT", hp:"ENERGY", playstyle:"MODE",
               meals:"Pick Your Power-Ups", tierPick:"Select Stage" }
     },

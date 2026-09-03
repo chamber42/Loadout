@@ -459,6 +459,7 @@
 <nav id="tabBar" class="tab-bar" hidden aria-label="Sections">
   <button class="tab" data-tab="you"      aria-label="Character sheet"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Sheet</span></button>
   <button class="tab" data-tab="prep"     aria-label="Meal prep loadout"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-map"></use></svg></span><span class="lbl" id="tabLoadoutLbl">Loadout</span></button>
+  <button class="tab" data-tab="pantry"   aria-label="Your pantry"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg></span><span class="lbl" id="tabPantryLbl">Pantry</span></button>
   <button class="tab" data-tab="today"    aria-label="Today's food"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg></span><span class="lbl" id="tabJournalLbl">Journal</span></button>
   <button class="tab" data-tab="progress" aria-label="Quest log calendar"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg></span><span class="lbl" id="tabQuestLbl">Quest Log</span></button>
 </nav>
@@ -848,17 +849,13 @@
     <p class="subtitle">What you already have, what you love, what you can't stand — and how adventurous today should be.</p>
 
     <div class="panel mustuse-panel">
-      <label class="field-label"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> INGREDIENTS ON HAND YOU ARE PREPARED TO USE</label>
-      <div class="fav-search-wrap">
-        <input type="text" id="mustSearch" class="fav-search" aria-label="Search ingredients you have on hand" placeholder="Search what you already have — e.g. chicken thigh, rice" autocomplete="off">
-        <button class="fav-clear" id="mustClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      <label class="field-label"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> WHAT YOU ALREADY HAVE</label>
+      <div id="mustSummary"></div>
+      <div class="choice-grid" style="grid-template-columns:1fr; margin-top:10px;">
+        <button class="choice-btn selected" id="pantryUseToggle" aria-pressed="true"><span><strong>Build Around My Pantry</strong><span class="desc">Work whatever is marked to use up into these meals</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg></span></button>
       </div>
-      <div id="mustChosen" class="fav-chosen mustuse-chosen"></div>
-      <div id="mustResults"></div>
       <p class="subtitle" id="mustWarn" style="font-size:var(--fs-body); margin:12px 0 0; display:none;"></p>
-      <p class="subtitle" style="font-size:var(--fs-body); margin:12px 0 0;">
-        These get worked into the plan wherever they fit. Use it for food you need to get through before it turns. Enter how much you have and the planner keeps within it.
-      </p>
+      <button class="mini-btn add" id="mustOpen"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg> OPEN PANTRY</button>
     </div>
 
     <div class="panel">
@@ -1022,8 +1019,58 @@
     <div id="pantryPanel"></div>
     <div id="shopList"></div>
 
-    <button class="btn-primary" id="btnCopyList"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg> COPY LIST</button>
+    <button class="btn-primary" id="btnBoughtList"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg> I'VE BOUGHT THIS LIST</button>
+    <button class="btn-ghost" id="btnCopyList"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg> COPY LIST</button>
     <button class="btn-ghost" id="btnPrintList"><svg class="px" aria-hidden="true"><use href="#i-print"></use></svg> PRINT / SAVE AS PDF</button>
+  </section>
+
+  <!-- SCREEN 4.5: PANTRY -->
+  <section class="screen" id="screen-pantry">
+    <div class="top-strip">
+      <button class="back-link" data-back="screen-shop">SHOPPING LIST</button>
+    </div>
+    <div class="eyebrow" data-word="inventory">PANTRY</div>
+    <h1 class="title">What You Have</h1>
+    <p class="subtitle">Kept between preps. The shopping list subtracts it; anything marked to use up gets built into a meal.</p>
+
+    <div class="panel">
+      <!-- Scanning into the pantry. Stocking up is a stack of packets on the
+           counter, and typing each of their names is the slowest way to
+           describe a shopping bag you are holding. -->
+      <button class="photo-btn" id="pantryScanCam" type="button" hidden>
+        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
+      </button>
+      <label class="photo-btn" for="pantryBarcodePhoto">
+        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Use a picture of a barcode
+      </label>
+      <input type="file" id="pantryBarcodePhoto" accept="image/*"
+             style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
+             aria-label="Upload a picture of a barcode">
+      <div class="fav-search-wrap" style="margin-top:8px;">
+        <input type="text" id="pantryBarcode" class="fav-search" placeholder="&hellip;or type a barcode"
+               inputmode="numeric" autocomplete="off" aria-label="Barcode number">
+        <button class="fav-clear" id="pantryBarcodeClear" aria-label="Clear barcode" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="pantryScanResults"></div>
+      <div class="fav-search-wrap" style="margin-top:8px;">
+        <input type="text" id="pantrySearch" class="fav-search" aria-label="Search foods to add to your pantry" placeholder="&hellip;or search a food by name" autocomplete="off">
+        <button class="fav-clear" id="pantryClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      </div>
+      <div id="pantryResults"></div>
+    </div>
+
+    <div class="panel">
+      <label class="field-label"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> USING IT UP</label>
+      <div class="choice-grid" style="grid-template-columns:1fr;">
+        <button class="choice-btn selected" id="pantryPlanToggle" aria-pressed="true"><span><strong>Build Around My Pantry</strong><span class="desc">Work whatever is marked to use up into your meals</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg></span></button>
+      </div>
+      <p class="subtitle" id="pantryPlanNote" style="font-size:var(--fs-body); margin:10px 0 0;"></p>
+    </div>
+
+    <div id="pantryList"></div>
+    <div id="pantryCupboard"></div>
+
+    <button class="btn-ghost" id="pantryCookedBtn" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> I'VE COOKED THIS PREP — TAKE IT OUT OF THE PANTRY</button>
   </section>
 
   <!-- SCREEN 3: DAILY LOADOUT -->
@@ -1129,6 +1176,7 @@
 <script src="js/43-usda.js"></script>
 <script src="js/44-health-weight.js"></script>
 <script src="js/45-journal-repeat.js"></script>
+<script src="js/46-pantry.js"></script>
 <script src="js/47-reminders.js"></script>
 <script src="js/48-prep-dates.js"></script>
 <script src="js/49-streaks.js"></script>
