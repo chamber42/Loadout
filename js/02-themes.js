@@ -223,37 +223,74 @@
   }
 
   /* ---- the title screen's phosphor --------------------------------------
-     A CRT phosphor is one substance: every part of a lit stroke is the same
-     colour at a different temperature, which is why the tube reads as glowing
-     rather than as four shapes stacked on each other. So the whole tube is
-     struck from a single hue — the genre's accent — at four lightnesses,
-     rather than from four separately chosen colours.
+     The tube is two colours, not one. Deriving the whole thing from a single
+     accent made every title screen monochrome, and monochrome is not what
+     these worlds look like: the fishing theme came out orange when the game
+     it names is green water and pine, and the arcade came out blue when its
+     whole screen is purple. What reads as the genre is the pair — what the
+     words are made of, and what is glowing behind them.
 
-     Saturation is forced to full rather than carried over from the accent.
-     A lit dot on black is the most saturated thing on a screen, and the
-     softer accents (the farm's pink, the fantasy gold) come out as grey haze
-     at the opacities the glow is drawn with — the light has to be the colour
-     it is claiming to be before it is spread over 88 pixels of shadow.
+     So each world names its own two, and both are taken from the palette it
+     already uses, so the title screen and the app behind it are lit by the
+     same colours rather than merely adjacent ones.
      -------------------------------------------------------------------- */
-  function hueOf(hex){
+  const THEME_PHOSPHOR = {
+    /* neon over neon, which is the whole genre: electric cyan writing with
+       the pink of a sign behind it */
+    cyberpunk:{ ink:'#00fff2', glow:'#ff2fb0' },
+    /* silver on gold. The letters are the theme's own near-white, which goes
+       to plain silver once the gold is sitting behind it. */
+    fantasy:  { ink:'#f2e6cf', glow:'#e8c977' },
+    /* orange on gunmetal — the accent the theme is built on, over the grey
+       it puts everything else in */
+    fps:      { ink:'#ff8c1a', glow:'#9da9ae' },
+    /* the toxic green stays; the haze behind it turns the theme's amber, so
+       the screen reads as sodium light through dust rather than as a wash */
+    survival: { ink:'#b6e027', glow:'#e3b23c' },
+    /* pink writing over a green field */
+    farm:     { ink:'#f5b8d0', glow:'#8fd46a' },
+    /* leaves over earth */
+    craft:    { ink:'#7fb054', glow:'#d9a05e' },
+    /* an orange lure against the water and the pines */
+    outdoors: { ink:'#e28a3a', glow:'#7fb069' },
+    /* a candle held up in a room that is already bleeding */
+    horror:   { ink:'#d19a3c', glow:'#e04a4a' },
+    /* the livery red on the white of a pit board */
+    racing:   { ink:'#ff5a5a', glow:'#eef1f4' },
+    /* the purple the whole cabinet is soaked in, over its cyan. The violet
+       is the theme's own, at the brightness a lit stroke needs — its rule
+       lines carry it at #3d1780 and its muted text at #b69dd7, and neither
+       reads as purple on black: one is too dark to glow at all, the other
+       blooms straight to white. */
+    arcade:   { ink:'#a06ce0', glow:'#00e5ff' }
+  };
+
+  /* hex -> [hue, saturation, lightness]. Null for anything unreadable, and
+     for a grey, which names no hue to relight it at another brightness. */
+  function hslOf(hex){
     let h = String(hex).trim().replace('#','');
     if (h.length === 3) h = h.split('').map(c=>c+c).join('');
     if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
     const [r,g,b] = [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255);
     const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
-    // a grey accent names no hue, and inventing one would be worse than frost
-    if (!d) return null;
+    const l = (max + min) / 2;
+    // a grey still relights fine — it just has no hue to carry, and a
+    // saturation of zero says so on its own
+    if (!d) return [0, 0, l];
     let deg;
     if (max === r) deg = (g - b) / d;
     else if (max === g) deg = (b - r) / d + 2;
     else deg = (r - g) / d + 4;
-    return ((deg * 60) % 360 + 360) % 360;
+    return [((deg * 60) % 360 + 360) % 360, d / (1 - Math.abs(2 * l - 1)), l];
   }
 
-  /* hue at full saturation, given a lightness. The standard HSL conversion
-     with s fixed at 1, which is all this needs. */
-  function litRgb(hue, l){
-    const a = Math.min(l, 1 - l);
+  /* The same colour at another brightness. Hue and saturation are carried
+     through untouched, which is the point: relighting the racing white by
+     hue would give grey, and relighting the fantasy cream would give gold —
+     both of which are the colour beside it, not the colour itself. */
+  function relit(hsl, l){
+    const [hue, s] = hsl;
+    const a = s * Math.min(l, 1 - l);
     const at = n => {
       const k = (n + hue / 30) % 12;
       return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
@@ -261,27 +298,56 @@
     return [at(0), at(8), at(4)];
   }
 
-  /* The four temperatures, matched to the frost the stylesheet ships: a core
-     that is white with the hue only just in it, the bloom hugging the stroke,
-     the phosphor proper, and the deep falloff. */
-  const PHOSPHOR = { '--phos-core':.97, '--phos-hot-rgb':.90, '--phos':.69,
-                     '--phos-rgb':.69, '--phos-deep-rgb':.56 };
+  /* Saturation for the far falloff. A saturated glow keeps its colour all
+     the way out — the cyberpunk pink is still pink where it is nearly gone.
+     A near-white does the opposite: the trace of blue in racing's white is
+     invisible at full brightness and turns the dim end of the halo into
+     slate, which is a different colour from the one that was asked for. So
+     the drop applies in proportion to how little saturation there was to
+     begin with, and leaves a saturated colour alone. */
+  function dimmable(hsl){
+    const [hue, s, l] = hsl;
+    return [hue, s * (0.55 + 0.45 * s), l];
+  }
+
+  /* Five tokens off the two authored colours. The ink is lifted towards
+     white for the stroke, because the middle of a lit stroke is always
+     hotter than its edge; the glow is dropped for the far falloff, because
+     light this far from the source has spent most of itself getting there.
+
+     The lift is relative rather than a floor. Lifting every ink to the same
+     brightness threw away exactly what distinguishes these worlds — the
+     farm's pale pink and the arcade's deep violet both arrived at the same
+     near-white, which is how the wordmark ended up white on every screen
+     while only the line beneath it carried the genre. */
+  function tubeTokens(pair){
+    const ink = hslOf(pair.ink), glow = hslOf(pair.glow);
+    if (!ink || !glow) return null;
+    const hex = c => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
+    const rgb = c => c.join(', ');
+    return {
+      '--phos-core':     hex(relit(ink,  Math.min(.95, ink[2] + .10))),
+      '--phos-ink':      pair.ink,
+      '--phos-ink-rgb':  rgb(relit(ink,  Math.max(ink[2],  .80))),
+      '--phos-glow-rgb': rgb(relit(glow, Math.max(glow[2], .62))),
+      '--phos-deep-rgb': rgb(relit(dimmable(glow), glow[2] * .62)),
+      '--phos-hot':      '.5'
+    };
+  }
 
   /* Written onto the element rather than into a stylesheet rule, so clearing
      them puts the tube back to the frost in styles.css with nothing left
-     behind — which is what a theme with no usable hue, and the very first
-     launch, both need. */
-  function tintTube(hex){
+     behind — which is what the very first launch needs. */
+  function tintTube(key){
     const el = document.querySelector('.crt');
     if (!el) return;
-    const hue = hex == null ? null : hueOf(hex);
-    Object.entries(PHOSPHOR).forEach(([token, l])=>{
-      if (hue == null){ el.style.removeProperty(token); return; }
-      const rgb = litRgb(hue, l);
-      el.style.setProperty(token, token.endsWith('-rgb')
-        ? rgb.join(', ')
-        : '#' + rgb.map(v => v.toString(16).padStart(2,'0')).join(''));
-    });
+    /* null is "no character yet", and only that returns the frost. An
+       unrecognised key is a different thing and falls back the way
+       applyTheme's own lookup does. */
+    const pair = key == null ? null : (THEME_PHOSPHOR[key] || THEME_PHOSPHOR.cyberpunk);
+    const tok = pair && tubeTokens(pair);
+    ['--phos-core','--phos-ink','--phos-ink-rgb','--phos-glow-rgb','--phos-deep-rgb','--phos-hot']
+      .forEach(t => tok ? el.style.setProperty(t, tok[t]) : el.style.removeProperty(t));
   }
 
   function applyTheme(key){
@@ -315,7 +381,7 @@
        the app immediately, and rightly — but until the character is finished
        the title screen behind it is still a first launch, and colouring it
        would be showing somebody a choice they have not made yet. */
-    tintTube(characterExists() ? t.colors.cyan : null);
+    tintTube(characterExists() ? key : null);
     applyThemeTiers(t);
     applyThemeWords(t);
     /* The tab strip carries genre words too, but it is only re-labelled on

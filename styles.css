@@ -5054,17 +5054,31 @@
        phosphor would. Kept as tokens because the glow is six stacked shadows
        and the beam, prompt and screen wash all echo it; one place to tune.
 
-       What is written here is frost, and it is what a first launch gets — the
-       app has not been told what game it is yet, so the title screen is its
-       own colour rather than a guess at somebody's genre. Once there is a
-       character, applyTheme overwrites these five on the element with a
-       phosphor struck from the genre's accent hue, and everything below
-       follows without knowing it happened. */
-    --phos-core:#f4fdff;                /* the lit stroke itself */
-    --phos:#5fd8ff;                     /* arctic blue, the phosphor proper */
-    --phos-hot-rgb:196, 246, 255;       /* the pale bloom hugging the stroke */
-    --phos-rgb:95, 216, 255;
-    --phos-deep-rgb:30, 150, 255;       /* sapphire, where it goes cold */
+       Two colours, not one. The ink pair is the stroke and the bloom hugging
+       it — what the words are made of. The glow pair is everything further
+       out: the halo past the letters and the wash on the tube behind them.
+       Frost happens to use one hue for both, which is why this used to read
+       as a single colour, but a genre rarely does — a farm is pink writing
+       over a green field, and a horror screen is a candle over blood.
+
+       What is written here is that frost, and it is what a first launch
+       gets: the app has not been told what game it is yet, so the title
+       screen is its own colour rather than a guess at somebody's genre. Once
+       there is a character, applyTheme overwrites these five on the element
+       and everything below follows without knowing it happened. */
+    --phos-core:#f4fdff;             /* the lit stroke itself */
+    --phos-ink:#5fd8ff;              /* the words, where they are not white-hot */
+    --phos-ink-rgb:196, 246, 255;    /* the bloom hugging the stroke */
+    --phos-glow-rgb:95, 216, 255;    /* the halo past the words, and the wash */
+    --phos-deep-rgb:30, 150, 255;    /* the far falloff, where it goes cold */
+    /* How white-hot the middle of a stroke burns. Frost can afford to blow
+       out to plain white, because the white it blows out to is a shade of
+       the same ice. A coloured tube cannot: the wordmark is a pixel face
+       whose strokes are a few pixels wide, so a white bloom this tight
+       fills the glyph and the letters come out white whatever the phosphor
+       is. applyTheme turns it down for a genre, which is the difference
+       between letters that glow pink and letters that glow. */
+    --phos-hot:.85;
     position:relative;
     width:100%;
     height:100vh; height:100dvh;
@@ -5106,9 +5120,9 @@
        lit the screen around the word instead of the word. */
     text-shadow:
       0 0 1px rgba(255,255,255,1),
-      0 0 4px rgba(255,255,255,.85),
-      0 0 9px rgba(var(--phos-hot-rgb),1),
-      0 0 20px rgba(var(--phos-rgb),.9),
+      0 0 4px rgba(255,255,255,var(--phos-hot)),
+      0 0 9px rgba(var(--phos-ink-rgb),1),
+      0 0 20px rgba(var(--phos-glow-rgb),.9),
       0 0 44px rgba(var(--phos-deep-rgb),.4),
       0 0 88px rgba(var(--phos-deep-rgb),.39);
   }
@@ -5116,10 +5130,10 @@
     margin-top:14px;
     font-family:'Press Start 2P', monospace;
     font-size:clamp(7px, 2.4vw, 10px);
-    letter-spacing:4px; color:var(--phos); opacity:1;
+    letter-spacing:4px; color:var(--phos-ink); opacity:1;
     text-shadow:
-      0 0 4px rgba(var(--phos-hot-rgb),1),
-      0 0 13px rgba(var(--phos-rgb),.8),
+      0 0 4px rgba(var(--phos-ink-rgb),1),
+      0 0 13px rgba(var(--phos-glow-rgb),.8),
       0 0 28px rgba(var(--phos-deep-rgb),.3);
   }
   .attract-blink{
@@ -5129,8 +5143,8 @@
     letter-spacing:3px; color:var(--phos-core);
     text-shadow:
       0 0 2px rgba(255,255,255,.9),
-      0 0 8px rgba(var(--phos-hot-rgb),.9),
-      0 0 20px rgba(var(--phos-rgb),.55),
+      0 0 8px rgba(var(--phos-ink-rgb),.9),
+      0 0 20px rgba(var(--phos-glow-rgb),.55),
       0 0 40px rgba(var(--phos-deep-rgb),.22);
     animation:blink 1.15s steps(1) infinite;
   }
@@ -5161,7 +5175,7 @@
          keep the hard core they gained — pop is contrast, and this is close
          to the most light the background can hold before they start losing
          it. Both radials keep their original size; only intensity moves. */
-      radial-gradient(95% 62% at 50% 44%, rgba(var(--phos-rgb),.105), transparent 70%),
+      radial-gradient(95% 62% at 50% 44%, rgba(var(--phos-glow-rgb),.105), transparent 70%),
       radial-gradient(155% 115% at 50% 44%, rgba(var(--phos-deep-rgb),.0525), transparent 72%),
       /* falloff held back to the outer third; it was starting at 42%, which
          is exactly where the wordmark sits */
@@ -5174,8 +5188,8 @@
     background:#fff; border-radius:2px;
     box-shadow:
       0 0 7px 1px rgba(255,255,255,1),
-      0 0 20px 3px rgba(var(--phos-hot-rgb),.85),
-      0 0 48px 7px rgba(var(--phos-rgb),.5),
+      0 0 20px 3px rgba(var(--phos-ink-rgb),.85),
+      0 0 48px 7px rgba(var(--phos-glow-rgb),.5),
       0 0 92px 12px rgba(var(--phos-deep-rgb),.22);
     transform:translateY(-50%) scaleX(0);
     opacity:0;
@@ -5201,7 +5215,7 @@
     background:transparent; border:0; padding:0; margin:0;
     cursor:pointer; -webkit-tap-highlight-color:transparent;
   }
-  .crt-hit:focus-visible{ outline:2px solid rgba(var(--phos-rgb),.75); outline-offset:-6px; }
+  .crt-hit:focus-visible{ outline:2px solid rgba(var(--phos-glow-rgb),.75); outline-offset:-6px; }
 
   @media (prefers-reduced-motion: no-preference){
     .crt-beam{ animation:crtBeam 1s ease-out both; }
