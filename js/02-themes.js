@@ -255,20 +255,22 @@
     outdoors: { ink:'#e28a3a', glow:'#7fb069' },
     /* The one sign with no power. Everything else here is a tube that has
        been switched on; horror is a tube that has not, and lighting it the
-       way the others are lit made the genre look cheerful. So the blood
-       stays behind the words and the words themselves are dead — the
-       theme's muted grey, flat, with no filament in the stroke and no
-       bloom coming off it. What is left reads as painted letters found in
-       a red room rather than as a title that wants your attention. */
-    horror:   { ink:'#ab9c9e', glow:'#e04a4a', lit:false },
+       way the others are lit made the genre look cheerful.
+
+       Taken to its end, the letters emit nothing at all: they are jet
+       black, and the only light in the picture is the blood behind them.
+       That inverts how the rest of the screen works — everywhere else the
+       words are the source and the tube catches what falls off them, and
+       here the words are the one place the light does not reach. */
+    horror:   { ink:'#000000', glow:'#e04a4a', lit:false },
     /* the livery red on the white of a pit board */
     racing:   { ink:'#ff5a5a', glow:'#eef1f4' },
-    /* the purple the whole cabinet is soaked in, over its cyan. The violet
-       is the theme's own, at the brightness a lit stroke needs — its rule
+    /* the cabinet's cyan, over the purple the whole thing is soaked in. The
+       violet is the theme's own, at the brightness a glow needs — its rule
        lines carry it at #3d1780 and its muted text at #b69dd7, and neither
-       reads as purple on black: one is too dark to glow at all, the other
-       blooms straight to white. */
-    arcade:   { ink:'#a06ce0', glow:'#00e5ff' }
+       works here: one is too dark to light anything, the other is so pale
+       it reads as haze. */
+    arcade:   { ink:'#00e5ff', glow:'#a06ce0' }
   };
 
   /* hex -> [hue, saturation, lightness]. Null for anything unreadable, and
@@ -332,18 +334,25 @@
     const hex = c => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
     const rgb = c => c.join(', ');
     /* A sign with no power. The glow behind it is untouched — the room is
-       still the colour it is — but nothing about the words themselves is
-       emitting: the stroke barely lifts, the bloom drops to a smudge, and
-       the two white layers that make a stroke look lit are switched off. */
-    if (pair.lit === false) return {
-      '--phos-core':     hex(relit(ink, Math.min(.72, ink[2] + .08))),
-      '--phos-ink':      pair.ink,
-      '--phos-ink-rgb':  rgb(relit(ink, ink[2] * .5)),
-      '--phos-glow-rgb': rgb(relit(glow, Math.max(glow[2], .62))),
-      '--phos-deep-rgb': rgb(relit(dimmable(glow), glow[2] * .62)),
-      '--phos-hot':      '0',
-      '--phos-filament': '0'
-    };
+       still the colour it is — but the words emit nothing whatsoever. The
+       ink is used exactly as authored, with no lift towards white: a lift
+       is a claim that the middle of the stroke is hotter than its edge,
+       and nothing here is hot. The layer that would be the bloom is handed
+       the glow instead of the ink, so the field simply carries on up to
+       the letters rather than breaking into a halo around them, and the
+       two white layers are switched off entirely. */
+    if (pair.lit === false){
+      const field = rgb(relit(glow, Math.max(glow[2], .62)));
+      return {
+        '--phos-core':     pair.ink,
+        '--phos-ink':      pair.ink,
+        '--phos-ink-rgb':  field,
+        '--phos-glow-rgb': field,
+        '--phos-deep-rgb': rgb(relit(dimmable(glow), glow[2] * .62)),
+        '--phos-hot':      '0',
+        '--phos-filament': '0'
+      };
+    }
     return {
       /* Capped at white rather than just below it, so an ink that is
          already white stays white instead of arriving as grey. */
