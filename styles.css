@@ -5079,6 +5079,10 @@
        is. applyTheme turns it down for a genre, which is the difference
        between letters that glow pink and letters that glow. */
     --phos-hot:.85;
+    /* The hot line down the middle of the stroke — the filament itself,
+       rather than the light coming off it. It is what separates a lit sign
+       from a painted one, so a theme whose power is out turns it off. */
+    --phos-filament:1;
     position:relative;
     width:100%;
     height:100vh; height:100dvh;
@@ -5119,7 +5123,7 @@
        out entirely the word looked printed rather than lit; left at full it
        lit the screen around the word instead of the word. */
     text-shadow:
-      0 0 1px rgba(255,255,255,1),
+      0 0 1px rgba(255,255,255,var(--phos-filament)),
       0 0 4px rgba(255,255,255,var(--phos-hot)),
       0 0 9px rgba(var(--phos-ink-rgb),1),
       0 0 20px rgba(var(--phos-glow-rgb),.9),

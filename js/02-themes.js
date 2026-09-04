@@ -235,12 +235,12 @@
      same colours rather than merely adjacent ones.
      -------------------------------------------------------------------- */
   const THEME_PHOSPHOR = {
-    /* neon over neon, which is the whole genre: electric cyan writing with
-       the pink of a sign behind it */
-    cyberpunk:{ ink:'#00fff2', glow:'#ff2fb0' },
-    /* silver on gold. The letters are the theme's own near-white, which goes
-       to plain silver once the gold is sitting behind it. */
-    fantasy:  { ink:'#f2e6cf', glow:'#e8c977' },
+    /* neon over neon, which is the whole genre: pink writing with the
+       electric cyan of a sign behind it */
+    cyberpunk:{ ink:'#ff2fb0', glow:'#00fff2' },
+    /* white on gold. The one ink not taken from its palette — the theme's
+       lightest colour is a cream, and cream over gold is gold. */
+    fantasy:  { ink:'#ffffff', glow:'#e8c977' },
     /* orange on gunmetal — the accent the theme is built on, over the grey
        it puts everything else in */
     fps:      { ink:'#ff8c1a', glow:'#9da9ae' },
@@ -253,8 +253,14 @@
     craft:    { ink:'#7fb054', glow:'#d9a05e' },
     /* an orange lure against the water and the pines */
     outdoors: { ink:'#e28a3a', glow:'#7fb069' },
-    /* a candle held up in a room that is already bleeding */
-    horror:   { ink:'#d19a3c', glow:'#e04a4a' },
+    /* The one sign with no power. Everything else here is a tube that has
+       been switched on; horror is a tube that has not, and lighting it the
+       way the others are lit made the genre look cheerful. So the blood
+       stays behind the words and the words themselves are dead — the
+       theme's muted grey, flat, with no filament in the stroke and no
+       bloom coming off it. What is left reads as painted letters found in
+       a red room rather than as a title that wants your attention. */
+    horror:   { ink:'#ab9c9e', glow:'#e04a4a', lit:false },
     /* the livery red on the white of a pit board */
     racing:   { ink:'#ff5a5a', glow:'#eef1f4' },
     /* the purple the whole cabinet is soaked in, over its cyan. The violet
@@ -325,13 +331,29 @@
     if (!ink || !glow) return null;
     const hex = c => '#' + c.map(v => v.toString(16).padStart(2,'0')).join('');
     const rgb = c => c.join(', ');
+    /* A sign with no power. The glow behind it is untouched — the room is
+       still the colour it is — but nothing about the words themselves is
+       emitting: the stroke barely lifts, the bloom drops to a smudge, and
+       the two white layers that make a stroke look lit are switched off. */
+    if (pair.lit === false) return {
+      '--phos-core':     hex(relit(ink, Math.min(.72, ink[2] + .08))),
+      '--phos-ink':      pair.ink,
+      '--phos-ink-rgb':  rgb(relit(ink, ink[2] * .5)),
+      '--phos-glow-rgb': rgb(relit(glow, Math.max(glow[2], .62))),
+      '--phos-deep-rgb': rgb(relit(dimmable(glow), glow[2] * .62)),
+      '--phos-hot':      '0',
+      '--phos-filament': '0'
+    };
     return {
-      '--phos-core':     hex(relit(ink,  Math.min(.95, ink[2] + .10))),
+      /* Capped at white rather than just below it, so an ink that is
+         already white stays white instead of arriving as grey. */
+      '--phos-core':     hex(relit(ink,  Math.min(1, ink[2] + .10))),
       '--phos-ink':      pair.ink,
       '--phos-ink-rgb':  rgb(relit(ink,  Math.max(ink[2],  .80))),
       '--phos-glow-rgb': rgb(relit(glow, Math.max(glow[2], .62))),
       '--phos-deep-rgb': rgb(relit(dimmable(glow), glow[2] * .62)),
-      '--phos-hot':      '.5'
+      '--phos-hot':      '.5',
+      '--phos-filament': '1'
     };
   }
 
@@ -346,7 +368,8 @@
        applyTheme's own lookup does. */
     const pair = key == null ? null : (THEME_PHOSPHOR[key] || THEME_PHOSPHOR.cyberpunk);
     const tok = pair && tubeTokens(pair);
-    ['--phos-core','--phos-ink','--phos-ink-rgb','--phos-glow-rgb','--phos-deep-rgb','--phos-hot']
+    ['--phos-core','--phos-ink','--phos-ink-rgb','--phos-glow-rgb','--phos-deep-rgb',
+     '--phos-hot','--phos-filament']
       .forEach(t => tok ? el.style.setProperty(t, tok[t]) : el.style.removeProperty(t));
   }
 
