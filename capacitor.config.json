@@ -3,7 +3,8 @@
   "appName": "Loadout",
   "webDir": "www",
   "ios": {
-    "contentInset": "never"
+    "contentInset": "never",
+    "backgroundColor": "#000000"
   },
   "plugins": {
     "CapacitorHttp": {

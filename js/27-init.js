@@ -53,13 +53,45 @@
   syncTargets();
   renderExerciseOptions();
 
-  /* Character creation and game selection happen once. With a character
-     saved, the app opens straight on the sheet — no title screen, no
-     library, no re-entering stats. Both are changed deliberately through
-     the System menu instead. */
+  /* The title screen is what every launch opens on, because the console
+     coming on is the app coming on — a returning player has already watched
+     it happen while the sheet was being built behind it. What differs is who
+     it waits for. Without a character it waits for a tap, because there is a
+     game to pick and stats to enter. With one there is nothing to ask, so it
+     plays the power-on, holds the wordmark long enough to read, and hands
+     over to the sheet on its own.
+
+     Character creation and game selection still happen once, and are changed
+     deliberately through the System menu rather than on the way in. */
   if (hadSave){
     renderTiers();
-    showScreen('screen-tiers');
+    splashThenShow('screen-tiers');
   } else {
     showScreen('screen-attract');
+  }
+
+  /* Long enough that the tube has finished striking, opening and settling
+     (1.47s of CSS) and the name is legible for a beat after. With motion
+     turned down there is no power-on to wait through, so the hold is only
+     what it takes to read the word. */
+  function splashThenShow(id){
+    const still = window.matchMedia &&
+                  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const hold = still ? 900 : 1700;
+    document.body.classList.add('attract-auto');
+    showScreen('screen-attract');
+    setTimeout(function(){
+      /* The set going off rather than a page turning: the picture fades on
+         black, then the sheet is simply there. */
+      document.body.classList.add('attract-out');
+      setTimeout(function(){
+        document.body.classList.remove('attract-auto', 'attract-out');
+        showScreen(id);
+        /* The health notice used to fire at load for a saved character, on
+           the grounds that no START tap was coming to hang it off. One is
+           still not coming — so it hangs off the end of the splash instead,
+           where it lands on the sheet rather than over the title. */
+        if (typeof showDisclaimerIfNeeded === 'function') showDisclaimerIfNeeded();
+      }, still ? 0 : 300);
+    }, hold);
   }

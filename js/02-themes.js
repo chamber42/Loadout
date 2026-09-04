@@ -222,6 +222,68 @@
     return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)).join(',');
   }
 
+  /* ---- the title screen's phosphor --------------------------------------
+     A CRT phosphor is one substance: every part of a lit stroke is the same
+     colour at a different temperature, which is why the tube reads as glowing
+     rather than as four shapes stacked on each other. So the whole tube is
+     struck from a single hue — the genre's accent — at four lightnesses,
+     rather than from four separately chosen colours.
+
+     Saturation is forced to full rather than carried over from the accent.
+     A lit dot on black is the most saturated thing on a screen, and the
+     softer accents (the farm's pink, the fantasy gold) come out as grey haze
+     at the opacities the glow is drawn with — the light has to be the colour
+     it is claiming to be before it is spread over 88 pixels of shadow.
+     -------------------------------------------------------------------- */
+  function hueOf(hex){
+    let h = String(hex).trim().replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    const [r,g,b] = [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255);
+    const max = Math.max(r,g,b), min = Math.min(r,g,b), d = max - min;
+    // a grey accent names no hue, and inventing one would be worse than frost
+    if (!d) return null;
+    let deg;
+    if (max === r) deg = (g - b) / d;
+    else if (max === g) deg = (b - r) / d + 2;
+    else deg = (r - g) / d + 4;
+    return ((deg * 60) % 360 + 360) % 360;
+  }
+
+  /* hue at full saturation, given a lightness. The standard HSL conversion
+     with s fixed at 1, which is all this needs. */
+  function litRgb(hue, l){
+    const a = Math.min(l, 1 - l);
+    const at = n => {
+      const k = (n + hue / 30) % 12;
+      return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+    };
+    return [at(0), at(8), at(4)];
+  }
+
+  /* The four temperatures, matched to the frost the stylesheet ships: a core
+     that is white with the hue only just in it, the bloom hugging the stroke,
+     the phosphor proper, and the deep falloff. */
+  const PHOSPHOR = { '--phos-core':.97, '--phos-hot-rgb':.90, '--phos':.69,
+                     '--phos-rgb':.69, '--phos-deep-rgb':.56 };
+
+  /* Written onto the element rather than into a stylesheet rule, so clearing
+     them puts the tube back to the frost in styles.css with nothing left
+     behind — which is what a theme with no usable hue, and the very first
+     launch, both need. */
+  function tintTube(hex){
+    const el = document.querySelector('.crt');
+    if (!el) return;
+    const hue = hex == null ? null : hueOf(hex);
+    Object.entries(PHOSPHOR).forEach(([token, l])=>{
+      if (hue == null){ el.style.removeProperty(token); return; }
+      const rgb = litRgb(hue, l);
+      el.style.setProperty(token, token.endsWith('-rgb')
+        ? rgb.join(', ')
+        : '#' + rgb.map(v => v.toString(16).padStart(2,'0')).join(''));
+    });
+  }
+
   function applyTheme(key){
     const t = THEMES[key] || THEMES.cyberpunk;
     state.theme = key;
@@ -248,6 +310,12 @@
        different materials, and no palette variable can express that. */
     document.body.setAttribute('data-theme', key);
     document.body.setAttribute('data-material', THEME_MATERIAL[key] || 'digital');
+    /* The title screen takes the genre's colour too, but only once there is
+       a character to have chosen one. Picking a game in the library themes
+       the app immediately, and rightly — but until the character is finished
+       the title screen behind it is still a first launch, and colouring it
+       would be showing somebody a choice they have not made yet. */
+    tintTube(characterExists() ? t.colors.cyan : null);
     applyThemeTiers(t);
     applyThemeWords(t);
     /* The tab strip carries genre words too, but it is only re-labelled on

@@ -99,14 +99,8 @@
     });
   }
 
-  /* A saved character skips the title screen entirely — 27-init.js opens
-     straight on the sheet — so the notice still has to fire at load for those,
-     or somebody who has never acknowledged it never would. Checked against
-     what is actually on screen rather than against the save, because that is
-     the condition that matters: is there a START tap coming to hang it off?
-     Opened synchronously; 27-init.js has already rendered by the time this
-     file runs, and requestAnimationFrame never fires in a background tab. */
-  const titleShowing = (document.getElementById('screen-attract') || {}).classList;
-  if (!titleShowing || !titleShowing.contains('active')){
-    showDisclaimerIfNeeded();
-  }
+  /* Nothing to do at load. Every launch now opens on the title screen, and
+     both ways out of it carry the notice: without a character it hangs off
+     the START tap, and with one 27-init.js fires it as the splash hands over
+     to the sheet. Opening it here as well would only put a modal over a
+     title screen that is about to leave. */
