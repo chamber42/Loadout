@@ -397,7 +397,16 @@
     transition:transform .15s;
   }
   .btn-primary:active{ transform:scale(.97); }
-  .btn-primary:disabled{ opacity:.35; box-shadow:none; }
+  /* A disabled action still has to say what it is. Fading the whole plate to
+     35% took the label with it — ADD IT in the custom-food form was the least
+     readable thing in the app, in every theme at once. Unavailable is a flat
+     plate with a muted label, not an erased one. */
+  .btn-primary:disabled{
+    opacity:1; box-shadow:none;
+    background:var(--readout);
+    border:1px solid var(--line);
+    color:var(--muted);
+  }
 
   .btn-ghost{
     width:100%; min-height:48px; border-radius:6px; cursor:pointer;
@@ -1148,7 +1157,12 @@
     transition:transform .08s ease, filter .12s ease;
   }
   .btn-primary:active{ transform:translateY(2px); filter:brightness(.92); }
-  .btn-primary:disabled{ opacity:.3; filter:grayscale(.6); transform:none; }
+  .btn-primary:disabled{
+    opacity:1; filter:none; transform:none;
+    background:var(--readout);
+    border-bottom:4px solid var(--line);
+    color:var(--muted);
+  }
   /* outline is drawn outside the border box, which a clip-path removes, so
      plated controls carry their focus ring on the inside instead */
   .btn-primary:focus-visible, .btn-ghost:focus-visible{
@@ -4746,6 +4760,34 @@
     box-shadow:inset 0 0 0 1px var(--pp-seal);
     color:var(--pp-seal-ink);
   }
+
+  /* ---- horror: the readouts glow only where there is a case to light -----
+     "the readouts glow red" further up is deliberately written twice and
+     deliberately unscoped, so it reaches the character sheet as well as the
+     Night Log. That was right while every .vital was a plate cut out of a
+     dark case. The paper pass then turned the sheet's panels to stock, and
+     #e05a5a on stock is 2.15:1 — so WEIGHT, AGE, HEIGHT, GOAL, TRAINING
+     SESSION BURN and every unit beside them went pale red on cream.
+
+     The quest screen was corrected when its plates were relit; this is the
+     same correction for the screens that pass did not name. The red is not
+     lost — it moves to the seal, which is what red means on paper here. */
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital,
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital strong,
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital input{
+    color:var(--pp-ink);
+  }
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .vital-lbl,
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .vital-unit{
+    color:var(--pp-soft);
+  }
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .btn-ghost,
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .mini-btn{
+    color:var(--pp-seal-text); border-color:var(--pp-rule);
+  }
+  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital input{
+    caret-color:var(--pp-ink);
+  }
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn::before,
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn::after{
     background:var(--pp-seal);
@@ -5675,6 +5717,96 @@
   body[data-material="paper"] .modal-card hr,
   body[data-material="paper"] .modal-card .divider{
     border-color:var(--pp-rule); background:var(--pp-rule);
+  }
+
+  /* =========================================================================
+     PAPER — THE SHEET REACHES INSIDE THE MODAL TOO
+
+     The rules above name the children they invert one class at a time, and
+     that list was always going to fall behind the app. Everything it missed
+     kept the dark palette on light stock and went from dim to invisible:
+
+       .panel        a whole panel nested inside a sheet — the amount step in
+                     the food picker — kept linear-gradient(--panel, --panel-2)
+                     and rendered as a black hole punched through the page,
+                     with --pp-ink text written on it at 1.1:1. Unreadable, and
+                     the reason this pass exists.
+       .fp-row .kc   "120 kcal/100g" beside every search result, in --muted
+       .fp-group     "13 MATCHES"
+       .nutri-group  "ENERGY & MACROS", "MINERALS", "VITAMINS"
+       .kv span      the left half of every macro row
+       and the target/goal/ceiling notes, the camera hints, the sub-rows.
+
+     Naming the next forty classes would only move the deadline, so the fix is
+     at the source: inside a paper modal the palette tokens themselves are
+     restated in the sheet's own hand. Every descendant that reads --text,
+     --muted, --line, --panel or the accent inverts with them, including the
+     ones written after this.
+
+     The box fills are black washes rather than literals on purpose — they
+     composite over whatever stock the theme laid down, so parchment and a
+     water-stained case file each darken by their own hue rather than sharing
+     one grey. The hues are drafted per material against the stock: measured
+     on horror's #cac4b8 panel, ink lands at 9.6:1, --pp-soft at 4.9:1 and the
+     recoloured accents between 4.8 and 5.8:1.
+     ========================================================================= */
+  body[data-material="paper"] .modal-card{
+    --panel:rgba(0,0,0,.045);
+    --panel-2:rgba(0,0,0,.075);
+    --bg-0:rgba(0,0,0,.055);
+    --bg-1:rgba(0,0,0,.04);
+    --readout:rgba(0,0,0,.055);
+    --text:var(--pp-ink);
+    --muted:var(--pp-soft);
+    --line:var(--pp-rule);
+    --cyan:var(--pp-seal-text);
+    --edge:rgba(255,255,255,.45);
+    --shade:rgba(0,0,0,.28);
+    --lift:0 1px 2px rgba(0,0,0,.18);
+    --sunk:inset 0 1px 2px rgba(50,34,12,.30),
+           inset 0 -1px 0 rgba(255,255,255,.30);
+    --plate:inset 0 1px 0 rgba(255,255,255,.35),
+            inset 0 -1px 0 rgba(0,0,0,.18),
+            0 2px 6px rgba(0,0,0,.16);
+  }
+  /* The status hues were drafted against near-black and are far too light to
+     write with here. Same four roles, redrawn for the stock — the food name
+     in the amount step is --green, and on parchment it was 1.9:1. */
+  body[data-theme="fantasy"] .modal-card{
+    --cyan-rgb:121,36,28;
+    --green:#4d5c22; --amber:#6e4b0e; --red:#9c2a1f; --magenta:#5a3566;
+  }
+  body[data-theme="horror"] .modal-card{
+    --cyan-rgb:78,19,19;
+    --green:#40522f; --amber:#63450f; --red:#8a2222; --magenta:#55365e;
+  }
+
+  /* A panel inside a sheet is a boxed section of the page, not a card lying
+     on it, so it takes a wash and a rule rather than its own stock — and the
+     accent hairline along its top belongs on a screen, not on paper. */
+  body[data-material="paper"] .modal-card .panel{
+    border:1px solid var(--pp-rule);
+    border-radius:6px;
+    box-shadow:none;
+  }
+  body[data-material="paper"] .modal-card .panel::before,
+  body[data-material="paper"] .modal-card .panel::after{ display:none; }
+  body[data-material="paper"] .modal-card .kv{
+    border-bottom-color:var(--pp-rule);
+  }
+
+  /* The primary action had been swept into the ghost-button rule above, so
+     ADD TO BREAKFAST and PICK SOMETHING ELSE were the same object drawn
+     twice. It gets the seal instead: the one stamped thing on the page, with
+     the stock's own colour as the ink. 6.3:1 on fantasy, 6.5:1 on horror. */
+  body[data-material="paper"] .modal-card .btn-primary:not(:disabled){
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(0,0,0,.10)),
+      var(--pp-seal);
+    border:1px solid rgba(0,0,0,.35);
+    border-bottom:3px solid rgba(0,0,0,.45);
+    color:var(--pp-1);
+    box-shadow:none;
   }
 
   /* =========================================================================
