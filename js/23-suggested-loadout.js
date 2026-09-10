@@ -321,7 +321,7 @@
     squashzoodle:"Zoodle", spaghettisq:"Spaghetti Squash", ricecakes:"Rice Cake",
     strawberry:"Strawberry", berries:"Blueberry", raspberry:"Raspberry", blackberry:"Blackberry",
     cherries:"Cherry", grapes:"Grape", dates:"Date", figs:"Fig", raisins:"Raisin",
-    blueberrfroz:"Mixed Berry", applesauce:"Apple", cranberry:"Cranberry",
+    mixberryfroz:"Mixed Berry", applesauce:"Apple", cranberry:"Cranberry",
     greenbeans:"Green Bean", snappeas:"Snap Pea", snowpeas:"Snow Pea", peas:"Pea",
     brussels:"Brussels Sprout", mushrooms:"Mushroom", carrots:"Carrot", tomatoes:"Tomato",
     peppers:"Bell Pepper", olives:"Olive", collards:"Collard Green", greens:"Mixed Green",

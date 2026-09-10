@@ -509,7 +509,6 @@
     grapefruit:      [0,0,7.983,155.9,21.36,0.0,9.58,0.0292,0,38.0,0],  // Grapefruit, raw
     grapes:          [0,0,17.341,229.4,10.17,0.1615,8.556,0.03603,0,3.308,0],  // Grapes, red, seedless, raw
     greenbeans:      [0,0,2.3338,290.4,40.05,0.6516,28.21,0.3498,0,0,0],  // Beans, snap, green, raw
-    greentom:        [0,0,2.8678,239.1,7.141,0.245,13.51,0.1594,0,2.181,0],  // Tomatillos, dehusked, raw
     grndlamb:        [0,75.02,0,272.1,6.575,1.643,17.48,3.13,0,0,0],  // Lamb, ground, raw
     grndturk93:      [2.264,82.26,0,246.3,23.63,1.087,17.3,2.95,0,0,0],  // Turkey, ground, 93% lean/ 7% fat, raw
     heavycream:      [20.45,103.1,0,96.94,61.21,0.0,5.974,0.2231,0,0,0],  // Cream, heavy
@@ -621,7 +620,6 @@
     grapefruit: 0.6525,
     grapes: 0,
     greenbeans: 3.011,
-    greentom: 1.7,
     grndlamb: 0,
     grndturk93: 0,
     heavycream: 0,
@@ -733,7 +731,6 @@
     grapefruit: 0.0,
     grapes: 6.999,
     greenbeans: 0.0,
-    greentom: 0.3113,
     grndlamb: 53.45,
     grndturk93: 80.18,
     heavycream: 20.61,
@@ -925,7 +922,6 @@
     grapeseed:       [9.6,0,0,0,0,0,0,0,0,0,0],  // Oil, grapeseed
     greenbeans:      [0.05,0,3.26,211,37,1.03,25,0.24,35,12.2,0],  // Beans, snap, green, raw
     greengoddess:    [5.978,40,6.67,58,34,0.35,7,0.25,10,0.2,0],  // Salad dressing, green goddess, regular
-    greentom:        [0.139,0,3.93,268,7,0.62,20,0.22,6,11.7,0],  // Tomatillos, raw
     grndlamb:        [10.19,73,0,222,16,1.55,21,3.41,0,0,0.1],  // Lamb, ground, raw
     grndturk85:      [3.414,78,0,202,33,1.32,19,2.75,30,0,0.4],  // Turkey, ground, 85% lean, 15% fat, raw
     grndturk93:      [2.17,74,0,213,21,1.17,21,2.53,22,0,0.4],  // Turkey, ground, 93% lean, 7% fat, raw
@@ -1180,7 +1176,6 @@
     grapeseed: 0,
     greenbeans: 2.7,
     greengoddess: 0.1,
-    greentom: 1.9,
     grndlamb: 0,
     grndturk85: 0,
     grndturk93: 0,
@@ -1435,7 +1430,6 @@
     grapeseed: 0,
     greenbeans: 6,
     greengoddess: 867,
-    greentom: 1,
     grndlamb: 59,
     grndturk85: 54,
     grndturk93: 69,

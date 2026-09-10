@@ -761,9 +761,7 @@
       {key:"enoki",     name:"Enoki Mushrooms",   kcal:37,  protein:2.7, carbs:7.8,fat:0.3, tags:[], crave:["warmbowl","light"]},
       {key:"oystermush",name:"Oyster Mushrooms",  kcal:33,  protein:3.3, carbs:6.1,fat:0.4, tags:[], crave:["savory","warmbowl"]},
       {key:"cremini",   name:"Cremini Mushrooms", kcal:22,  protein:2.5, carbs:4.3,fat:0.1, tags:[], crave:["savory","grilled"]},
-      {key:"aspgreens", name:"Broccoli Rabe",     kcal:22,  protein:3.2, carbs:2.9,fat:0.5, tags:[], crave:["savory","warmbowl"]},
       {key:"cherrytom", name:"Cherry Tomatoes",   kcal:18,  protein:0.9, carbs:3.9,fat:0.2, tags:["nightshade"], crave:["fresh","nocook","crunchy"]},
-      {key:"greentom",  name:"Tomatillo",         kcal:32,  protein:0.9, carbs:5.8,fat:1,   tags:["nightshade"], crave:["spicy","fresh"]},
       {key:"babyspinach",name:"Baby Spinach",     kcal:23,  protein:2.9, carbs:3.6,fat:0.4, tags:[], crave:["fresh","light","nocook"]},
       {key:"butterlettuce",name:"Butter Lettuce",  kcal:13,  protein:1.4, carbs:2.2,fat:0.2, tags:[], crave:["fresh","light","nocook"]},
       {key:"iceberg",   name:"Iceberg Lettuce",    kcal:14,  protein:0.9, carbs:3,  fat:0.1, tags:[], crave:["crunchy","fresh","nocook"]},
@@ -904,7 +902,6 @@
       {key:"starfruit", name:"Starfruit",          kcal:31,  protein:1,   carbs:6.7,fat:0.3, tags:[], crave:["fresh","light"]},
       {key:"persimmon", name:"Persimmon",          kcal:70,  protein:0.6, carbs:19, fat:0.2, tags:[], crave:["sweet"]},
       {key:"cranberry", name:"Fresh Cranberries",  kcal:46,  protein:0.4, carbs:12, fat:0.1, tags:[], crave:["fresh"]},
-      {key:"blueberrfroz",name:"Frozen Mixed Berries",kcal:48,protein:0.8,carbs:11, fat:0.4, tags:[], crave:["sweet","nocook"]},
       {key:"applesauce",name:"Unsweetened Applesauce",kcal:42,protein:0.2,carbs:11, fat:0.1, tags:[], crave:["sweet","nocook"]},
       {key:"raisins",   name:"Raisins",            kcal:299, protein:3.1, carbs:79, fat:0.5,  tags:[], crave:["sweet","carbheavy","nocook"]},
       /* ---- ADDED ---- */
