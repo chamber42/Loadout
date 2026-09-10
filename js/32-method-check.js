@@ -32,46 +32,92 @@
   const MC_GENERIC_AT = 12;
   const MC_CALORIE_DENSE = 250;   // kcal/100g: worth calling out by name
 
-  const MC_STOP = {
-    'and':1,'with':1,'the':1,'raw':1,'dry':1,'cooked':1,'fresh':1,'low':1,'fat':1,'free':1,
-    'plain':1,'whole':1,'white':1,'red':1,'green':1,'light':1,'skim':1,'lean':1,'style':1,
-    'powder':1,'ground':1,'canned':1,'frozen':1,'mix':1,'baby':1,'sweet':1,'hot':1,'mini':1,
-    'large':1,'small':1,'per':1,'cup':1,'nonfat':1,'reduced':1,'thin':1,'protein':1,'carb':1,
-    'veg':1,'fruit':1,'sauce':1,'breast':1,'thigh':1,'fillet':1,'slice':1,'sliced':1,
-    'spread':1,'toast':1,'roll':1,'stick':1,'sticks':1,'chips':1,'bites':1,'cut':1,'cuts':1,
-    /* Head nouns that are also cooking verbs. "Roast at 220C" must not pull in
-       Chuck Roast, and "Chop the salad" must not pull in Pork Loin Chop. */
-    'roast':1,'roasts':1,'chop':1,'chops':1,'grill':1,'bake':1,'bakes':1,'steam':1,
-    'mince':1,'dice':1,'press':1,'wrap':1,'wraps':1,'stock':1,'water':1,'rest':1,
-    'fries':1,'blend':1,'melt':1
-    /* butter, cream and oil are deliberately NOT here. They read as verbs
-       occasionally, but they are exactly the calorie-dense extras a method can
-       call for without them appearing on the plate, which is the whole point
-       of this check. A rare false positive is the right trade. */
+  /* Words that only grade a food rather than name it. "Skim Milk" and "Whole
+     Milk" are both what a step means by "milk"; "Egg White Wrap" is not what a
+     step means by "egg", so wrap, chips, toast and their kind stay in. */
+  const MC_GRADE = {
+    'raw':1,'dry':1,'cooked':1,'uncooked':1,'fresh':1,'frozen':1,'canned':1,'plain':1,
+    'unsweetened':1,'nonfat':1,'reduced':1,'low':1,'fat':1,'free':1,'light':1,'lite':1,
+    'skim':1,'whole':1,'lean':1,'large':1,'medium':1,'small':1,'mini':1,'baby':1,
+    'boneless':1,'skinless':1,'long':1,'style':1,'per':1,'the':1,'and':1,'with':1,
   };
 
+  /* Words a method uses for a whole family rather than for one product.
+     "Fold the nut butter through" means the peanut butter already on the
+     plate, not a tub of dairy butter — but the only food phrase inside it is
+     "butter", so without this the step buys you butter you do not need. */
+  const MC_SYNONYM = [
+    {p:'nut butter', fam:'nutbutter'},
+    {p:'olive oil',  fam:'oil'},
+    {p:'greek yogurt', fam:'yogurt'},
+  ];
+
+  /* ---- USED UP vs EATEN ----
+     Not every ingredient a method names but the plate does not carry is the
+     same kind of thing. A yogurt marinade or a pickle brine is thrown away:
+     what clings to the food is a rounding error, and leaving it out of the
+     macros is honest. Milk that oats are cooked in is not thrown away — the
+     oats drink it, and it is eaten. So is the flour and breadcrumb on a piece
+     of breaded chicken. Calling those "not counted" tells someone their bowl
+     is 380 kcal when they just poured 200 ml of milk into it.
+
+     These are the ingredients that end up inside the food. They are disclosed
+     as counting, not as free. */
+  const MC_ABSORBED = {
+    milk:1, milkwhole:1, chocmilk:1, soymilk:1, condensed:1, evapmilk:1,
+    heavycream:1, halfhalf:1, coconutmilk:1, coconutcream:1, creme:1,
+    cashewcream:1, sourcream:1, sourcreamlt:1, creamcheese:1, creamcheeselight:1,
+  };
+  /* ...unless the method is marinating in it, which is the case that is
+     genuinely thrown away. */
+  const MC_DISCARD_CONTEXT = /marinat|marinade|brine|brining|discard/;
+
   let mcFoods = null;    // key -> food
-  let mcTokens = null;   // word -> {key:1}
+  let mcPhrases = null;  // [{p, keys, re}] — a food's name as it would be written
 
   function mcIndex(){
     if (mcFoods) return;
     mcFoods = {};
-    mcTokens = {};
+    mcPhrases = [];
     Object.keys(FOODS).forEach(function(slot){
       (FOODS[slot] || []).forEach(function(f){ if (f && f.key) mcFoods[f.key] = f; });
     });
-    /* Index the HEAD NOUN only -- the last real word of the name. A modifier
-       is not the ingredient: "dark" must not pull in Dark Chocolate when a step
-       says "cook until the edges are dark", and "grain" must not pull in Whole
-       Grain Crackers from "warm the grain". The head noun is what a step is
-       actually naming. */
+    /* Index the WHOLE NAME as a phrase, not its head noun.
+
+       Head nouns were chosen so a modifier could not pull a food in — "dark"
+       must not find Dark Chocolate in "cook until the edges are dark". But it
+       fails the same way in the other direction, and far more often: an
+       ordinary word in a sentence lands on whichever product happens to carry
+       it as a head noun. "Grill until it has real char on the edges" bought
+       Arctic Char. "Brown the meat" bought Goat Meat. "Fold the nut butter
+       through" bought Pine Nuts. Across 450 dishes nearly every name this
+       reported was one of those.
+
+       A method that means Pine Nuts says "pine nuts". So the step has to
+       contain the food's name, with the words that only grade it — skim,
+       whole, raw, sliced — dropped, since "cook the oats in milk" plainly
+       means the milk. */
+    const byPhrase = {};
     Object.keys(mcFoods).forEach(function(k){
+      /* Anything after the first comma grades the food — "Chicken Breast,
+         skin-on", "Greek Yogurt, 0%", "Provolone, slices" — and a method
+         naming it would not repeat that part. */
       const words = String(mcFoods[k].name || '').replace(/\([^)]*\)/g, ' ')
-        .split(/[^A-Za-z]+/).filter(function(w){ return w.length >= 3; });
+        .split(',')[0]
+        .toLowerCase().split(/[^a-z]+/)
+        .filter(function(w){ return w.length >= 3 && !MC_GRADE[w]; });
       if (!words.length) return;
-      const head = words[words.length - 1].toLowerCase();
-      if (head.length < 4 || MC_STOP[head]) return;
-      (mcTokens[head] = mcTokens[head] || {})[k] = 1;
+      const phrase = words.join(' ');
+      (byPhrase[phrase] = byPhrase[phrase] || {})[k] = 1;
+    });
+    Object.keys(byPhrase).forEach(function(phrase){
+      mcPhrases.push({
+        p: phrase,
+        keys: byPhrase[phrase],
+        /* trailing s optional on the last word, so "pine nut butter" still
+           finds nothing but "toast the pine nut" finds Pine Nuts */
+        re: new RegExp('(^|[^a-z])' + phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + 's?([^a-z]|$)')
+      });
     });
   }
 
@@ -95,12 +141,39 @@
     return keys;
   }
 
-  function mcLookup(w){
+  /* Which slot's list a food came from. */
+  function mcSlotOf(key){
     mcIndex();
-    if (mcTokens[w]) return mcTokens[w];
-    if (w.length > 4 && w.charAt(w.length - 1) === 's' && mcTokens[w.slice(0, -1)]) return mcTokens[w.slice(0, -1)];
-    if (mcTokens[w + 's']) return mcTokens[w + 's'];
-    return null;
+    const named = {protein:'protein', carbs:'carb', fat:'fat', veg:'veg', fruit:'fruit', sauce:'sauce'};
+    let out = null;
+    Object.keys(FOODS).forEach(function(slot){
+      if (out) return;
+      if ((FOODS[slot] || []).some(function(f){ return f && f.key === key; })) out = named[slot] || slot;
+    });
+    return out;
+  }
+
+  /* Every food a step actually names, as {phrase: {key:1}}. */
+  function mcNamesIn(text){
+    mcIndex();
+    const hit = mcPhrases.filter(function(entry){ return entry.re.test(text); });
+    MC_SYNONYM.forEach(function(syn){
+      if (text.indexOf(syn.p) < 0) return;
+      const keys = {};
+      Object.keys(mcFoods).forEach(function(k){ if (FAMILY[k] === syn.fam) keys[k] = 1; });
+      if (Object.keys(keys).length) hit.push({p: syn.p, keys: keys});
+    });
+    const found = {};
+    hit.forEach(function(entry){
+      /* "Simmer in the coconut milk" names Coconut Milk, not Fresh Coconut.
+         A phrase sitting inside a longer one that also matched is the same
+         words being read twice. */
+      const swallowed = hit.some(function(other){
+        return other !== entry && (' ' + other.p + ' ').indexOf(' ' + entry.p + ' ') >= 0;
+      });
+      if (!swallowed) found[entry.p] = entry.keys;
+    });
+    return found;
   }
 
   /* Every key actually chosen for this plate. */
@@ -153,24 +226,59 @@
      ones that can actually move a day are reported separately from lemon and
      stock. Seasonings the recipe already declares are excluded. */
   function methodExtras(recipe, sel){
-    const dense = [], light = [];
-    if (!recipe || !recipe.steps) return { dense: dense, light: light };
+    const dense = [], light = [], absorbed = [];
+    if (!recipe || !recipe.steps) return { dense: dense, light: light, absorbed: absorbed };
     mcIndex();
     const onPlate = dishPlateKeys(sel);
     const ofRecipe = mcRecipeKeys(recipe);
+    const hasSauce = (sel && (sel.sauce || []).some(Boolean));
+    const plateFams = {}, recipeFams = {};
+    Object.keys(onPlate).forEach(function(k){ if (FAMILY[k]) plateFams[FAMILY[k]] = 1; });
+    Object.keys(ofRecipe).forEach(function(k){ if (FAMILY[k]) recipeFams[FAMILY[k]] = 1; });
 
     const seenWord = {}, seenName = {};
     recipe.steps.forEach(function(step){
-      String(step).toLowerCase().split(/[^a-z]+/).forEach(function(w){
+      const text = String(step).toLowerCase();
+      const thrownAway = MC_DISCARD_CONTEXT.test(text);
+      const named = mcNamesIn(text);
+      Object.keys(named).forEach(function(w){
         if (seenWord[w]) return;
-        const hits = mcLookup(w);
-        if (!hits) return;
         seenWord[w] = 1;
-        const keys = Object.keys(hits);
+        const keys = Object.keys(named[w]);
         if (keys.length > MC_GENERIC_AT) return;                                 // category word
-        if (keys.some(function(k){ return onPlate[k] !== undefined; })) return;  // it IS on the plate
-        if (keys.every(function(k){ return ofRecipe[k]; })) return;              // a slot alternative
+
+        /* Matched by family as well as by key. A template lists ALTERNATIVES
+           per slot, not a combined ingredient list, and an ordinary English
+           word in a step lands on whichever branded product happens to carry
+           it as a head noun: "oatmeal" finds Protein Oatmeal, "nuts" finds
+           Pine Nuts. Neither is an extra anyone needs to buy when the plate
+           already holds rolled oats and the recipe already offers walnuts —
+           they are the same food by another name. Anything in a family the
+           dish already has is the dish talking about itself. */
+        if (keys.some(function(k){ return onPlate[k] !== undefined || plateFams[FAMILY[k]]; })) return;
         if (keys.every(mcIsSeasoning)) return;                                   // spice
+
+        /* Asked before the alternatives test, because milk is an alternative
+           protein on an oats recipe — so that test would file the milk the
+           method cooks the oats in as one of the dish's own and say nothing,
+           when it is the one thing here that changes the numbers. */
+        if (!thrownAway && keys.some(function(k){ return MC_ABSORBED[k]; })){
+          const eaten = keys.filter(function(k){ return MC_ABSORBED[k]; })
+            .map(function(k){ return mcFoods[k]; }).filter(Boolean)
+            .sort(function(a, b){ return String(a.name).length - String(b.name).length; })[0];
+          if (eaten && !seenName[eaten.name]){
+            seenName[eaten.name] = 1;
+            absorbed.push({ name: eaten.name, kcal: eaten.kcal });
+          }
+          return;
+        }
+
+        /* Sauces are named loosely — a method says "the cheese sauce" and the
+           plate carries High-Protein Cheddar Sauce. If the plate already has a
+           sauce, a sauce in the method is that one, not a second bottle. */
+        if (hasSauce && keys.every(function(k){ return mcSlotOf(k) === 'sauce'; })) return;
+
+        if (keys.some(function(k){ return ofRecipe[k] || recipeFams[FAMILY[k]]; })) return;
 
         // the plainest candidate, not the most calorific, so the name reads right
         let best = null;
@@ -185,7 +293,7 @@
         (best.kcal >= MC_CALORIE_DENSE ? dense : light).push({ name: best.name, kcal: best.kcal });
       });
     });
-    return { dense: dense, light: light };
+    return { dense: dense, light: light, absorbed: absorbed };
   }
 
   /* The block the cook plan prints under a dish. */
@@ -207,6 +315,12 @@
     }
 
     const ex = methodExtras(recipe, sel);
+    if (ex.absorbed.length){
+      parts.push('<div class="mc-warn"><strong>Goes into the food, so it does count:</strong> ' +
+        escapeHtml(ex.absorbed.map(function(x){ return x.name + ' (' + x.kcal + ' kcal/100g)'; }).join(', ')) +
+        '. The method cooks it in rather than pouring it away, so it is eaten &mdash; and it is not in ' +
+        'the macros above. Use water instead, or put it on the plate.</div>');
+    }
     if (ex.dense.length){
       parts.push('<div class="mc-extra"><strong>Also needed, not counted:</strong> ' +
         escapeHtml(ex.dense.map(function(x){ return x.name + ' (' + x.kcal + ' kcal/100g)'; }).join(', ')) +
