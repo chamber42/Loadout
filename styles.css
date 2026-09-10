@@ -398,7 +398,7 @@
     transition:border-color .2s, box-shadow .2s, background .2s;
   }
   .choice-btn .desc{ display:block; font-size:var(--fs-10); color:var(--muted); margin-top:3px; }
-  .choice-btn:active{ transform:scale(.98); }
+  .choice-btn:active{ transform:none; }
   .choice-btn.selected{
     border-color:var(--green); background:rgba(var(--green-rgb),0.08);
     box-shadow:var(--lift);
@@ -433,7 +433,7 @@
     margin-top:10px; box-shadow:var(--lift);
     transition:transform .15s;
   }
-  .btn-primary:active{ transform:scale(.97); }
+  .btn-primary:active{ transform:none; }
   /* A disabled action still has to say what it is. Fading the whole plate to
      35% took the label with it — ADD IT in the custom-food form was the least
      readable thing in the app, in every theme at once. Unavailable is a flat
@@ -1193,7 +1193,9 @@
     color:#04121a; letter-spacing:2px; box-shadow:none;
     transition:transform .08s ease, filter .12s ease;
   }
-  .btn-primary:active{ transform:translateY(2px); filter:brightness(.92); }
+  /* The dimming stays; only the shove goes. A control can answer a press
+     without leaving the place you pressed it. */
+  .btn-primary:active{ transform:none; filter:brightness(.92); }
   .btn-primary:disabled{
     opacity:1; filter:none; transform:none;
     background:var(--readout);
@@ -1215,13 +1217,13 @@
     color:var(--text); letter-spacing:1.5px;
     transition:transform .08s ease, border-color .12s, color .12s;
   }
-  .btn-ghost:active{ transform:translateY(2px); border-color:var(--accent-line); color:var(--cyan); }
+  .btn-ghost:active{ transform:none; border-color:var(--accent-line); color:var(--cyan); }
 
   .mini-btn{
     border:1px solid var(--accent-line); border-bottom-width:2px;
     background:var(--accent-soft); border-radius:4px; letter-spacing:1.2px;
   }
-  .mini-btn:active{ transform:translateY(1px); }
+  .mini-btn:active{ transform:none; }
 
   /* Back link was easy to miss as underlined text; make it a real control. */
   .back-link{
@@ -1265,7 +1267,7 @@
   }
   .choice-btn.selected::before{ transform:scaleX(1); }
   .choice-btn.selected::after{ opacity:1; transform:none; }
-  .choice-btn:active{ transform:translateY(1px); }
+  .choice-btn:active{ transform:none; }
   .choice-btn strong{ letter-spacing:.4px; }
 
   /* Tier / recommendation cards read as loot cards */
@@ -1371,7 +1373,7 @@
     position:relative;
     border:1px solid var(--line); min-height:54px; gap:4px;
     box-shadow:0 4px 14px rgba(0,0,0,.38);
-    transition:color .12s, background .12s, transform .08s, box-shadow .12s;
+    transition:color .12s, background .12s, filter .08s, box-shadow .12s;
   }
   .tab .lbl{ letter-spacing:.4px; }
   .tab::before{
@@ -1383,8 +1385,13 @@
     box-shadow:0 6px 18px rgba(0,0,0,.45);
   }
   .tab.on::before{ opacity:1; }
-  .tab.on .ico{ transform:translateY(-1px); }
-  .tab:active{ transform:translateY(1px); }
+  /* Nothing in the bar moves. The icon used to lift a pixel when its tab
+     became the current one and the tab used to press a pixel down while
+     held, so every tap set two of the five twitching — the one arriving and
+     the one leaving. Colour, the rule above the label and the shadow say
+     which tab you are on and that you have hit it; none of them need the
+     bar to move to do it. */
+  .tab:active{ transform:none; filter:brightness(1.08); }
 
   /* Screens pay for the bar at the bottom instead of the top */
   body.tabbed .screen{
@@ -1409,7 +1416,7 @@
   }
   .modal-title{ letter-spacing:2px; }
   .modal-x{ border-radius:4px; }
-  .modal-x:active{ transform:translateY(1px); }
+  .modal-x:active{ transform:none; }
 
   /* ---------- Chips, segments, day pills --------------------------------*/
   .chip, .day-chip, .var-step, .seg button, .rtag, .dish-chip, .gear-tag, .macro-chip{
@@ -1420,7 +1427,7 @@
     box-shadow:inset 0 0 0 1px var(--accent-line);
   }
   .seg button, .var-step, .day-chip{ box-shadow:0 2px 0 rgba(0,0,0,.28); }
-  .seg button:active, .var-step:active, .day-chip:active{ transform:translateY(1px); }
+  .seg button:active, .var-step:active, .day-chip:active{ transform:none; }
   .cal-cell{ border-radius:4px; }
   .cal-cell.sel, .cal-cell.today{ box-shadow:inset 0 0 0 1px var(--accent-line); }
 
@@ -1455,7 +1462,7 @@
   /* ---------- Recipe cards ----------------------------------------------*/
   .rcard::after{ display:none; }
   .rcard{ transition:transform .08s, border-color .12s; }
-  .rcard:active{ transform:translateY(1px); border-color:var(--accent-line); }
+  .rcard:active{ transform:none; border-color:var(--accent-line); }
   .rname{ letter-spacing:.6px; }
 
   /* ---------- Shopping / lists ------------------------------------------*/
@@ -1711,7 +1718,12 @@
     border-color:var(--accent-line); border-bottom-color:var(--cyan);
   }
   .tab.on::before{ left:14%; right:14%; height:3px; }
-  .tab:active{ transform:translateY(2px); border-bottom-width:1px; margin-bottom:2px; }
+  /* The keycap keeps its bevel while held. Trading the 3px bottom border for
+     1px and paying it back as margin was height-neutral, so it never
+     reflowed the row — but the face of the key still dropped two pixels,
+     which is the pop. Nothing here moves now; the press answers in light,
+     the way the primary button does. */
+  .tab:active{ transform:none; filter:brightness(1.08); }
 
   /* =========================================================================
      ==  CHARACTER SHEET  ====================================================
@@ -3214,7 +3226,7 @@
     box-shadow:0 2px 0 rgba(0,0,0,.3);
   }
   body[data-material="cozy"] .cal-cell.blank{ background:transparent; box-shadow:none; }
-  body[data-material="cozy"] .cal-cell:active{ transform:translateY(2px); box-shadow:none; }
+  body[data-material="cozy"] .cal-cell:active{ transform:none; box-shadow:none; }
   body[data-material="cozy"] .cal-cell.today{
     background:linear-gradient(180deg, rgba(157,214,106,.28), rgba(157,214,106,.1));
     box-shadow:0 2px 0 rgba(0,0,0,.3), inset 0 0 0 2px var(--cyan);
@@ -5617,7 +5629,7 @@
     background:linear-gradient(180deg, #33491f, #223217);
     box-shadow:inset 0 2px 0 rgba(255,255,255,.09), inset 0 -3px 0 rgba(0,0,0,.28);
   }
-  body[data-material="cozy"] .tab:active{ transform:translateY(1px); margin-bottom:1px; }
+  body[data-material="cozy"] .tab:active{ transform:none; filter:brightness(1.06); }
 
   /* ---- RACE (racing) — carbon weave -------------------------------------- */
   body[data-material="race"] .modal-card,
