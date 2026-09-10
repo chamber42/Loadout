@@ -608,8 +608,9 @@
     const floors = buildFloors(sel, mealKcal);
     capOnHandPortions(grams, sel);
     capAbsurdPortions(grams, sel);
+    const isMain = !!(MEALS.find(m => m.key === mealKey) || {}).required;
     snapToUnits(grams, sel, floors, isFixed);
-    enforceMinimums(grams, sel, mealKcal, floors, isFixed);
+    enforceMinimums(grams, sel, mealKcal, floors, isFixed, isMain);
     snapToUnits(grams, sel, floors, isFixed);
     /* A belt-and-braces re-assert. Snapping and the minimum-portion floor
        both skip pinned items now, so this should already be a no-op — it
@@ -1344,7 +1345,7 @@
     }
   }
 
-  function enforceMinimums(grams, sel, mealKcal, floors, isFixed){
+  function enforceMinimums(grams, sel, mealKcal, floors, isFixed, keepFat){
     const items = [];
     /* Amounts the person set by hand. They are treated exactly like a hard
        unit food below — their calories come off the budget up front and they
@@ -1417,9 +1418,20 @@
       const r = sel._recipe ? RECIPES.find(x=>x.name === sel._recipe) : null;
       return !sel._improvised && isCore(r, 'sauce');
     })();
-    const DROP_ORDER = coreSauce
-      ? ['fruit','fat','veg','sauce']
-      : ['sauce','fruit','fat','veg'];
+    /* Fat goes after the sides, not before them. It is a macro the plan was
+       built around, and a plate that drops it misses its fat target while
+       still carrying two vegetables — and shows an empty fat row on the card
+       with the oil still on the shopping list. Over 600 preps that was 66
+       required meals served with no fat at all. */
+    let DROP_ORDER = coreSauce
+      ? ['fruit','veg','fat','sauce']
+      : ['sauce','fruit','veg','fat'];
+    /* On a main meal the fat is not an extra to be shed. A sitting too small
+       to hold every floor shrinks them all together below — a 4g drizzle of
+       oil is a poorer serving than none at all only if you are not counting
+       fat, and this app is. A snack keeps the old behaviour, where a sliver
+       of tahini really is worth dropping. */
+    if (keepFat) DROP_ORDER = DROP_ORDER.filter(sl => sl !== 'fat');
     let floorKcal = () => items.reduce((a,it)=>a + it.food.kcal*it.floor/100, 0);
     for (const slot of DROP_ORDER){
       if (floorKcal() <= mealKcal) break;
