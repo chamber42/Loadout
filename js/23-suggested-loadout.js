@@ -769,7 +769,89 @@
 
   /* Score a recipe: favorites it can use, cravings it matches, and a nudge
      away from whatever was served earlier today. */
-  function scoreRecipe(recipe, usedNames){
+  /* The ingredients the person actually asked for: the starred ones while
+     "stick to my favourites" is on, and whatever is in the fridge waiting to
+     be used up. A dish that can be cooked from these is cheaper to the
+     shopping list than one that cannot, so it is preferred outright rather
+     than being left to a coin toss. */
+  function shortlistFor(slot){
+    const keep = k => {
+      const f = listFor(slot).find(x=>x.key===k);
+      return f && passesPrefs(f) && !isDisliked(f);
+    };
+    const onHand = planPantryKeys().filter(k => slotOf(k) === slot && keep(k));
+    if (state.discoveryMode !== 'favorites') return onHand;
+    return onHand.concat(favKeys(slot).filter(k => keep(k) && onHand.indexOf(k) < 0));
+  }
+
+  /* Is there a breakfast sitting that has to look like breakfast? */
+  function wantsBreakfast(){
+    return MEALS.some(m=>m.required && m.name === 'BREAKFAST')
+      && !state.breakfastForDinner && !state.breakfastAllDay;
+  }
+
+  /* ---- THE COMMITTED LIST ----
+     Starring six proteins and asking for two of them used to mean the six
+     were merely *eligible*: four dishes were chosen first and could easily
+     want four different ones, and the shopping list stretched to cover
+     whatever they asked for. So the two are settled first, and the dishes
+     are chosen to fit them. That is what the number on the prep screen is
+     for. */
+  let COMMITTED = {};
+
+  /* How many dishes call for each ingredient. With nothing starred there is
+     still a list to settle, and it should be settled on food the menu
+     actually cooks with rather than on whatever obscure thing a random draw
+     turned up. */
+  let STAPLES = null;
+  function stapleKeys(slot){
+    if (!STAPLES){
+      STAPLES = {};
+      RECIPES.forEach(r=>{
+        ['protein','carb','fat','veg'].forEach(sl=>{
+          const at = (STAPLES[sl] = STAPLES[sl] || {});
+          (r[sl] || []).forEach(k=>{ at[k] = (at[k] || 0) + 1; });
+        });
+      });
+    }
+    return Object.keys(STAPLES[slot] || {})
+      .sort((a,b)=>STAPLES[slot][b] - STAPLES[slot][a])
+      .slice(0, 40);
+  }
+  function drawShortlist(slot, from){
+    const want = varietyBudget(slot);
+    const pool = (from || shortlistFor(slot))
+      .map(k => listFor(slot).find(f=>f.key===k))
+      .filter(f => f && passesPrefs(f) && !isDisliked(f));
+    if (!pool.length) return [];
+    let bench = pool;
+    if (slot === 'protein'){
+      const carriers = pool.filter(carriesProtein);
+      if (carriers.length) bench = carriers;
+    }
+    const order = bench.slice()
+      .map(f => ({f, r: Math.random() + (LAST_DRAW.foods.has(f.key) ? 1 : 0)}))
+      .sort((a,b)=>a.r-b.r).map(x=>x.f);
+    const out = [];
+    order.forEach(f=>{
+      if (out.length >= want) return;
+      if (out.some(g => familyClashPair(g, f))) return;
+      out.push(f);
+    });
+    /* Two proteins that are both dinner food leaves breakfast to be bought
+       separately, which is how the list crept past the number it was given.
+       Spend one of them on something that reads as breakfast. */
+    if ((slot === 'protein' || slot === 'carb') && out.length && wantsBreakfast()
+        && !out.some(f => mealAllowsFood('breakfast', f))){
+      const morning = order.find(f => mealAllowsFood('breakfast', f)
+        && !out.some(g => g.key === f.key)
+        && !out.slice(0, -1).some(g => familyClashPair(g, f)));
+      if (morning) out[out.length - 1] = morning;
+    }
+    return out.map(f=>f.key);
+  }
+
+  function scoreRecipe(recipe, usedNames, alongside){
     let score = Math.random() * 0.8;
     // whatever came up last time steps aside so a second press changes things
     if (LAST_DRAW.recipes.has(recipe.name)) score -= 4;
@@ -792,6 +874,18 @@
     if (state.cravings.length){
       const hits = (recipe.crave || []).filter(c => state.cravings.includes(c)).length;
       score += hits * 2;
+    }
+    /* A prep is a shopping list as well as a menu, so a dish that can be
+       cooked out of what the others already need beats one that wants a
+       shelf of its own. Counted on the actual shortlist rather than on the
+       whole expanded option set, which every dish overlaps with. */
+    if (alongside && alongside.length){
+      VARIETY_SLOTS.forEach(slot=>{
+        const want = COMMITTED[slot];
+        if (!want || !want.length) return;
+        const mine = recipeOptions(recipe, slot);
+        if (mine.length && want.some(k => mine.includes(k))) score += 4;
+      });
     }
     if (usedNames.has(recipe.name)) score -= 5;
     return score;
@@ -934,6 +1028,18 @@
 
   function generateSuggestionInner(){
     const usedNames = new Set();
+    COMMITTED = {};
+    VARIETY_SLOTS.forEach(slot=>{
+      COMMITTED[slot] = drawShortlist(slot);
+      if (!COMMITTED[slot].length){
+        /* "Try something new" steps around the starred foods, so the list it
+           settles on should too. */
+        const staples = state.discoveryMode === 'new'
+          ? stapleKeys(slot).filter(k => !favKeys(slot).includes(k))
+          : stapleKeys(slot);
+        COMMITTED[slot] = drawShortlist(slot, staples);
+      }
+    });
     const days = Math.max(1, state.prepServings || 1);
     const kinds = dayKinds();
 
@@ -951,15 +1057,49 @@
        those dishes actually call for. Doing it the other way round produced
        "Banana Protein Pancakes" made of Canadian bacon — the palette had
        ingredients the recipe never wanted, and they got forced in anyway. */
+    const chosenSoFar = [];
     const pickRecipe = (role)=>{
       const budgetKcal = role === 'snack' ? snackKcal() : null;
       const usable = RECIPES.filter(r => recipeUsable(r, role, budgetKcal));
       if (!usable.length) return null;
       // fresh dishes first; only reuse a name when the pool is genuinely spent
       const unused = usable.filter(r => !usedNames.has(r.name));
-      const from = unused.length ? unused : usable;
-      const pick = weightedPick(from.map(r => ({item:r, s: scoreRecipe(r, usedNames)})), 1.8);
-      if (pick) usedNames.add(pick.name);
+      let from = unused.length ? unused : usable;
+      /* Dishes the settled list can actually cook come first, judged on as
+         many slots as still leaves a real choice — asking a narrow set of
+         starred foods to cover every slot at once would empty the menu, so
+         a slot is given up at a time until enough dishes qualify. */
+      const servedBySettled = (r, sl)=>{
+        const want = COMMITTED[sl];
+        if (!want || !want.length) return true;
+        const opts = recipeOptions(r, sl);
+        return !opts.length || want.some(k => opts.includes(k));
+      };
+      const rungs = [
+        {on:['protein','carb','veg'], least:6},
+        {on:['protein','carb'],       least:6},
+        {on:['protein','carb'],       least:1},   // hold both even when it is tight
+        {on:['carb'],                 least:6},
+        {on:['protein'],              least:6},
+      ];
+      for (let g = 0; g < rungs.length; g++){
+        const fit = from.filter(r => rungs[g].on.every(sl => servedBySettled(r, sl)));
+        if (fit.length >= rungs[g].least){ from = fit; break; }
+      }
+      const pick = weightedPick(
+        from.map(r => ({item:r, s: scoreRecipe(r, usedNames, chosenSoFar)})), 1.8);
+      if (pick){
+        usedNames.add(pick.name);
+        chosenSoFar.push(pick);
+        /* Nothing starred and nothing in the fridge leaves no list to settle
+           in advance, and the number on the prep screen still has to mean
+           something. So the first dish sets it: what that dish calls for is
+           what the rest of the prep gets shopped around. */
+        VARIETY_SLOTS.forEach(sl=>{
+          if ((COMMITTED[sl] || []).length) return;
+          COMMITTED[sl] = drawShortlist(sl, recipeOptions(pick, sl));
+        });
+      }
       return pick;
     };
 
@@ -1271,29 +1411,99 @@
         .map(w => ({w, r: Math.random() + (LAST_DRAW.foods.has(w.f.key) ? 1 : 0)}))
         .sort((a,b)=>a.r-b.r).map(x=>x.w);
 
-      // on-hand and starred foods first, if a dish can take them
-      shuffled.filter(w => isMustUse(w.f)).forEach(w=>{
-        if (chosen.length < allowance && !chosen.some(c=>familyClashPair(c,w.f))) add(w.f);
+      /* ---- COVER THE DISHES, DON'T COLLECT ONE PER DISH ----
+         The allowance is a number the person set on the prep screen, and
+         "two proteins" has to come back as two. This used to take a starred
+         food for each dish in turn with no count kept, so three dishes with
+         different tastes in protein handed back three, four or five of them
+         however the screen was set — and the ones that arrived that way were
+         drawn at random, which is how a prep built on six starred proteins
+         came back carrying one of them and two nobody asked for.
+
+         So the list is filled by covering the dishes with as few ingredients
+         as possible: at each step take whichever candidate serves the most
+         dishes that still have nothing, breaking ties towards food already
+         in the fridge and then towards the starred ones. */
+      const needs = picked.slice();
+      const serves = new Map();
+      shuffled.forEach(w=>{
+        serves.set(w.f.key, needs.filter(p =>
+          recipeOptions(p.recipe, slot).includes(w.f.key) && mealAllowsFood(p.role, w.f)));
       });
-      shuffled.filter(w => favKeys(slot).includes(w.f.key)).forEach(w=>{
-        if (chosen.length < allowance && !chosen.some(c=>familyClashPair(c,w.f))) add(w.f);
+      // a dish nothing on the bench can serve is not this slot's problem
+      const uncovered = new Set(needs.filter(p =>
+        shuffled.some(w => serves.get(w.f.key).indexOf(p) >= 0)));
+
+      /* Start from the list that was settled before the dishes were chosen;
+         the cover below only has to fill what it leaves uncovered. Only the
+         two slots the dishes were chosen against are seeded outright — the
+         sides are better served by covering the dishes properly and merely
+         leaning towards the settled list. */
+      const settled = COMMITTED[slot] || [];
+      if (slot === 'protein' || slot === 'carb') settled.forEach(k=>{
+        if (chosen.length >= allowance) return;
+        const w = shuffled.find(x => x.f.key === k);
+        if (!w || chosen.some(c=>familyClashPair(c, w.f))) return;
+        // spending the allowance on something no dish still needs is how the
+        // list grew past the number even when it started from the right foods
+        if (!serves.get(w.f.key).some(p => uncovered.has(p))) return;
+        add(w.f);
+        serves.get(w.f.key).forEach(p => uncovered.delete(p));
       });
 
-      // then make sure every dish has at least one option it can use
-      picked.forEach(({recipe, role})=>{
+      const rank = f => (isMustUse(f) ? 4 : 0)
+        + (settled.indexOf(f.key) >= 0 ? 2 : 0)
+        + (favKeys(slot).includes(f.key) ? 1 : 0);
+      const takeBest = from => {
+        let best = null, score = -1;
+        from.forEach(w=>{
+          if (chosen.some(c=>c.key===w.f.key)) return;
+          if (chosen.some(c=>familyClashPair(c, w.f))) return;
+          const covers = serves.get(w.f.key).filter(p=>uncovered.has(p)).length;
+          const s = covers * 10 + rank(w.f);
+          if (s > score){ score = s; best = w; }
+        });
+        return best;
+      };
+      const cover = from => {
+        while (chosen.length < allowance && uncovered.size){
+          const w = takeBest(from);
+          if (!w) break;
+          add(w.f);
+          serves.get(w.f.key).forEach(p => uncovered.delete(p));
+        }
+      };
+
+      /* "Stick to my favourites" means the list comes from the starred foods
+         wherever they can carry the dishes. Anything else is reached for only
+         once they have run out. */
+      const starred = shuffled.filter(w => isMustUse(w.f) || favKeys(slot).includes(w.f.key));
+      if (state.discoveryMode === 'favorites' && starred.length) cover(starred);
+      cover(shuffled);
+
+      /* A dish with nothing at all on the list cannot be cooked, so going one
+         over the number beats serving an empty slot — and even then a starred
+         food goes on ahead of a stranger. */
+      needs.forEach(p=>{
+        if (!uncovered.has(p)) return;
         const opts = shuffled.filter(w =>
-          recipeOptions(recipe, slot).includes(w.f.key) && mealAllowsFood(role, w.f));
+          serves.get(w.f.key).indexOf(p) >= 0 && !chosen.some(c=>c.key===w.f.key));
         if (!opts.length) return;
-        if (opts.some(o => chosen.some(c=>c.key===o.f.key))) return;
-        const fresh = opts.filter(o => !chosen.some(c=>familyClashPair(c,o.f)));
-        const from = fresh.length ? fresh : opts;
-        add(randOf(from).f);
+        const fav = opts.filter(w => favKeys(slot).includes(w.f.key));
+        const tier = fav.length ? fav : opts;
+        const fresh = tier.filter(o => !chosen.some(c=>familyClashPair(c,o.f)));
+        const w = randOf(fresh.length ? fresh : tier);
+        add(w.f);
+        serves.get(w.f.key).forEach(q => uncovered.delete(q));
       });
 
       // fill any remaining allowance with other things the dishes could use
       let guard = 0;
       while (chosen.length < allowance && guard++ < 40){
-        const rest = shuffled.filter(w =>
+        const spare = (state.discoveryMode === 'favorites' && starred.length) ? starred : shuffled;
+        let rest = spare.filter(w =>
+          !chosen.some(c=>c.key===w.f.key) && !chosen.some(c=>familyClashPair(c,w.f)));
+        if (!rest.length) rest = shuffled.filter(w =>
           !chosen.some(c=>c.key===w.f.key) && !chosen.some(c=>familyClashPair(c,w.f)));
         if (!rest.length) break;
         add(randOf(rest).f);
@@ -1460,7 +1670,10 @@
           if (sane.length) pool = sane;
         }
 
-        if (!pool.length && recipeKeys){
+        /* Reaching past the shopping list is for an empty slot, not a
+           thinner one. A second vegetable is a nicety; buying a sixth
+           vegetable to get it is not, when the prep screen was told two. */
+        if (!pool.length && recipeKeys && !sel[slot].length){
           // the dish wants something the palette can't supply — take it from
           // the recipe directly and add it to the palette so the shopping
           // list stays truthful
