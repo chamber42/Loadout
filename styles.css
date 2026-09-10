@@ -717,12 +717,19 @@
   }
   .var-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .var-label{ flex:1; font-family:var(--font-body); font-size:var(--fs-body); }
-  .var-steps{ display:flex; gap:4px; }
+  /* Veg runs to eight steps, which is wider than a phone once the label and
+     the readout have had their share. Wrap rather than run off the edge —
+     left-aligned, so the second line reads as the rest of the same grid. */
+  .var-steps{ display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-start; }
   .var-step{ min-width:38px; min-height:38px; border-radius:8px; cursor:pointer;
              background:var(--panel-2); border:1px solid var(--line); color:var(--muted);
              font-family:var(--font-body); font-size:15px; }
   .var-step.wide{ min-width:64px; font-size:13px; }
   .var-step.on{ border-color:var(--cyan); color:var(--cyan); background:var(--accent-soft); }
+  /* What that setting actually buys. A snack usually wants a different kind
+     of carb from a dinner, so the list runs to one more than the number when
+     there is a snack in the plan — said here rather than found out later. */
+  .var-buys{ display:block; font-size:12px; color:var(--muted); white-space:nowrap; }
   /* A bundled document shown inside the app. Sized to the modal rather than
      its content because the policy is long and the card must not grow past
      the screen. */

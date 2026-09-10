@@ -207,10 +207,17 @@
     }
 
     // ingredient variety
+    /* A snack sitting wants a different kind of carb from a dinner — rice
+       cakes rather than rice — so a prep with a snack in it usually shops for
+       one more of each than the number says. Shown as the range it really is,
+       rather than left to be discovered at the till. */
+    const hasSnack = MEALS.some(m => !m.required);
     varietyRows.innerHTML = VARIETY_CATS.map(c=>{
       const v = varietyOf(c.slot);
+      const buys = (hasSnack && v < c.max) ? `${v}\u2013${v+1}` : `${v}`;
       return `<div class="var-row">
-        <span class="var-label">${ic(c.icon)} ${c.label}</span>
+        <span class="var-label">${ic(c.icon)} ${c.label}${
+          buys === String(v) ? '' : ` <span class="var-buys">buys ${buys}</span>`}</span>
         <div class="var-steps">
           ${Array.from({length:c.max},(_,i)=>i+1).map(n=>
             `<button class="var-step${v===n?' on':''}" data-var="${c.slot}|${n}" aria-label="${n} different ${c.label}">${n}</button>`).join('')}
