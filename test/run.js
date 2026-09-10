@@ -22,6 +22,7 @@ const SUITES = [
   './recipe-place.test.js',
   './pantry.test.js',
   './off-cache.test.js',
+  './fibre.test.js',
 ];
 
 let passed = 0, failed = 0;

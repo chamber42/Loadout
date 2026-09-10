@@ -120,12 +120,20 @@
   }
   /* A scanned product brought its own label with it. Those figures beat every
      table and family average below, which exist precisely because the library
-     foods have no label to read. */
+     foods have no label to read. A packet stating 0 g of fibre means it, so
+     that one is read as a value and not as a gap.
+
+     The two generated tables are the opposite case: they carry a literal 0
+     wherever FDC published no fibre figure, so a zero there means "not
+     measured". Taken at face value it stands in front of the answer —
+     lentils and chia both read 0 in the Foundation table and both have a
+     real figure a layer below. A food that genuinely has none, an oil or a
+     cut of meat, is unaffected: what it falls through to says none either. */
   function fibreOf(food){
     if (!food) return 0;
     if (food.fibre != null) return food.fibre;
-    if (typeof USDA_FF_FIBRE !== 'undefined' && USDA_FF_FIBRE[food.key] != null) return USDA_FF_FIBRE[food.key];
-    if (typeof USDA_FIBRE !== 'undefined' && USDA_FIBRE[food.key] != null) return USDA_FIBRE[food.key];
+    if (typeof USDA_FF_FIBRE !== 'undefined' && USDA_FF_FIBRE[food.key] > 0) return USDA_FF_FIBRE[food.key];
+    if (typeof USDA_FIBRE !== 'undefined' && USDA_FIBRE[food.key] > 0) return USDA_FIBRE[food.key];
     if (FIBRE_OVERRIDE[food.key] != null) return FIBRE_OVERRIDE[food.key];
     const fam = nutriFam(food.key);
     return (fam && FIBRE_BY_FAMILY[fam] != null) ? FIBRE_BY_FAMILY[fam] : 1.0;
