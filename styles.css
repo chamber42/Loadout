@@ -329,50 +329,9 @@
   .screen.active{ display:block; animation:fadeUp .4s ease both; }
   @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
 
-  /* ---- moving between screens ----
-     showScreen() runs the swap inside a view transition where the browser
-     supports one, which is what lets the page being left and the page being
-     arrived at overlap. The two halves are named old/new here and given the
-     same short rise fadeUp already uses, so a switch reads as one movement
-     rather than a cut followed by an entrance.
-
-     A screen the crossfade is carrying stands its own rise down, because
-     playing both compounds into a stutter. A screen arriving any other way
-     — no support for the API, reduced motion, or the splash handing over —
-     still rises exactly as it always did. showScreen() marks which is which
-     as it makes the swap. */
-  .screen.active.no-rise{ animation:none; }
-
-  /* The snapshot sits in the top layer over the whole page while the
-     crossfade runs. It is a picture, not a surface: anything tapped during
-     those 260ms belongs to the button underneath it, and without this the
-     tab pressed just after a screen change did nothing at all. */
-  ::view-transition{ pointer-events:none; }
-
-  ::view-transition-old(root),
-  ::view-transition-new(root){
-    animation-duration:.26s;
-    animation-timing-function:cubic-bezier(.4,0,.2,1);
-    animation-fill-mode:both;
-  }
-  ::view-transition-old(root){ animation-name:navOut; }
-  ::view-transition-new(root){ animation-name:navIn; }
-  @keyframes navOut{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-6px);} }
-  @keyframes navIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-
-  /* The tab bar is fixed and belongs to no single page, so it must not be
-     dragged through the fade with the content behind it. Naming it takes it
-     out of the root snapshot; giving it no animation leaves it sitting
-     still, which is what a bar you are tapping should do. */
-  .tab-bar{ view-transition-name:tabbar; }
-  /* Only the arriving copy is drawn. Giving both halves animation:none left
-     both at full opacity for the length of a transition, so there were two
-     tab bars stacked — and two sets of key shadows, which showed up under
-     the buttons and vanished a quarter of a second later. Naming the bar
-     keeps it out of the page fade; this keeps it from being doubled. */
-  ::view-transition-group(tabbar){ animation:none; }
-  ::view-transition-old(tabbar){ animation:none; opacity:0; }
-  ::view-transition-new(tabbar){ animation:none; opacity:1; mix-blend-mode:normal; }
+  /* Screens do not crossfade. A view transition made the whole page
+     non-hit-testable for the length of it — see the note in 16-tabs.js —
+     so the arrival animation above is the whole of it. */
 
   .eyebrow{ min-height:14px; display:flex; align-items:center;
     font-size:var(--fs-10); color:var(--cyan); letter-spacing:2px; margin-bottom:10px;
@@ -431,10 +390,6 @@
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{ animation-duration:.01ms!important; transition-duration:.01ms!important; }
     .screen.active{ animation:none; }
-    /* Nothing should move here, and the crossfade is the one animation that
-       does not come from a rule the blanket above can reach. */
-    ::view-transition-old(root),
-    ::view-transition-new(root){ animation:none; }
   }
   /* Controls keep a fixed height across themes — type size varies with the
      typeface's optical scale, but the boxes should not move. */

@@ -1,89 +1,42 @@
 'use strict';
-/* Covers which screen changes are allowed to crossfade.
+/* Covers that changing screen happens immediately.
 
-   showScreen() runs its swap inside a view transition so the page being
-   left and the page arriving overlap. One hand-off must not: the splash.
-   The attract screen dissolves to black under its own steam, and the
-   moment it finishes, 27-init.js clears attract-auto/attract-out and calls
-   showScreen() for the real screen.
+   Screens used to swap inside a view transition so the outgoing and
+   incoming pages would overlap. While one runs, WebKit replaces the live
+   DOM with snapshots and nothing on the page is hit-testable: measured with
+   elementFromPoint, a tab and a panel in the middle of the page both
+   returned <html> from 64ms to 293ms after a swap. Every navigation bought
+   a quarter of a second in which no control anywhere could be pressed,
+   which is the "it takes two taps" people reported.
 
-   Clearing attract-out restores the title card to full opacity. If the
-   swap crossfades from there, the browser snapshots a re-lit title card
-   and plays it back over the arriving page — the splash appearing a second
-   time for a quarter of a second, at the end of a sequence that had just
-   faded it out. That shipped, and it is what these checks exist to stop
-   coming back.
-
-   The guard cannot be "is body.attract-auto set", because init clears that
-   class immediately BEFORE handing over — it is already gone by the time
-   showScreen runs, on the one call it was written for. It has to be the
-   screen actually being left. */
+   So the swap is synchronous, and this pins that down. A future attempt to
+   defer it — a view transition, an animation frame, a timeout to line
+   something up — fails here, and the comment above says why that is not a
+   trade worth making again. */
 
 const {loadFunctions, suite} = require('./helpers');
 
-/* A document stub with just enough of the two things showScreen reads: the
-   screen currently marked active, and the classes on <body>. */
-function rig(opts){
-  const active = opts.from;
-  const bodyClasses = new Set(opts.bodyClasses || []);
-  const calls = {crossfaded: [], rise: null};
-  const doc = {
-    querySelector(sel){
-      return sel === '.screen.active' && active ? {id: active} : null;
-    },
-    body: {classList: {contains: c => bodyClasses.has(c)}},
-  };
-  if (opts.supported !== false){
-    doc.startViewTransition = function(cb){ calls.crossfaded.push(true); cb(); return {}; };
-  }
+module.exports = () => suite('screen changes', t => {
+  const swapped = [];
   const ctx = loadFunctions('16-tabs.js', ['showScreen'], {
-    document: doc,
-    canCrossfade: opts.supported !== false,
-    /* The second argument is what decides whether the arriving screen
-       plays its own rise, so the rig records it rather than the id. */
-    swapScreen(id, crossfading){ calls.rise = !crossfading; },
+    swapScreen(id){ swapped.push(id); },
+    document: {
+      querySelector(){ return null; },
+      body: {classList: {contains(){ return false; }}},
+      /* If anything reaches for this again, the test should fail rather
+         than quietly hand back a transition object. */
+      startViewTransition(){ throw new Error('screen changes must not be deferred'); },
+    },
   });
-  ctx.showScreen(opts.to);
-  return {crossfaded: calls.crossfaded.length > 0, rises: calls.rise};
-}
 
-module.exports = () => suite('screen transitions', t => {
+  t.section('the screen changes on the spot');
+  ctx.showScreen('screen-journal');
+  t.equal('one swap, immediately', swapped.length, 1);
+  t.equal('and it is the screen asked for', swapped[0], 'screen-journal');
 
-  t.section('the splash hand-off is never a crossfade');
-  /* Exactly the state 27-init.js leaves behind: both classes already
-     cleared, still standing on the attract screen. */
-  t.equal('leaving the attract screen for the sheet',
-    rig({from: 'screen-attract', to: 'screen-tiers', bodyClasses: []}).crossfaded, false);
-  t.equal('leaving it for the loadout, as the START tap does',
-    rig({from: 'screen-attract', to: 'screen-loadout', bodyClasses: []}).crossfaded, false);
-  t.equal('arriving at the attract screen',
-    rig({from: 'screen-journal', to: 'screen-attract'}).crossfaded, false);
-  t.equal('while the splash is still running',
-    rig({from: 'screen-tiers', to: 'screen-loadout', bodyClasses: ['attract-auto']}).crossfaded, false);
-
-  t.section('every ordinary screen change is');
-  t.equal('tab to tab', rig({from: 'screen-journal', to: 'screen-quest'}).crossfaded, true);
-  t.equal('into the pantry', rig({from: 'screen-shop', to: 'screen-pantry'}).crossfaded, true);
-  t.equal('a back link', rig({from: 'screen-pantry', to: 'screen-journal'}).crossfaded, true);
-  t.equal('with no screen yet active',
-    rig({from: null, to: 'screen-tiers'}).crossfaded, true);
-
-  t.section('a screen the crossfade is not carrying still rises on its own');
-  /* The regression this section exists for: standing the rise down for the
-     whole browser left the splash handing over to a screen with no arrival
-     at all, and the sheet appeared instantly where it used to rise. */
-  t.equal('the sheet, after the splash',
-    rig({from: 'screen-attract', to: 'screen-tiers', bodyClasses: []}).rises, true);
-  t.equal('the loadout, off a START tap',
-    rig({from: 'screen-attract', to: 'screen-loadout', bodyClasses: []}).rises, true);
-  t.equal('any screen, where the API is missing',
-    rig({from: 'screen-journal', to: 'screen-quest', supported: false}).rises, true);
-  t.equal('but not one the crossfade is carrying',
-    rig({from: 'screen-journal', to: 'screen-quest'}).rises, false);
-
-  t.section('a browser without the API just swaps');
-  t.equal('ordinary change',
-    rig({from: 'screen-journal', to: 'screen-quest', supported: false}).crossfaded, false);
-  t.equal('splash hand-off',
-    rig({from: 'screen-attract', to: 'screen-tiers', supported: false}).crossfaded, false);
+  t.section('a second change is not queued behind the first');
+  ctx.showScreen('screen-quest');
+  ctx.showScreen('screen-loadout');
+  t.equal('all three landed', swapped.length, 3);
+  t.equal('in order', swapped.join(','), 'screen-journal,screen-quest,screen-loadout');
 });

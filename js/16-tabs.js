@@ -157,10 +157,7 @@
   const PANTRY_FROM = {'screen-shop':'SHOPPING LIST', 'screen-cravings':'CRAVINGS',
                        'screen-journal':'JOURNAL'};
 
-  /* `crossfading` says whether a view transition is carrying this arrival.
-     It decides whether the screen rises on its own or not, which is the
-     whole reason it is passed down rather than inferred here. */
-  function swapScreen(id, crossfading){
+  function swapScreen(id){
     if (id === 'screen-pantry'){
       const from = document.querySelector('.screen.active');
       const label = from && PANTRY_FROM[from.id];
@@ -184,13 +181,8 @@
     }
     // the attract screen is a black cabinet, not a themed page
     document.body.classList.toggle('attract-mode', id === 'screen-attract');
-    const el = document.getElementById(id);
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    /* Set before .active, never after. The animation starts when .active
-       lands, so deciding first means it either plays once or not at all —
-       where flipping this afterwards would restart it. */
-    el.classList.toggle('no-rise', !!crossfading);
-    el.classList.add('active');
+    document.getElementById(id).classList.add('active');
     const onLoadout = id === 'screen-loadout';
     document.getElementById('hud').classList.toggle('show', onLoadout);
     document.body.classList.toggle('hud-on', onLoadout);
@@ -201,53 +193,32 @@
     window.scrollTo(0, 0);
   }
 
-  /* One screen is shown at a time, so a switch has always been a cut: the
-     outgoing page is display:none before the incoming one paints, and the
-     arrival animation plays into the gap left behind. A view transition
-     snapshots the outgoing screen first, so the two actually cross instead
-     of one following the other.
+  /* ---------------------------------------------------------
+     WHY THERE IS NO CROSSFADE HERE
 
-     Where the API is missing the swap happens exactly as it did before and
-     the .active animation still covers the arrival, so this is an
-     improvement where it lands and nothing anywhere else.
+     Screens used to swap inside a view transition so the page being left
+     and the page arriving would overlap. It looked better and it cost far
+     too much: while a view transition runs, WebKit replaces the live DOM
+     with snapshots and NOTHING ON THE PAGE IS HIT-TESTABLE.
 
-     The attract screen keeps its own hand-made fade to black and is left
-     alone — two dissolves over each other is worse than either. */
-  const canCrossfade = typeof document.startViewTransition === 'function';
+     Measured on the simulator with elementFromPoint at two points, one on
+     the tab bar and one in the middle of the page. Both return the tab and
+     the panel at rest and one millisecond in; from 64ms to 293ms both
+     return <html>; both are live again at 344ms. So every screen change
+     bought a quarter of a second in which no button anywhere in the app
+     could be pressed — which is exactly the "sometimes it takes two taps"
+     that came back, and it was never only the tabs.
 
-  function showScreen(id){
-    /* The attract screen dissolves to black under its own steam, in both
-       directions, and two dissolves over each other is worse than either.
+     Nothing in CSS or JS reaches this. pointer-events on the overlay does
+     not help because the overlay is not what is swallowing the tap, and
+     recognising taps from pointer events does not help because the element
+     is not hit-testable to begin with. A shorter transition would only
+     shorten the dead window.
 
-       Leaving it is tested on the screen actually being left rather than on
-       body.attract-auto, because the splash clears that class immediately
-       BEFORE handing over (27-init.js) — so the class was already gone by
-       the time this ran, on the one call it was written for. What the
-       crossfade then snapshotted was the title card springing back to full
-       opacity as attract-out came off, and it played that back over the
-       arriving screen: the splash appearing a second time for a quarter of
-       a second, at the end of a sequence that had just faded it out. */
-    const from = document.querySelector('.screen.active');
-    /* A modal covers the page, so nobody can see the screen being left.
-       Crossfading it is not a transition anybody watches — it is a stale
-       screen being revealed the moment the modal comes down, which is how
-       "redo the meal prep" managed to show the prep you were replacing.
-       Callers that navigate out of a modal change the screen first and
-       close it after, so this is the state that reaches here. */
-    const covered = !!document.querySelector('.modal-wrap:not([hidden])');
-    const bespoke = id === 'screen-attract' ||
-      (from && from.id === 'screen-attract') ||
-      covered ||
-      document.body.classList.contains('attract-auto');
-    /* Told per swap, not declared once for the whole browser. Standing the
-       rise down everywhere was wrong for exactly the paths that skip the
-       crossfade: the splash handed over to a screen that then had no
-       arrival at all, and the sheet appeared instantly where it used to
-       rise. A screen that is not being crossfaded still rises. */
-    if (!canCrossfade || bespoke){ swapScreen(id, false); return; }
-    try { document.startViewTransition(()=> swapScreen(id, true)); }
-    catch (e){ swapScreen(id, false); }
-  }
+     So the swap is a plain swap, and .screen.active's own rise covers the
+     arrival, the way it did before any of this.
+  --------------------------------------------------------- */
+  function showScreen(id){ swapScreen(id); }
 
   /* ---------------------------------------------------------
      TAPPING A TAB
