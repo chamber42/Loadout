@@ -23,6 +23,7 @@ const SUITES = [
   './pantry.test.js',
   './off-cache.test.js',
   './micronutrients.test.js',
+  './screen-transitions.test.js',
 ];
 
 let passed = 0, failed = 0;

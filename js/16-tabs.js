@@ -215,9 +215,20 @@
   if (canCrossfade) document.documentElement.classList.add('vt');
 
   function showScreen(id){
-    /* The attract screen dissolves to black under its own steam; two
-       dissolves over each other is worse than either. */
+    /* The attract screen dissolves to black under its own steam, in both
+       directions, and two dissolves over each other is worse than either.
+
+       Leaving it is tested on the screen actually being left rather than on
+       body.attract-auto, because the splash clears that class immediately
+       BEFORE handing over (27-init.js) — so the class was already gone by
+       the time this ran, on the one call it was written for. What the
+       crossfade then snapshotted was the title card springing back to full
+       opacity as attract-out came off, and it played that back over the
+       arriving screen: the splash appearing a second time for a quarter of
+       a second, at the end of a sequence that had just faded it out. */
+    const from = document.querySelector('.screen.active');
     const bespoke = id === 'screen-attract' ||
+      (from && from.id === 'screen-attract') ||
       document.body.classList.contains('attract-auto');
     if (!canCrossfade || bespoke){ swapScreen(id); return; }
     try { document.startViewTransition(()=> swapScreen(id)); }
