@@ -336,11 +336,12 @@
      same short rise fadeUp already uses, so a switch reads as one movement
      rather than a cut followed by an entrance.
 
-     Where that is available the arrival animation stands down for good: the
-     crossfade already carries the arrival, and playing both compounds into a
-     stutter. The attract screen keeps fadeUp, because it is reached by the
-     one path that deliberately skips the transition. */
-  html.vt .screen.active:not(#screen-attract){ animation:none; }
+     A screen the crossfade is carrying stands its own rise down, because
+     playing both compounds into a stutter. A screen arriving any other way
+     — no support for the API, reduced motion, or the splash handing over —
+     still rises exactly as it always did. showScreen() marks which is which
+     as it makes the swap. */
+  .screen.active.no-rise{ animation:none; }
 
   ::view-transition-old(root),
   ::view-transition-new(root){

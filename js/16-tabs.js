@@ -157,7 +157,10 @@
   const PANTRY_FROM = {'screen-shop':'SHOPPING LIST', 'screen-cravings':'CRAVINGS',
                        'screen-journal':'JOURNAL'};
 
-  function swapScreen(id){
+  /* `crossfading` says whether a view transition is carrying this arrival.
+     It decides whether the screen rises on its own or not, which is the
+     whole reason it is passed down rather than inferred here. */
+  function swapScreen(id, crossfading){
     if (id === 'screen-pantry'){
       const from = document.querySelector('.screen.active');
       const label = from && PANTRY_FROM[from.id];
@@ -181,8 +184,13 @@
     }
     // the attract screen is a black cabinet, not a themed page
     document.body.classList.toggle('attract-mode', id === 'screen-attract');
+    const el = document.getElementById(id);
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+    /* Set before .active, never after. The animation starts when .active
+       lands, so deciding first means it either plays once or not at all —
+       where flipping this afterwards would restart it. */
+    el.classList.toggle('no-rise', !!crossfading);
+    el.classList.add('active');
     const onLoadout = id === 'screen-loadout';
     document.getElementById('hud').classList.toggle('show', onLoadout);
     document.body.classList.toggle('hud-on', onLoadout);
@@ -205,14 +213,7 @@
 
      The attract screen keeps its own hand-made fade to black and is left
      alone — two dissolves over each other is worse than either. */
-  /* Declared once, not toggled per navigation. A class that comes and goes
-     around each transition looked tidier and was wrong: removing it puts
-     the arrival animation back, and changing animation-name from none to
-     fadeUp restarts it — so every screen crossfaded in and then faded up a
-     second time. Where the crossfade exists it is the whole arrival, so
-     fadeUp stands down for good and the stylesheet can say so plainly. */
   const canCrossfade = typeof document.startViewTransition === 'function';
-  if (canCrossfade) document.documentElement.classList.add('vt');
 
   function showScreen(id){
     /* The attract screen dissolves to black under its own steam, in both
@@ -230,9 +231,14 @@
     const bespoke = id === 'screen-attract' ||
       (from && from.id === 'screen-attract') ||
       document.body.classList.contains('attract-auto');
-    if (!canCrossfade || bespoke){ swapScreen(id); return; }
-    try { document.startViewTransition(()=> swapScreen(id)); }
-    catch (e){ swapScreen(id); }
+    /* Told per swap, not declared once for the whole browser. Standing the
+       rise down everywhere was wrong for exactly the paths that skip the
+       crossfade: the splash handed over to a screen that then had no
+       arrival at all, and the sheet appeared instantly where it used to
+       rise. A screen that is not being crossfaded still rises. */
+    if (!canCrossfade || bespoke){ swapScreen(id, false); return; }
+    try { document.startViewTransition(()=> swapScreen(id, true)); }
+    catch (e){ swapScreen(id, false); }
   }
 
   document.getElementById('tabBar').addEventListener('click', (e)=>{

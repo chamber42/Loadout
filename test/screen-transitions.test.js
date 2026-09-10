@@ -26,7 +26,7 @@ const {loadFunctions, suite} = require('./helpers');
 function rig(opts){
   const active = opts.from;
   const bodyClasses = new Set(opts.bodyClasses || []);
-  const calls = {crossfaded: [], plain: []};
+  const calls = {crossfaded: [], rise: null};
   const doc = {
     querySelector(sel){
       return sel === '.screen.active' && active ? {id: active} : null;
@@ -39,10 +39,12 @@ function rig(opts){
   const ctx = loadFunctions('16-tabs.js', ['showScreen'], {
     document: doc,
     canCrossfade: opts.supported !== false,
-    swapScreen(id){ calls.plain.push(id); },
+    /* The second argument is what decides whether the arriving screen
+       plays its own rise, so the rig records it rather than the id. */
+    swapScreen(id, crossfading){ calls.rise = !crossfading; },
   });
   ctx.showScreen(opts.to);
-  return {crossfaded: calls.crossfaded.length > 0};
+  return {crossfaded: calls.crossfaded.length > 0, rises: calls.rise};
 }
 
 module.exports = () => suite('screen transitions', t => {
@@ -65,6 +67,19 @@ module.exports = () => suite('screen transitions', t => {
   t.equal('a back link', rig({from: 'screen-pantry', to: 'screen-journal'}).crossfaded, true);
   t.equal('with no screen yet active',
     rig({from: null, to: 'screen-tiers'}).crossfaded, true);
+
+  t.section('a screen the crossfade is not carrying still rises on its own');
+  /* The regression this section exists for: standing the rise down for the
+     whole browser left the splash handing over to a screen with no arrival
+     at all, and the sheet appeared instantly where it used to rise. */
+  t.equal('the sheet, after the splash',
+    rig({from: 'screen-attract', to: 'screen-tiers', bodyClasses: []}).rises, true);
+  t.equal('the loadout, off a START tap',
+    rig({from: 'screen-attract', to: 'screen-loadout', bodyClasses: []}).rises, true);
+  t.equal('any screen, where the API is missing',
+    rig({from: 'screen-journal', to: 'screen-quest', supported: false}).rises, true);
+  t.equal('but not one the crossfade is carrying',
+    rig({from: 'screen-journal', to: 'screen-quest'}).rises, false);
 
   t.section('a browser without the API just swaps');
   t.equal('ordinary change',
