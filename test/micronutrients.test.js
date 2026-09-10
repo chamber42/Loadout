@@ -1,5 +1,6 @@
 'use strict';
-/* Covers how fibreOf() picks a figure out of its stack of tables.
+/* Covers how fibreOf() and sodiumOf() pick a figure out of their stack of
+   tables.
 
    The stack exists because no one source covers 850 foods: a scanned
    label first, then USDA Foundation Foods, then SR Legacy, then the
@@ -12,7 +13,11 @@
 
    Nothing on screen looks broken when that happens. The day's fibre bar
    is simply lower than the food on the plate deserves, which is exactly
-   the kind of wrong these checks are here to catch. */
+   the kind of wrong these checks are here to catch.
+
+   sodiumOf() reads the same way off the same kind of table and had the
+   same fault, with more at stake: salami, pepperoni, bologna, mayo and
+   ranch all reported no sodium at all. */
 
 const fs = require('fs');
 const path = require('path');
@@ -51,7 +56,7 @@ function rig(){
   return ctx;
 }
 
-module.exports = () => suite('fibre', t => {
+module.exports = () => suite('fibre and sodium', t => {
   const ctx = rig();
   const fibre = key => vm.runInContext('fibreOf', ctx)({key});
   const fibreOf = f => vm.runInContext('fibreOf', ctx)(f);
@@ -79,6 +84,21 @@ module.exports = () => suite('fibre', t => {
   t.equal('the family average is the last resort', fibre('mangofroz'), 1.7);
   t.equal('an unknown food falls back to 1.0', fibre('nosuchfoodatall'), 1.0);
 
+  t.section('sodium: the same zero, in the tables that matter most');
+  const sodium = key => vm.runInContext('sodiumOf', ctx)({key});
+  /* Five foods that read 0 mg and have four figures a layer below. */
+  t.equal('salami', sodium('salami'), 1140);
+  t.equal('pepperoni', sodium('pepperoni'), 1582);
+  t.equal('bologna', sodium('bologna'), 1013);
+  t.equal('ranch dressing', sodium('ranch'), 901);
+  t.equal('mayonnaise', sodium('mayo'), 635);
+
+  t.section('sodium: what genuinely has almost none is left alone');
+  t.equal('olive oil stays at zero', sodium('oil'), 0);
+  t.equal('avocado oil stays at zero', sodium('avocadooil'), 0);
+  t.equal('blueberries carry their 1mg', sodium('berries'), 1);
+  t.equal('a packet stating 0mg', vm.runInContext('sodiumOf', ctx)({key: 'salami', sodium: 0}), 0);
+
   t.section('no food in the table reports an impossible figure');
   /* `const` in a vm context is not a property of the context object, so the
      tables are read back by evaluating their names rather than indexing. */
@@ -90,5 +110,15 @@ module.exports = () => suite('fibre', t => {
     const v = fibre(k);
     return !isFinite(v) || v < 0 || v > 100;
   });
-  t.check('every known key resolves to a sane number', bad.length === 0, bad.slice(0, 8));
+  t.check('every known fibre key resolves to a sane number', bad.length === 0, bad.slice(0, 8));
+
+  const sodKeys = new Set();
+  ['USDA_FF_SODIUM', 'USDA_SODIUM', 'SODIUM_OVERRIDE']
+    .forEach(name => Object.keys(table(name)).forEach(k => sodKeys.add(k)));
+  /* Nothing edible reaches a tablespoon of salt in 100g. */
+  const badSod = [...sodKeys].filter(k => {
+    const v = sodium(k);
+    return !isFinite(v) || v < 0 || v > 20000;
+  });
+  t.check('every known sodium key resolves to a sane number', badSod.length === 0, badSod.slice(0, 8));
 });

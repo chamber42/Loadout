@@ -138,11 +138,18 @@
     const fam = nutriFam(food.key);
     return (fam && FIBRE_BY_FAMILY[fam] != null) ? FIBRE_BY_FAMILY[fam] : 1.0;
   }
+  /* Sodium is read the same way and carries the same zeros, for the same
+     reason — but it bites harder. Salami, pepperoni, bologna, mayo and
+     ranch all sat at 0 in the Foundation table with four-figure milligrams
+     a layer below, so the app was quietly telling anybody watching their
+     sodium that the cured meats and the dressings had none. Fresh produce
+     moves too, from a false 0 to the 1-5 mg it really carries. Oils stay
+     at zero: their family says zero as well. */
   function sodiumOf(food){
     if (!food) return 0;
     if (food.sodium != null) return food.sodium;
-    if (typeof USDA_FF_SODIUM !== 'undefined' && USDA_FF_SODIUM[food.key] != null) return USDA_FF_SODIUM[food.key];
-    if (typeof USDA_SODIUM !== 'undefined' && USDA_SODIUM[food.key] != null) return USDA_SODIUM[food.key];
+    if (typeof USDA_FF_SODIUM !== 'undefined' && USDA_FF_SODIUM[food.key] > 0) return USDA_FF_SODIUM[food.key];
+    if (typeof USDA_SODIUM !== 'undefined' && USDA_SODIUM[food.key] > 0) return USDA_SODIUM[food.key];
     if (SODIUM_OVERRIDE[food.key] != null) return SODIUM_OVERRIDE[food.key];
     const fam = nutriFam(food.key);
     return (fam && SODIUM_BY_FAMILY[fam] != null) ? SODIUM_BY_FAMILY[fam] : 30;
