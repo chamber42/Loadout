@@ -20,6 +20,7 @@ const SUITES = [
   './data-export.test.js',
   './recipe-import.test.js',
   './recipe-place.test.js',
+  './dish-name.test.js',
   './pantry.test.js',
   './off-cache.test.js',
   './micronutrients.test.js',

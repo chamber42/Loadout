@@ -32,6 +32,9 @@
     hawaiian:"bun", hotdogbun:"bun", dinnerroll:"bun", brioche:"bun",
     hoagie:"subroll", kaiser:"subroll", ciabatta:"subroll",
     baguette:"subroll", focaccia:"subroll",
+    /* Oven pastries and griddle cakes were one "pastry" family, which made a
+       dry flapjack mix a legal stand-in for a croissant. A batter you cook is
+       not a thing you unwrap, so they are kept apart. */
     biscuit:"pastry", englishcrumpet:"pastry",
     // rice
     buckwheat:"grain", freekeh:"grain", bulgur:"grain", farro:"grain", barley:"grain",
@@ -266,7 +269,7 @@
     proteinchips:"chips",
     lentilchips:"chips",
     proteinoats:"oats",
-    kodiakmix:"pastry",
+    kodiakmix:"griddle",
     cassavaflour:"tortilla",
     macadamiabutter:"nutbutter",
     pecanbutter:"nutbutter",
@@ -333,10 +336,10 @@
     sorghum:"grain",
     fonio:"grain",
     croissant:"pastry",
-    waffle:"pastry",
-    protwaffle:"pastry",
-    pancakemix:"pastry",
-    protpancake:"pastry",
+    waffle:"griddle",
+    protwaffle:"griddle",
+    pancakemix:"griddle",
+    protpancake:"griddle",
     proteinbar:"bar",
     oatbran:"oats",
     cofw:"porridge",
@@ -419,6 +422,7 @@
      though they're different families. One member of a group per meal. */
   const GROUP = {
     tortilla:"bready", bread:"bready", pastry:"bready", bun:"bready", subroll:"bready",
+    griddle:"bready",
     friedside:"staple",
     rice:"staple", pasta:"staple", noodle:"staple", grain:"staple", potato:"staple", dumpling:"staple",
     oats:"breakfastcarb", porridge:"breakfastcarb", cereal:"breakfastcarb", granola:"breakfastcarb",

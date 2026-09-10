@@ -507,6 +507,80 @@
   const isCore = (recipe, slot) =>
     !!recipe && (recipe.core || []).includes(slot);
 
+  /* ---------------------------------------------------------
+     NAME PROMISES
+     The words a template hard-codes into its title are a promise about what
+     turns up on the plate: "Baked Oatmeal" says oats, "Fish Tacos" says a
+     tortilla. Family expansion cannot read the title, so a Baked Oatmeal
+     that lists a flapjack mix among its oats was free to reach the rest of
+     that mix's family and came out as a croissant, yogurt and peanuts with
+     no oat anywhere in it.
+
+     A promised word narrows expansion to the families that honour it. Two
+     rules keep this from starving a dish: whatever the template lists by
+     hand always survives, and a promise none of the listed ingredients can
+     keep is treated as not applying here — so "Rice Cakes", built from rice
+     cakes rather than rice, still expands among rice cakes.
+  --------------------------------------------------------- */
+  const NAME_PROMISES = (()=>{
+    const table = {};
+    const promise = (slot, families, words) => words.split(' ').forEach(w=>{
+      (table[w] = table[w] || {})[slot] = families;
+    });
+
+    promise('carb', ['oats'], 'oat oats oatmeal porridge');
+    promise('carb', ['rice'], 'rice bibimbap jambalaya poke sushi risotto');
+    promise('carb', ['pasta'], 'pasta bolognese carbonara alfredo primavera scampi ' +
+                               'stroganoff ziti lasagna parm parmesan mac macaroni cincinnati');
+    promise('carb', ['noodle','pasta'], 'noodle noodles ramen pho udon soba');
+    promise('carb', ['bread','bun','subroll'],
+                    'toast toastie sandwich sub hoagie hero club blt reuben melt burger ' +
+                    'cheeseburger joes cuban patty cheesesteak banh mi gyro souvlaki ' +
+                    'shawarma rye biscuit dip');
+    promise('carb', ['tortilla','bread'], 'taco tacos burrito quesadilla wrap wraps fajitas');
+    promise('carb', ['chips'], 'nachos');
+    promise('carb', ['griddle'], 'pancake pancakes waffle waffles');
+    promise('carb', ['potato'], 'potato potatoes fries');
+    promise('carb', ['grain'], 'quinoa couscous bulgur farro');
+    promise('carb', ['dumpling'], 'pierogi dumplings');
+    promise('carb', ['granola','oats','cereal'], 'parfait granola muesli');
+
+    promise('protein', ['egg'], 'egg eggs huevos shakshuka frittata omelette scramble scrambled');
+    promise('protein', ['chickencut','groundpoultry','curedpoultry'], 'chicken');
+    promise('protein', ['turkeycut','groundpoultry'], 'turkey');
+    promise('protein', ['beefcut','groundbeef'], 'beef steak bulgogi birria carne cheesesteak');
+    promise('protein', ['salmon'], 'salmon');
+    promise('protein', ['tuna'], 'tuna');
+    promise('protein', ['soy'], 'tofu tempeh edamame');
+    promise('protein', ['yogurt'], 'yogurt greek skyr');
+    promise('protein', ['cottage'], 'cottage');
+    promise('protein', ['sausage'], 'sausage bratwurst kielbasa chorizo');
+    promise('protein', ['beans'], 'falafel');
+
+    /* Fat is the slot a title almost never speaks for: "Pesto Pasta" says
+       where the pesto is, not that the olive oil beside it is wrong. Left
+       alone so those dishes keep their range. */
+
+    return table;
+  })();
+
+  /* Which families expansion may reach for this slot. Normally every family
+     the template lists by hand; where the title promises a food, only the
+     listed families that keep the promise. */
+  function allowedFamilies(recipe, slot){
+    const listedFams = new Set();
+    (recipe[slot] || []).forEach(k=>{ if (FAMILY[k]) listedFams.add(FAMILY[k]); });
+    const words = ((recipe.pattern || '') + ' ' + (recipe.name || ''))
+      .replace(/\{[A-Za-z]\}/g, ' ').toLowerCase().match(/[a-z]+/g) || [];
+    const promised = new Set();
+    words.forEach(w=>{
+      const p = NAME_PROMISES[w];
+      if (!p || !p[slot]) return;
+      p[slot].forEach(fam=>{ if (listedFams.has(fam)) promised.add(fam); });
+    });
+    return promised.size ? promised : listedFams;
+  }
+
   const OPTION_CACHE = {};
   function recipeOptions(recipe, slot){
     const cacheKey = recipe.name + '|' + slot;
@@ -519,11 +593,13 @@
       OPTION_CACHE[cacheKey] = only;
       return only;
     }
+    const allowed = allowedFamilies(recipe, slot);
     listed.forEach(k=>{
       const base = listFor(slot).find(f=>f.key === k);
       if (!base) return;
       const fam = FAMILY[k];
-      if (!fam) return;
+      // a listed ingredient the title rules out stays, but brings no siblings
+      if (!fam || !allowed.has(fam)) return;
       listFor(slot).forEach(f=>{
         if (FAMILY[f.key] !== fam) return;
         // a sibling has to be close in energy density, or a dish built for
