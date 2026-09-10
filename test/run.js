@@ -22,6 +22,7 @@ const SUITES = [
   './recipe-place.test.js',
   './dish-name.test.js',
   './prep-options.test.js',
+  './general-method.test.js',
   './pantry.test.js',
   './off-cache.test.js',
   './micronutrients.test.js',

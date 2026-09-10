@@ -896,5 +896,173 @@
       "If it is for tomorrow, keep the granola in a separate pot and add it on eating."
     ],
   };
+
+  /* =========================================================
+     GENERAL METHOD
+     Most plates in a prep are not cooked straight off a template. The
+     ingredients get swapped for whatever is on the shopping list, and the
+     written steps then describe different food — so the cook plan said
+     "no written method" and stopped, which leaves someone holding four raw
+     ingredients and a jar of paprika with nothing to do about it.
+
+     A method is written from the plate instead. It is general by design: it
+     knows how to cook rice and how to cook chicken rather than how to make
+     one particular dish, and it puts the jobs in the order the work
+     actually happens. Keyed by food family, with a slot-specific entry
+     where one family means different things in different slots.
+  ========================================================= */
+
+  /* `o` orders the steps — stages of a cook, not minutes. */
+  const GENERIC_METHOD = {
+    // ---- the long jobs, started first
+    'carb:rice':    {o:2, t:'Rinse the {n} until the water runs clear, then simmer it covered in twice its volume of water for about 15 minutes. Leave it off the heat with the lid on for 10 more.'},
+    'carb:grain':   {o:2, t:'Simmer the {n} in plenty of salted water until tender, then drain it well.'},
+    'carb:potato':  {o:2, t:'Roast the {n} at 220C/425F for 30–40 minutes, turning once, on a tray that was already hot.'},
+    'carb:beans':   {o:2, t:'Simmer the {n} until tender. From dry that is an hour or more, so start it before anything else.'},
+    'carb:porridge':{o:3, t:'Cook the {n} in about three times its volume of water or milk, stirring, until it thickens.'},
+    'carb:oats':    {o:3, t:'Cook the {n} in about three times their volume of water or milk until thick, or soak them overnight in the fridge.'},
+    'carb:pasta':   {o:3, t:'Boil the {n} in well-salted water, a minute under the packet time. Keep a cup of the water back.'},
+    'carb:noodle':  {o:3, t:'Cook the {n} to the packet time, then rinse them under cold water so they stop cooking.'},
+    'carb:dumpling':{o:3, t:'Boil the {n} until they float, then crisp them in a hot pan with a little fat.'},
+    'carb:griddle': {o:3, t:'Make up the {n} and cook in a medium pan — bubbles across the surface before you turn them.'},
+    'carb:tortilla':{o:5, t:'Warm the {n} through in a dry pan, 20 seconds a side, just before you eat.'},
+    'carb:bread':   {o:5, t:'Toast the {n} hard. Soft toast collapses under anything you put on it.'},
+    'carb:bun':     {o:5, t:'Split and toast the {n} cut-side down.'},
+    'carb:subroll': {o:5, t:'Split and toast the {n} cut-side down.'},
+    'carb:pastry':  {o:5, t:'Warm the {n} through — a few minutes in a low oven beats a microwave.'},
+    'carb:chips':   {o:6, t:'Keep the {n} in the bag until you eat, or it goes soft.'},
+    'carb:granola': {o:6, t:'Add the {n} last so it stays crunchy — pack it separately if this is for later in the week.'},
+    'carb:cereal':  {o:6, t:'Add the {n} last so it stays crunchy — pack it separately if this is for later in the week.'},
+    'carb:syrup':   {o:6, t:'Stir the {n} in at the end, off the heat, and taste before adding more.'},
+    'carb:banana':  {o:7, t:'Slice the {n} in fresh when you eat; it browns and weeps if it sits.'},
+    'carb:bar':     {o:7, t:'The {n} needs nothing — it is there to round the day out.'},
+
+    // ---- protein
+    'protein:chickencut':  {o:2, t:'Season the {n} and cook it right through: 6–8 minutes a side in a hot pan, or 20–25 minutes at 200C/400F. 74C/165F in the thickest part.'},
+    'protein:turkeycut':   {o:2, t:'Season the {n} and cook it right through — 74C/165F in the middle. It dries out fast past that.'},
+    'protein:poultrycut':  {o:2, t:'Season the {n} and roast it until the juices run clear.'},
+    'protein:groundbeef':  {o:2, t:'Brown the {n} in a dry hot pan, breaking it up as it goes, until no pink is left. Pour off the fat if there is much.'},
+    'protein:groundpoultry':{o:2,t:'Brown the {n} in a hot pan, breaking it up. It gives up water first — keep going until that has cooked away and it starts to colour.'},
+    'protein:beefcut':     {o:2, t:'Dry the {n} on paper towel, sear it hard on both sides, then rest it five minutes before slicing across the grain.'},
+    'protein:porkcut':     {o:2, t:'Sear the {n} on both sides, then finish it in the oven to 63C/145F and rest it.'},
+    'protein:organ':       {o:2, t:'Cook the {n} fast and hot, and stop while it is still pink inside.'},
+    'protein:soy':         {o:2, t:'Press the {n} dry, cut it into cubes and sear it until the edges are firm before anything wet goes near it.'},
+    'protein:lentils':     {o:2, t:'Simmer the {n} until tender — 20–25 minutes — and salt them at the end.'},
+    'protein:beans':       {o:2, t:'Simmer the {n} until tender. Canned only need warming through.'},
+    'protein:sausage':     {o:3, t:'Cook the {n} through over medium heat, turning it so it colours evenly rather than splitting.'},
+    'protein:curedpork':   {o:3, t:'Cook the {n} in a cold pan brought up slowly, so the fat renders instead of burning.'},
+    'protein:curedpoultry':{o:3, t:'Cook the {n} over medium heat until it crisps at the edges.'},
+    'protein:salmon':      {o:3, t:'Cook the {n} skin-side down for 4–5 minutes, then a minute on the flesh side. It is done when it just flakes.'},
+    'protein:oilyfish':    {o:3, t:'Cook the {n} hot and briefly — it is done the moment it flakes.'},
+    'protein:whitefish':   {o:3, t:'Cook the {n} 3–4 minutes a side in a hot pan. It flakes when it is ready and turns to cotton if you go further.'},
+    'protein:tuna':        {o:3, t:'If the {n} is a fresh steak, sear it a minute a side and leave it red in the middle. If it is canned, drain it and keep it cold.'},
+    'protein:shellfish2':  {o:3, t:'Cook the {n} about two minutes a side. Any longer and it turns rubbery.'},
+    'protein:egg':         {o:4, t:'Cook the {n} however you like them. For a prep, bake them in a muffin tin at 180C/350F for 18–22 minutes — they reheat far better than fried.'},
+    'protein:grillcheese': {o:4, t:'Dry the {n} and sear it in a hot dry pan until it colours — it holds its shape rather than melting.'},
+    'protein:powder':      {o:7, t:'Stir the {n} in off the heat and away from anything boiling, or it goes grainy.'},
+    'protein:yogurt':      {o:7, t:'The {n} is served cold. Keep it out of the pan and stir it smooth before it goes on.'},
+    'protein:cottage':     {o:7, t:'The {n} goes on cold, at the end.'},
+    'protein:dairyliquid': {o:7, t:'The {n} goes in cold, at the end.'},
+    'protein:jerky':       {o:7, t:'The {n} needs no cooking.'},
+    'protein:roe':         {o:7, t:'The {n} is served cold and untouched by heat.'},
+
+    // ---- fat
+    'fat:oil':       {o:1, t:'Cook in the {n} — enough to coat the pan, no more.'},
+    'fat:butter':    {o:1, t:'Cook in the {n}, over a lower heat than you would use for oil so it does not brown.'},
+    'fat:nuts':      {o:6, t:'Scatter the {n} over at the end. Toast them dry for a minute first if you have the pan free.'},
+    'fat:seeds':     {o:6, t:'Scatter the {n} over at the end.'},
+    'fat:nutbutter': {o:6, t:'Stir or drizzle the {n} in at the end; warm it 10 seconds if it is fridge-cold.'},
+    'fat:avocado':   {o:6, t:'Cut the {n} in fresh when you eat, not when you cook.'},
+    'fat:cream':     {o:6, t:'Fold the {n} through off the heat so it does not split.'},
+    'fat:mayo':      {o:6, t:'Spread or fold the {n} in cold, at the end.'},
+    'fat:olives':    {o:6, t:'Add the {n} at the end — they are seasoning as much as fat.'},
+    'fat:pestofat':  {o:6, t:'Stir the {n} through off the heat; cooking it dulls the flavour.'},
+    'fat:egg':       {o:6, t:'Stir the {n} in off the heat, or they scramble.'},
+  };
+
+  /* Cheese behaves the same whichever cheese it is. */
+  ['cheddar','mozzarella','swiss','softcheese','hardcheese','jackcheese','feta','bluecheese',
+   'freshcheese','goatcheese','processedcheese','shredblend','spreadcheese','stringcheese'
+  ].forEach(fam=>{
+    GENERIC_METHOD['protein:' + fam] =
+      {o:6, t:'Add the {n} at the end and let the heat off the food melt it.'};
+  });
+
+  /* Anything whose family has no entry still gets told what to do. */
+  const GENERIC_SLOT = {
+    protein: {o:2, t:'Cook the {n} through.'},
+    carb:    {o:3, t:'Cook the {n} to the packet instructions.'},
+    fat:     {o:6, t:'Add the {n} at the end.'},
+    sauce:   {o:6, t:'Stir the {n} through at the end, or spoon it over on the plate.'},
+    fruit:   {o:7, t:'Add the {n} fresh, when you eat.'},
+  };
+
+  function methodFoodByKey(key){
+    for (const slot of Object.keys(FOODS)){
+      const f = (FOODS[slot] || []).find(x => x.key === key);
+      if (f) return f;
+    }
+    return null;
+  }
+  /* "Chicken Breast, skin-on (raw)" reads badly mid-sentence. */
+  function methodFoodName(f){
+    return f.name.replace(/\s*\([^)]*\)/g, '').replace(/,.*$/, '').trim();
+  }
+  function methodList(words){
+    if (words.length <= 1) return words[0] || '';
+    return words.slice(0, -1).join(', ') + ' and ' + words[words.length - 1];
+  }
+
+  /* A method written from what is actually on the plate, for the dishes that
+     have no usable one of their own. */
+  function generalMethod(sel){
+    if (!sel) return [];
+    const steps = [], seen = {};
+    const push = (o, t) => { if (t && !seen[t]){ seen[t] = 1; steps.push({o:o, t:t}); } };
+
+    ['fat','protein','carb','sauce','fruit'].forEach(slot=>{
+      (sel[slot] || []).forEach(key=>{
+        if (!key) return;
+        const f = methodFoodByKey(key);
+        if (!f) return;
+        const fam = FAMILY[key];
+        const rule = GENERIC_METHOD[slot + ':' + fam] || GENERIC_METHOD[fam] || GENERIC_SLOT[slot];
+        if (rule) push(rule.o, rule.t.replace('{n}', methodFoodName(f)));
+      });
+    });
+
+    /* Vegetables are one job, not one job each. */
+    const veg = (sel.veg || []).filter(Boolean).map(methodFoodByKey).filter(Boolean);
+    if (veg.length){
+      push(4, 'Roast the ' + methodList(veg.map(methodFoodName)) +
+        ' at 220C/425F for 20–25 minutes, or steam until just tender. They should keep some bite — they get a second cooking when you reheat.');
+    }
+
+    /* The point of the whole exercise: the seasonings on the shopping list
+       have somewhere to go. They go on before the heat where there is any,
+       which is why this sits ahead of the cooking rather than after it. */
+    /* Asked before the seasoning line is added, because that line sits early
+       in the order and would otherwise count itself as cooking. */
+    const anythingCooks = steps.some(s => s.o <= 4);
+    if ((sel.season || []).length){
+      const hotProtein = (sel.protein || []).map(methodFoodByKey).filter(Boolean)
+        .filter(f => { const r = GENERIC_METHOD['protein:' + FAMILY[f.key]]; return r && r.o <= 4; })[0];
+      push(1.5, 'Season with ' + methodList(sel.season.slice()) + '. ' +
+        (hotProtein
+          ? 'Most of it goes on the ' + methodFoodName(hotProtein) + ' before it meets the heat; taste again at the end.'
+          : anythingCooks
+            ? 'Put it on before the heat rather than after; taste again at the end.'
+            : 'Nothing here is cooked, so stir it through and taste as you go.'));
+    }
+
+    if (!steps.length) return [];
+    steps.sort((a, b) => a.o - b.o);
+    const out = steps.map(s => s.t);
+    out.push(anythingCooks
+      ? 'Portion it out and let it cool before the lids go on. It keeps three to four days in the fridge.'
+      : 'Nothing here meets heat, so keep it cold and covered and build it the day you eat it.');
+    return out;
+  }
+
   RECIPES.forEach(r=>{ if (!r.steps && RECIPE_STEPS[r.name]) r.steps = RECIPE_STEPS[r.name]; });
 

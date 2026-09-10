@@ -224,6 +224,17 @@
             servings: jobs.reduce((n,j)=> n + j.servings, 0)};
   }
 
+  /* The shopping list buys seasonings for a prep and nothing ever said which
+     dish they belonged to, so they arrived in the kitchen with no home. Every
+     method now names its own. */
+  function seasonStepHtml(sel){
+    const list = (sel && sel.season || []).filter(Boolean);
+    if (!list.length) return '';
+    return '<div class="season-hint"><svg class="px" aria-hidden="true"><use href="#i-season"></use></svg>' +
+      ' Season with: <strong class="n-amber">' + list.map(escapeHtml).join(' · ') +
+      '</strong> — to taste, not weighed.</div>';
+  }
+
   function renderCookPlan(){
     const host = document.getElementById('cookPlanBody');
     const plan = cookPlan();
@@ -291,22 +302,34 @@
       <div class="slot-label" style="margin-bottom:6px;"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> METHODS IN ORDER</div>
       ${plan.jobs.map((j, i)=>{
         const hasSteps = !!(j.recipe && j.recipe.steps && j.recipe.steps.length);
-        if (!hasSteps){
-          return `<div class="cook-meta">${i+1}. ${escapeHtml(j.name)} — no written method; it's an assembly job.</div>`;
-        }
         /* Computed against the plate, so it holds even when _improvised was
            never set by whichever path last edited this dish. */
-        const drift = dishDiverged(j.recipe, j.sel);
+        const drift = hasSteps ? dishDiverged(j.recipe, j.sel) : {score:0};
         /* Badly adrift — or flagged adrift — and the written method is about a
            different dish. Printing it is how a prep of bacon and sourdough ends
-           up telling someone to cook grits. Show what is on the plate instead. */
-        if (j.improvised || drift.score >= 2){
-          return `<div class="cook-meta">${i+1}. ${escapeHtml(j.name)} — no written method.
-            This plate was rebuilt, so the original recipe's steps describe different food.
-            ${escapeHtml(dishIngredients(j.sel).map(x=>x.name).join(', '))}</div>`;
+           up telling someone to cook grits. Cook what is on the plate instead.
+
+           Saying so and stopping there was no better: nearly every plate in a
+           prep is rebuilt from the shopping list, so almost every dish came
+           back reading "no written method" and nothing else. A method written
+           from the ingredients themselves is generic, but it is cooking. */
+        if (!hasSteps || j.improvised || drift.score >= 2){
+          const made = generalMethod(j.sel);
+          const why = hasSteps
+            ? 'built from your ingredients, because this plate was rebuilt and the original recipe\'s steps describe different food'
+            : 'built from your ingredients — this plate does not follow a set recipe';
+          if (!made.length){
+            return `<div class="cook-meta">${i+1}. ${escapeHtml(j.name)} — nothing here needs cooking.
+              ${escapeHtml(dishIngredients(j.sel).map(x=>x.name).join(', '))}</div>`;
+          }
+          return `<details class="rsteps"><summary>${i+1}. ${escapeHtml(j.name)} — ${made.length} steps, general method</summary>
+               <div class="mc-uses"><strong>${escapeHtml(why.charAt(0).toUpperCase() + why.slice(1))}.</strong></div>
+               <ol>${made.map(st=>`<li>${escapeHtml(st)}</li>`).join('')}</ol>
+             </details>`;
         }
         return `<details class="rsteps"><summary>${i+1}. ${escapeHtml(j.name)} — ${j.recipe.steps.length} steps</summary>
              ${methodNotesHtml(j.recipe, j.sel)}
+             ${seasonStepHtml(j.sel)}
              <ol>${j.recipe.steps.map(st=>`<li>${escapeHtml(st)}</li>`).join('')}</ol>
            </details>`;
       }).join('')}

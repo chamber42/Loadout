@@ -1861,7 +1861,9 @@
     /* If the dish had to be improvised around a dietary filter, don't keep
        calling it by its original name — "Protein Pasta Primavera" made with
        a bagel is a lie. Fall back to a plain description of the plate. */
-    if (recipe) sel.dish = sel._improvised ? plainTitle(sel) : dishTitle(recipe, sel);
+    /* A plate built without a template got no name at all, which is how a
+       prep ends up with an unnamed row and a seasoning nobody can place. */
+    sel.dish = (recipe && !sel._improvised) ? dishTitle(recipe, sel) : plainTitle(sel);
     sel.season = seasoningFor(recipe);
     return sel;
   }
@@ -2153,6 +2155,10 @@
       <div style="font-size:9px; color:var(--muted); margin-bottom:10px;">
         Served ${servedOnText(rec.days, totalDays)} · ~${Math.round(tg.kcal*meal.share)} kcal per serving</div>
       ${rows}
+      ${(sel.season || []).filter(Boolean).length ? `<div class="season-hint" style="margin-top:6px;">${
+        ic('season')} Season with: <strong class="n-amber">${
+        (sel.season || []).filter(Boolean).map(escapeHtml).join(' · ')
+      }</strong> — to taste, not weighed.</div>` : ''}
       ${brandHint(rec.mealKey)}
     `;
     return card;
