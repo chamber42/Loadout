@@ -939,9 +939,17 @@
     return true;
   }
 
-  function centreJournalStripSoon(){
+  /* One retry used to be enough: showScreen() ran synchronously right after
+     renderJournal(), so by the next frame the strip was laid out. A view
+     transition defers that swap by however long the browser needs to
+     snapshot the outgoing screen, which can be more than a frame — and a
+     miss here leaves the strip pinned to the left of a three-week range.
+     Keep asking for a few frames, and stop as soon as it measures. */
+  function centreJournalStripSoon(tries){
     if (centreJournalStrip()) return;
-    requestAnimationFrame(function(){ centreJournalStrip(); });
+    const left = tries === undefined ? 6 : tries;
+    if (left <= 0) return;
+    requestAnimationFrame(function(){ centreJournalStripSoon(left - 1); });
   }
 
   (function(){

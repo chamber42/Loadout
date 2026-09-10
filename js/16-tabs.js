@@ -157,7 +157,7 @@
   const PANTRY_FROM = {'screen-shop':'SHOPPING LIST', 'screen-cravings':'CRAVINGS',
                        'screen-journal':'JOURNAL'};
 
-  function showScreen(id){
+  function swapScreen(id){
     if (id === 'screen-pantry'){
       const from = document.querySelector('.screen.active');
       const label = from && PANTRY_FROM[from.id];
@@ -187,7 +187,41 @@
     document.getElementById('hud').classList.toggle('show', onLoadout);
     document.body.classList.toggle('hud-on', onLoadout);
     refreshTabs(id);
-    window.scrollTo({top:0, behavior:'smooth'});
+    /* Instant, not smooth. The old page is already gone by the time this
+       runs, so there is nothing left to scroll away from — a smooth scroll
+       just drags the arriving page under its own fade. */
+    window.scrollTo(0, 0);
+  }
+
+  /* One screen is shown at a time, so a switch has always been a cut: the
+     outgoing page is display:none before the incoming one paints, and the
+     arrival animation plays into the gap left behind. A view transition
+     snapshots the outgoing screen first, so the two actually cross instead
+     of one following the other.
+
+     Where the API is missing the swap happens exactly as it did before and
+     the .active animation still covers the arrival, so this is an
+     improvement where it lands and nothing anywhere else.
+
+     The attract screen keeps its own hand-made fade to black and is left
+     alone — two dissolves over each other is worse than either. */
+  /* Declared once, not toggled per navigation. A class that comes and goes
+     around each transition looked tidier and was wrong: removing it puts
+     the arrival animation back, and changing animation-name from none to
+     fadeUp restarts it — so every screen crossfaded in and then faded up a
+     second time. Where the crossfade exists it is the whole arrival, so
+     fadeUp stands down for good and the stylesheet can say so plainly. */
+  const canCrossfade = typeof document.startViewTransition === 'function';
+  if (canCrossfade) document.documentElement.classList.add('vt');
+
+  function showScreen(id){
+    /* The attract screen dissolves to black under its own steam; two
+       dissolves over each other is worse than either. */
+    const bespoke = id === 'screen-attract' ||
+      document.body.classList.contains('attract-auto');
+    if (!canCrossfade || bespoke){ swapScreen(id); return; }
+    try { document.startViewTransition(()=> swapScreen(id)); }
+    catch (e){ swapScreen(id); }
   }
 
   document.getElementById('tabBar').addEventListener('click', (e)=>{

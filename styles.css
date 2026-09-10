@@ -329,6 +329,38 @@
   .screen.active{ display:block; animation:fadeUp .4s ease both; }
   @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
 
+  /* ---- moving between screens ----
+     showScreen() runs the swap inside a view transition where the browser
+     supports one, which is what lets the page being left and the page being
+     arrived at overlap. The two halves are named old/new here and given the
+     same short rise fadeUp already uses, so a switch reads as one movement
+     rather than a cut followed by an entrance.
+
+     Where that is available the arrival animation stands down for good: the
+     crossfade already carries the arrival, and playing both compounds into a
+     stutter. The attract screen keeps fadeUp, because it is reached by the
+     one path that deliberately skips the transition. */
+  html.vt .screen.active:not(#screen-attract){ animation:none; }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root){
+    animation-duration:.26s;
+    animation-timing-function:cubic-bezier(.4,0,.2,1);
+    animation-fill-mode:both;
+  }
+  ::view-transition-old(root){ animation-name:navOut; }
+  ::view-transition-new(root){ animation-name:navIn; }
+  @keyframes navOut{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-6px);} }
+  @keyframes navIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+
+  /* The tab bar is fixed and belongs to no single page, so it must not be
+     dragged through the fade with the content behind it. Naming it takes it
+     out of the root snapshot; giving it no animation leaves it sitting
+     still, which is what a bar you are tapping should do. */
+  .tab-bar{ view-transition-name:tabbar; }
+  ::view-transition-old(tabbar),
+  ::view-transition-new(tabbar){ animation:none; mix-blend-mode:normal; }
+
   .eyebrow{ min-height:14px; display:flex; align-items:center;
     font-size:var(--fs-10); color:var(--cyan); letter-spacing:2px; margin-bottom:10px;
     display:flex; align-items:center; gap:8px;
@@ -386,6 +418,10 @@
   @media (prefers-reduced-motion: reduce){
     *, *::before, *::after{ animation-duration:.01ms!important; transition-duration:.01ms!important; }
     .screen.active{ animation:none; }
+    /* Nothing should move here, and the crossfade is the one animation that
+       does not come from a rule the blanket above can reach. */
+    ::view-transition-old(root),
+    ::view-transition-new(root){ animation:none; }
   }
   /* Controls keep a fixed height across themes — type size varies with the
      typeface's optical scale, but the boxes should not move. */
