@@ -1088,7 +1088,6 @@
       {key:"ranchdry",   name:"Ranch Seasoning",        kcal:280, protein:8,  carbs:50, fat:6,   serving:4,  level:"light", tags:["dairy"], crave:["savory","creamy"]},
       {key:"gingerfresh",name:"Fresh Ginger",           kcal:80,  protein:1.8,carbs:18, fat:0.8, serving:6,  level:"light", tags:[], crave:["spicy","fresh"]},
       /* ---- ADDED ---- */
-      {key:"smokedpap",  name:"Smoked Paprika",             kcal:282, protein:14,  carbs:54,  fat:13,  tags:["nightshade"], crave:["savory","grilled"]},
       {key:"chiliflake", name:"Crushed Red Pepper Flakes",  kcal:318, protein:12,  carbs:57,  fat:17,  tags:["nightshade"], crave:["spicy"]},
       {key:"bayleaf",    name:"Bay Leaves",                 kcal:313, protein:7.6, carbs:75,  fat:8.4, tags:[], crave:["savory","warmbowl"]},
       {key:"sage",       name:"Dried Sage",                 kcal:315, protein:11,  carbs:61,  fat:13,  tags:[], crave:["savory","comfort"]},

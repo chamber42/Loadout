@@ -433,7 +433,7 @@
     chiliseason:'herbs', coriander:'herbs', cumin:'herbs', fennelseed:'herbs',
     fivespice:'herbs', ginger:'herbs', mesquite:'herbs', mint:'herbs',
     mustardpwd:'herbs', oldbay:'herbs', poultryseason:'herbs', sage:'herbs',
-    smokedpap:'herbs', steakrub:'herbs', sumac:'herbs', tarragon:'herbs',
+    steakrub:'herbs', sumac:'herbs', tarragon:'herbs',
     whitepepper:'herbs', zaatar:'herbs', ranchdip:'herbs',
 
     /* --- last few one-offs that sit in no family at all --- */
