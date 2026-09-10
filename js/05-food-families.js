@@ -244,8 +244,23 @@
     tunasteak:"tuna",
     sardinesoil:"oilyfish",
     caviar:"roe",
+    /* Shellfish were half-filed: squid and snow crab had a family while
+       shrimp, scallops, mussels, lobster, oysters, clams, crab and calamari
+       had none at all, and a food with no family can never be reached by
+       substitution — it only ever appears where a recipe names it outright.
+       Same for the two small oily fish sitting outside their own shelf. */
     squid:"shellfish2",
     snowcrab:"shellfish2",
+    shrimp:"shellfish2",
+    scallops:"shellfish2",
+    crab:"shellfish2",
+    mussels:"shellfish2",
+    lobster:"shellfish2",
+    oysters:"shellfish2",
+    clams:"shellfish2",
+    calamari:"shellfish2",
+    sardines:"oilyfish",
+    anchovy:"oilyfish",
     eggbeater:"egg",
     quarkcheese:"cottage",
     labneh:"yogurt",
