@@ -80,9 +80,18 @@
     const hold = still ? 900 : 1700;
     document.body.classList.add('attract-auto');
     showScreen('screen-attract');
+    /* Started now, not at the end of the hold, so the fetch runs alongside
+       the power-on rather than after it. */
+    const fonts = themeFontsReady();
     setTimeout(function(){
       /* The set going off rather than a page turning: the picture fades on
-         black, then the sheet is simply there. */
+         black, then the sheet is simply there — and "simply there" has to
+         mean finished. Anything still resolving as the picture goes is the
+         thing you notice, so the fade does not start until the faces the
+         sheet is set in are in hand. They have had the whole hold to
+         arrive, so this waits for nothing on a warm start and is capped
+         either way. */
+      settledWithin(fonts, 600).then(function(){
       document.body.classList.add('attract-out');
       setTimeout(function(){
         document.body.classList.remove('attract-auto', 'attract-out');
@@ -93,5 +102,6 @@
            where it lands on the sheet rather than over the title. */
         if (typeof showDisclaimerIfNeeded === 'function') showDisclaimerIfNeeded();
       }, still ? 0 : 300);
+      });
     }, hold);
   }
