@@ -228,8 +228,16 @@
        arriving screen: the splash appearing a second time for a quarter of
        a second, at the end of a sequence that had just faded it out. */
     const from = document.querySelector('.screen.active');
+    /* A modal covers the page, so nobody can see the screen being left.
+       Crossfading it is not a transition anybody watches — it is a stale
+       screen being revealed the moment the modal comes down, which is how
+       "redo the meal prep" managed to show the prep you were replacing.
+       Callers that navigate out of a modal change the screen first and
+       close it after, so this is the state that reaches here. */
+    const covered = !!document.querySelector('.modal-wrap:not([hidden])');
     const bespoke = id === 'screen-attract' ||
       (from && from.id === 'screen-attract') ||
+      covered ||
       document.body.classList.contains('attract-auto');
     /* Told per swap, not declared once for the whole browser. Standing the
        rise down everywhere was wrong for exactly the paths that skip the

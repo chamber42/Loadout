@@ -554,7 +554,7 @@
         <button class="btn-primary" id="rpGoRoadmap" style="margin-top:14px;">GO TO THE LOADOUT</button>`;
       openModal('modalRecipePlace');
       document.getElementById('rpGoRoadmap').addEventListener('click', ()=>{
-        closeModal('modalRecipePlace'); goTab('prep');
+        goTab('prep'); closeModal('modalRecipePlace');
       });
       return;
     }
@@ -580,9 +580,9 @@
     openModal('modalRecipePlace');
     host.querySelectorAll('[data-rpslot]').forEach(b=>b.addEventListener('click', ()=>{
       placeRecipeOnMeal(recipe, b.getAttribute('data-rpslot'));
-      closeModal('modalRecipePlace');
       renderEatenPanel(); renderMealTimeline(); refreshTargets();
       showScreen('screen-loadout');
+      closeModal('modalRecipePlace');
     }));
   }
 

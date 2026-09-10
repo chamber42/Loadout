@@ -145,11 +145,14 @@
     const slots = journalSlots() || [];
     const slotName = (slots[mi] || {}).name || (MEALS[mi] ? MEALS[mi].name : 'MEAL');
     state.journalDate = todayKey();
-    closeModal('modalPrepDay');
+    /* Everything the journal is going to show is built while the modal is
+       still over it, so the modal comes down onto a finished screen rather
+       than onto one that then fills itself in. */
     renderPrepDays();
     goTab('today');
     renderJournal();
     journalAddRow(slotName);
+    closeModal('modalPrepDay');
     toast('Serving kept in the fridge — log what you actually ate', 'burger');
     saveState();
   }
@@ -447,10 +450,10 @@
       toast('Day ' + (dayIdx+1) + ' and day ' + (other+1) + ' swapped', 'swap');
     }));
     document.getElementById('pdEditDay').addEventListener('click', ()=>{
-      closeModal('modalPrepDay');
       applyDayToSelections(dayIdx + 1);
       renderEatenPanel(); renderMealTimeline(); refreshTargets();
       showScreen('screen-loadout');
+      closeModal('modalPrepDay');
     });
     document.getElementById('pdLogDay').addEventListener('click', ()=>{
       logPrepDayToJournal(dayIdx);

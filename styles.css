@@ -359,8 +359,14 @@
      out of the root snapshot; giving it no animation leaves it sitting
      still, which is what a bar you are tapping should do. */
   .tab-bar{ view-transition-name:tabbar; }
-  ::view-transition-old(tabbar),
-  ::view-transition-new(tabbar){ animation:none; mix-blend-mode:normal; }
+  /* Only the arriving copy is drawn. Giving both halves animation:none left
+     both at full opacity for the length of a transition, so there were two
+     tab bars stacked — and two sets of key shadows, which showed up under
+     the buttons and vanished a quarter of a second later. Naming the bar
+     keeps it out of the page fade; this keeps it from being doubled. */
+  ::view-transition-group(tabbar){ animation:none; }
+  ::view-transition-old(tabbar){ animation:none; opacity:0; }
+  ::view-transition-new(tabbar){ animation:none; opacity:1; mix-blend-mode:normal; }
 
   .eyebrow{ min-height:14px; display:flex; align-items:center;
     font-size:var(--fs-10); color:var(--cyan); letter-spacing:2px; margin-bottom:10px;

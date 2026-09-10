@@ -778,10 +778,10 @@
   })();
 
   document.getElementById('sysRecreate').addEventListener('click', ()=>{
-    closeModal('modalSystem'); showScreen('screen-onboard');
+    showScreen('screen-onboard'); closeModal('modalSystem');
   });
   document.getElementById('sysReprep').addEventListener('click', ()=>{
-    closeModal('modalSystem'); renderPrefs(); showScreen('screen-prefs');
+    renderPrefs(); showScreen('screen-prefs'); closeModal('modalSystem');
   });
   document.getElementById('sysReset').addEventListener('click', (e)=>{
     const btn = e.currentTarget;
