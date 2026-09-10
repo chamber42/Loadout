@@ -454,8 +454,13 @@
       }));
       return;
     }
+    /* Say when a filter is the reason, exactly as the loadout picker does.
+       Somebody who has switched on Vegetarian has hidden 142 foods and every
+       meat among them, and being told the library simply does not know what
+       beef is sends them looking for the wrong fault. */
     if (!items.length){
-      host.innerHTML = `<div class="fav-nores">Nothing matches “${escapeHtml(query)}”.
+      host.innerHTML = `<div class="fav-nores">Nothing matches “${escapeHtml(query)}”${
+        state.preferences.length ? ' within your dietary filters' : ''}.
         You can still enter it by hand below.</div>`;
       return;
     }
