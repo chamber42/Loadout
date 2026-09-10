@@ -54,7 +54,7 @@ function rig(){
   /* Everything above is declared with const, which lives in the context's
      lexical scope rather than on the context object — hand it out. */
   vm.runInContext(
-    'globalThis.api = {RECIPES, FAMILY, GROUP, recipeOptions, allowedFamilies};', ctx);
+    'globalThis.api = {RECIPES, FAMILY, GROUP, recipeOptions, promiseFor};', ctx);
   return ctx.api;
 }
 
@@ -70,11 +70,15 @@ module.exports = () => suite('a dish is made of what its name says', t => {
   t.check('but no longer reaches a croissant', !oatmeal.includes('croissant'), oatmeal);
   t.check('nor a buttermilk biscuit', !oatmeal.includes('biscuit'), oatmeal);
 
-  t.section('what the template lists by hand always stays');
-  t.check('the flapjack mix the recipe asks for is still allowed',
-    oatmeal.includes('kodiakmix'), oatmeal);
-  t.check('but it brings none of its own siblings with it',
-    !oatmeal.includes('pancakemix'), oatmeal);
+  t.section('the flapjack mix that opened the door is shut out with it');
+  /* "{F} Baked Oatmeal" has no {C} to rename itself with, so the carb is
+     bound outright: the mix goes, and so does everything it could reach. */
+  t.check('the flapjack mix itself is no longer an option',
+    !oatmeal.includes('kodiakmix'), oatmeal);
+  t.check('nor is anything else off its shelf',
+    !oatmeal.includes('pancakemix') && !oatmeal.includes('waffle'), oatmeal);
+  t.check('and the dish still has oats enough to be built',
+    oatmeal.filter(function(k){ return /oat|muesli|steelcut/.test(k); }).length >= 3, oatmeal);
 
   t.section('a promise the dish cannot keep is not applied');
   /* "Rice Cakes" is built out of rice cakes, which are filed with the
@@ -87,9 +91,23 @@ module.exports = () => suite('a dish is made of what its name says', t => {
     !stack.includes('rice') && !stack.includes('basmati'), stack);
 
   t.section('a title that promises nothing keeps its full range');
-  const open = app.allowedFamilies({name:'x', pattern:'{P} with {C}', carb:['rice','oats']}, 'carb');
-  t.check('both listed families stay reachable',
-    open.has('rice') && open.has('oats'), [...open]);
+  t.check('a pattern of nothing but placeholders binds no slot',
+    app.promiseFor({name:'x', pattern:'{P} with {C}', carb:['rice','oats']}, 'carb') === null);
+
+  t.section('a placeholder binds the siblings but not the template');
+  /* "{P} & Eggs" renames itself after whatever protein is chosen, so the
+     steak stays — but the eggs in the title stop it reaching the rest of
+     the beef shelf, which is where the venison came from. */
+  const steak = app.recipeOptions(dish('Steak & Eggs'), 'protein');
+  t.check('the steak the template lists is still allowed', steak.includes('steak'), steak);
+  t.check('and no longer drags venison in with it', !steak.includes('venison'), steak);
+
+  t.section('a slot named outright is bound completely');
+  /* "Three-Bean Chili" has no {P} to rename itself with, so the soy curls
+     its template also lists cannot stand in for the beans. */
+  const chili = app.recipeOptions(dish('Three-Bean Chili'), 'protein');
+  t.check('the beans stay', chili.includes('kidneycan'), chili);
+  t.check('the soy curls do not', !chili.includes('tvp') && !chili.includes('veganground'), chili);
 
   t.section('the family map keeps batter and pastry apart');
   t.check('a flapjack mix is not a croissant',

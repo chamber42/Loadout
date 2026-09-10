@@ -510,75 +510,135 @@
   /* ---------------------------------------------------------
      NAME PROMISES
      The words a template hard-codes into its title are a promise about what
-     turns up on the plate: "Baked Oatmeal" says oats, "Fish Tacos" says a
-     tortilla. Family expansion cannot read the title, so a Baked Oatmeal
+     turns up on the plate: "Baked Oatmeal" says oats, "Chia Pudding" says
+     chia. The ingredient picker cannot read the title, so a Baked Oatmeal
      that lists a flapjack mix among its oats was free to reach the rest of
-     that mix's family and came out as a croissant, yogurt and peanuts with
-     no oat anywhere in it.
+     that mix's family and came out as a croissant, greek yogurt and peanuts
+     with no oat anywhere in it.
 
-     A promised word narrows expansion to the families that honour it. Two
-     rules keep this from starving a dish: whatever the template lists by
-     hand always survives, and a promise none of the listed ingredients can
-     keep is treated as not applying here — so "Rice Cakes", built from rice
-     cakes rather than rice, still expands among rice cakes.
+     A promised word holds its slot to the ingredients that keep the promise.
+     Three rules keep this honest without starving a dish:
+
+       - A placeholder is a weaker promise than a literal word. "{P}
+         Fajitas" takes the name of whatever protein is chosen, so venison
+         there reads "Venison Fajitas" and the card is still true — the
+         template's own list stands, and only the siblings expansion would
+         have reached are held back. A slot named outright is bound
+         completely: "Three-Bean Chili" gets beans, not the soy curls its
+         template also lists.
+       - A promise none of the dish's own ingredients can keep does not
+         apply, so "Rice Cakes", built from rice cakes rather than rice,
+         still expands among the crackers.
+       - A promise never empties a slot, because it is only ever applied
+         when at least one listed ingredient survives it.
   --------------------------------------------------------- */
   const NAME_PROMISES = (()=>{
     const table = {};
-    const promise = (slot, families, words) => words.split(' ').forEach(w=>{
-      (table[w] = table[w] || {})[slot] = families;
+    const add = (slot, kind, values, words) => words.split(' ').forEach(w=>{
+      const at = (table[w] = table[w] || {});
+      const p = (at[slot] = at[slot] || {fams:[], keys:[]});
+      p[kind] = p[kind].concat(values);
     });
+    /* families, when a whole shelf keeps the promise */
+    const fams = (slot, values, words) => add(slot, 'fams', values, words);
+    /* exact foods, where the family is too broad — the seeds hold chia and
+       flaxseed both, and a Chia Pudding is not a flaxseed pudding */
+    const keys = (slot, values, words) => add(slot, 'keys', values, words);
 
-    promise('carb', ['oats'], 'oat oats oatmeal porridge');
-    promise('carb', ['rice'], 'rice bibimbap jambalaya poke sushi risotto');
-    promise('carb', ['pasta'], 'pasta bolognese carbonara alfredo primavera scampi ' +
-                               'stroganoff ziti lasagna parm parmesan mac macaroni cincinnati');
-    promise('carb', ['noodle','pasta'], 'noodle noodles ramen pho udon soba');
-    promise('carb', ['bread','bun','subroll'],
-                    'toast toastie sandwich sub hoagie hero club blt reuben melt burger ' +
-                    'cheeseburger joes cuban patty cheesesteak banh mi gyro souvlaki ' +
-                    'shawarma rye biscuit dip');
-    promise('carb', ['tortilla','bread'], 'taco tacos burrito quesadilla wrap wraps fajitas');
-    promise('carb', ['chips'], 'nachos');
-    promise('carb', ['griddle'], 'pancake pancakes waffle waffles');
-    promise('carb', ['potato'], 'potato potatoes fries');
-    promise('carb', ['grain'], 'quinoa couscous bulgur farro');
-    promise('carb', ['dumpling'], 'pierogi dumplings');
-    promise('carb', ['granola','oats','cereal'], 'parfait granola muesli');
+    fams('carb', ['oats'], 'oat oats oatmeal porridge');
+    fams('carb', ['rice'], 'rice bibimbap jambalaya poke sushi risotto katsu korma');
+    fams('carb', ['pasta'], 'pasta bolognese carbonara alfredo primavera scampi ' +
+                            'stroganoff ziti lasagna parm parmesan cincinnati');
+    /* "Mac" is a shape, not just any pasta — lasagna sheets are not mac */
+    keys('carb', ['macaroni','promacaroni','cavatappi','shellpasta','penne','rigatoni'],
+                 'mac macaroni');
+    fams('carb', ['noodle','pasta'], 'noodle noodles');
+    keys('carb', ['pho'], 'pho');
+    keys('carb', ['ramen'], 'ramen');
+    fams('carb', ['bread','bun','subroll'],
+                 'toast toastie sandwich sub hoagie hero club blt reuben melt burger ' +
+                 'cheeseburger joes cuban patty cheesesteak rye biscuit dip');
+    fams('carb', ['bread','tortilla'], 'banh mi gyro souvlaki shawarma');
+    fams('carb', ['tortilla','bread'], 'taco tacos burrito quesadilla wrap wraps fajitas');
+    fams('carb', ['chips'], 'nachos');
+    fams('carb', ['griddle','oats'], 'pancake pancakes waffle waffles');
+    fams('carb', ['potato'], 'potato potatoes fries');
+    fams('carb', ['dumpling'], 'pierogi dumplings');
+    fams('carb', ['granola','oats','cereal'], 'parfait granola muesli');
+    keys('carb', ['quinoa'], 'quinoa');
+    keys('carb', ['couscous','couscousprl'], 'couscous');
 
-    promise('protein', ['egg'], 'egg eggs huevos shakshuka frittata omelette scramble scrambled');
-    promise('protein', ['chickencut','groundpoultry','curedpoultry'], 'chicken');
-    promise('protein', ['turkeycut','groundpoultry'], 'turkey');
-    promise('protein', ['beefcut','groundbeef'], 'beef steak bulgogi birria carne cheesesteak');
-    promise('protein', ['salmon'], 'salmon');
-    promise('protein', ['tuna'], 'tuna');
-    promise('protein', ['soy'], 'tofu tempeh edamame');
-    promise('protein', ['yogurt'], 'yogurt greek skyr');
-    promise('protein', ['cottage'], 'cottage');
-    promise('protein', ['sausage'], 'sausage bratwurst kielbasa chorizo');
-    promise('protein', ['beans'], 'falafel');
+    fams('protein', ['egg'], 'egg eggs huevos shakshuka frittata omelette scramble scrambled');
+    fams('protein', ['chickencut','groundpoultry','curedpoultry'], 'chicken');
+    fams('protein', ['turkeycut','groundpoultry'], 'turkey');
+    fams('protein', ['beefcut','groundbeef'], 'beef steak bulgogi birria carne cheesesteak');
+    fams('protein', ['salmon'], 'salmon');
+    fams('protein', ['tuna'], 'tuna');
+    keys('protein', ['tofu','tofusilken'], 'tofu');
+    keys('protein', ['tempeh'], 'tempeh');
+    keys('protein', ['edamame'], 'edamame');
+    fams('protein', ['yogurt'], 'yogurt greek skyr');
+    fams('protein', ['cottage'], 'cottage');
+    fams('protein', ['cheddar'], 'cheddar');
+    fams('protein', ['mozzarella'], 'caprese mozzarella');
+    fams('protein', ['sausage'], 'sausage bratwurst kielbasa chorizo');
+    fams('protein', ['beans'], 'bean beans falafel');
 
-    /* Fat is the slot a title almost never speaks for: "Pesto Pasta" says
-       where the pesto is, not that the olive oil beside it is wrong. Left
-       alone so those dishes keep their range. */
+    /* Fat has no placeholder of its own, so a fat word in a title always
+       binds. These are the two that name the fat outright. */
+    keys('fat', ['chia'], 'chia');
+    fams('fat', ['avocado'], 'avocado guacamole');
+    keys('fat', ['sesameseeds','sesameoil'], 'sesame');
+    fams('fat', ['nutbutter'], 'nut');
+    fams('fat', ['nuts','nutbutter','seeds'], 'trail');
+
+    keys('sauce', ['buffalo'], 'buffalo');
+    keys('sauce', ['gravy','gravywhite'], 'gravy');
+    keys('sauce', ['alfredo'], 'alfredo');
+    keys('sauce', ['pesto'], 'pesto');
+    keys('sauce', ['teriyaki'], 'teriyaki');
+    keys('sauce', ['tikka'], 'tikka masala');
+    keys('sauce', ['curry'], 'korma massaman');
+    keys('sauce', ['harissa'], 'harissa');
+    keys('sauce', ['jerk'], 'jerk');
+    keys('sauce', ['katsu'], 'katsu');
+    keys('sauce', ['caesar'], 'caesar');
+    keys('sauce', ['hummus'], 'hummus');
+    keys('sauce', ['honeymust'], 'mustard');
+    keys('sauce', ['salsaverde'], 'verde');
+    keys('sauce', ['ranch','ranchlight','hpranch'], 'ranch');
+    keys('sauce', ['chipotle','chipotleyog'], 'chipotle');
+    keys('sauce', ['protqueso','nachocheese','queso'], 'queso');
 
     return table;
   })();
 
-  /* Which families expansion may reach for this slot. Normally every family
-     the template lists by hand; where the title promises a food, only the
-     listed families that keep the promise. */
-  function allowedFamilies(recipe, slot){
-    const listedFams = new Set();
-    (recipe[slot] || []).forEach(k=>{ if (FAMILY[k]) listedFams.add(FAMILY[k]); });
-    const words = ((recipe.pattern || '') + ' ' + (recipe.name || ''))
-      .replace(/\{[A-Za-z]\}/g, ' ').toLowerCase().match(/[a-z]+/g) || [];
-    const promised = new Set();
-    words.forEach(w=>{
-      const p = NAME_PROMISES[w];
-      if (!p || !p[slot]) return;
-      p[slot].forEach(fam=>{ if (listedFams.has(fam)) promised.add(fam); });
-    });
-    return promised.size ? promised : listedFams;
+  /* The placeholder each slot fills in the title. A slot whose placeholder
+     is in the pattern renames itself to whatever is chosen, so it can make
+     no promise to break. Fat has no placeholder — it is never named by the
+     pattern unless it is named outright. */
+  const SLOT_TOKEN = {protein:'{P}', carb:'{C}', veg:'{V}', fruit:'{F}', sauce:'{S}'};
+
+  /* What this slot is held to, or null when the title asks nothing of it.
+     `soft` marks a slot the title also renames through a placeholder: the
+     promise still governs what expansion may reach, but the template's own
+     list is left alone. */
+  function promiseFor(recipe, slot){
+    const pattern = recipe.pattern || '';
+    const fams = new Set(), keys = new Set();
+    (pattern.replace(/\{[A-Za-z]\}/g, ' ').toLowerCase().match(/[a-z]+/g) || [])
+      .forEach(w=>{
+        const p = NAME_PROMISES[w] && NAME_PROMISES[w][slot];
+        if (!p) return;
+        p.fams.forEach(f=>fams.add(f));
+        p.keys.forEach(k=>keys.add(k));
+      });
+    if (!fams.size && !keys.size) return null;
+    const keeps = k => keys.has(k) || fams.has(FAMILY[k]);
+    // nothing the dish itself lists can keep it, so it was never about this dish
+    if (!(recipe[slot] || []).some(keeps)) return null;
+    keeps.soft = !!(SLOT_TOKEN[slot] && pattern.indexOf(SLOT_TOKEN[slot]) >= 0);
+    return keeps;
   }
 
   const OPTION_CACHE = {};
@@ -586,22 +646,23 @@
     const cacheKey = recipe.name + '|' + slot;
     if (OPTION_CACHE[cacheKey]) return OPTION_CACHE[cacheKey];
     const listed = recipe[slot] || [];
-    const out = new Set(listed);
+    const keeps = promiseFor(recipe, slot);
+    const out = new Set(keeps && !keeps.soft ? listed.filter(keeps) : listed);
     // a defining ingredient isn't negotiable
     if (isSignature(recipe, slot)){
       const only = [...out];
       OPTION_CACHE[cacheKey] = only;
       return only;
     }
-    const allowed = allowedFamilies(recipe, slot);
     listed.forEach(k=>{
+      if (keeps && !keeps(k) && !keeps.soft) return;
       const base = listFor(slot).find(f=>f.key === k);
       if (!base) return;
       const fam = FAMILY[k];
-      // a listed ingredient the title rules out stays, but brings no siblings
-      if (!fam || !allowed.has(fam)) return;
+      if (!fam) return;
       listFor(slot).forEach(f=>{
         if (FAMILY[f.key] !== fam) return;
+        if (keeps && !keeps(f.key)) return;
         // a sibling has to be close in energy density, or a dish built for
         // lean chicken ends up carrying pork belly
         const ratio = base.kcal > 0 ? f.kcal / base.kcal : 1;
@@ -1435,7 +1496,10 @@
       if (opts.length) sel.fruit.push(opts[Math.floor(Math.random()*opts.length)].key);
     }
     const sauceKeys = recipe ? recipeOptions(recipe, 'sauce') : [];
-    const sauceCore = isCore(recipe, 'sauce');
+    /* A title that names its sauce — "Harissa Chicken", "Buffalo Chicken
+       Mac" — is making the same claim a core sauce makes, so it is plated
+       every time rather than on the usual coin toss. */
+    const sauceCore = isCore(recipe, 'sauce') || !!(recipe && promiseFor(recipe, 'sauce'));
     if (sauceKeys.length && (sauceCore || (role !== 'snack' && Math.random() < 0.7))){
       const base = sauceKeys.map(k=>FOODS.sauce.find(f=>f.key===k))
         .filter(f => f && passesPrefs(f) && !isDisliked(f)
@@ -1458,6 +1522,35 @@
         opts = [base.slice().sort((a,b)=>a.kcal - b.kcal)[0]];
       }
       if (opts.length) sel.sauce.push(opts[Math.floor(Math.random()*opts.length)].key);
+    }
+
+    /* A title that names a food for a slot it also renames is describing two
+       things in one bowl: "{P} & Eggs" is a steak AND eggs, "{P} Black Bean
+       Chili" is turkey AND beans. The placeholder takes the first protein,
+       so the name gets the second rather than going unserved — which is how
+       a Black Bean Chili turned up with no bean in it. */
+    const namedProtein = recipe && promiseFor(recipe, 'protein');
+    if (namedProtein && namedProtein.soft && sel.protein.length
+        && !sel.protein.some(k => namedProtein(k))){
+      const meatAlready = sel.protein.some(k=>{
+        const f = FOODS.protein.find(x=>x.key===k); return f && isMeat(f);
+      });
+      const opts = recipeOptions(recipe, 'protein').filter(namedProtein)
+        .map(k=>{
+          let f = FOODS.protein.find(x=>x.key===k);
+          if (f && isDisliked(f)) f = substituteFor('protein', k);
+          return f;
+        })
+        .filter(f => f && passesPrefs(f) && !isDisliked(f)
+          && !sel.protein.includes(f.key) && !familyClash(f, sel)
+          && mealAllowsFood(role, f) && fitsBudget('protein', f)
+          && !(f.powder && !POWDER_OK.includes(role))
+          && !(meatAlready && isMeat(f)));
+      if (opts.length){
+        const pick = randOf(opts);
+        if (!palette.protein.some(f=>f.key===pick.key)) palette.protein.push(pick);
+        sel.protein.push(pick.key);
+      }
     }
 
     /* A single protein that can't carry the meal — either because it needs
