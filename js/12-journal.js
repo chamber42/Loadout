@@ -320,6 +320,12 @@
     {slot:'veg',     icon:'veg', label:'VEGETABLES', list:()=>FOODS.veg},
     {slot:'fruit',   icon:'fruit', label:'FRUIT',      list:()=>FOODS.fruit},
     {slot:'sauce',   icon:'sauce', label:'SAUCES',     list:()=>FOODS.sauce},
+    /* Seasonings are not a portioned meal slot — the planner never sizes one
+       onto a plate, and the sauce picker deliberately doesn't offer them.
+       Logging is the other direction: salt, spices and blends were eaten,
+       some of them carry real calories, and until now the only way to record
+       one was to type its four numbers by hand. */
+    {slot:'season',  icon:'season', label:'SEASONINGS', list:()=>FOODS.season},
   ];
 
   /* Every food in one flat list, tagged with where it came from */
@@ -334,9 +340,16 @@
   }
 
   /* A sensible amount to open on: one unit for unit foods, otherwise the
-     portion the planner would have suggested. */
+     portion the planner would have suggested.
+
+     Seasonings go their own way. minPortion() sizes a portion from a slot's
+     calorie floor, and there is no such floor for a spice — nor should there
+     be, since nobody eats 45 kcal of cayenne. Each seasoning carries the
+     amount it is actually used in, which is the honest thing to open on;
+     the handful that don't get a pinch. */
   function defaultLogGrams(slot, food){
     if (food.unit) return food.unit.g * (food.unit.whole ? 1 : 1);
+    if (slot === 'season') return food.serving || 2;
     const m = minPortion(slot, food);
     return Math.max(10, Math.round(m / 5) * 5);
   }
@@ -530,7 +543,9 @@
         const s = unitStep(food) * unit.g;
         jfoodTarget.grams = Math.max(s, jfoodTarget.grams + dir * s);
       } else {
-        const s = jfoodTarget.grams >= 100 ? 10 : 5;
+        /* A seasoning is used by the gram — stepping 2g of sea salt to 7g
+           overshoots the whole range the food is ever eaten in. */
+        const s = slot === 'season' ? 1 : (jfoodTarget.grams >= 100 ? 10 : 5);
         jfoodTarget.grams = Math.max(0, jfoodTarget.grams + dir * s);
       }
       renderJournalFoodAmount();
