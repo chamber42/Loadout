@@ -908,6 +908,7 @@
       {key:"mangofroz",  name:"Frozen Mango",               kcal:60,  protein:0.8, carbs:15,  fat:0.4, tags:[], crave:["sweet","nocook"]},
       {key:"strawbfroz", name:"Frozen Strawberries",        kcal:35,  protein:0.7, carbs:8.5, fat:0.2, tags:[], crave:["sweet","nocook"]},
       {key:"mixberryfroz",name:"Frozen Mixed Berries",      kcal:50,  protein:0.9, carbs:12,  fat:0.4, tags:[], crave:["sweet","nocook"]},
+      {key:"blueberryfroz",name:"Frozen Blueberries",         kcal:51,  protein:0.4, carbs:12.2,fat:0.6, tags:[], crave:["sweet","nocook"]},
       {key:"cherryfroz", name:"Frozen Dark Cherries",       kcal:63,  protein:1.1, carbs:15.5,fat:0.2, tags:[], crave:["sweet","nocook"]},
       {key:"pineapplecan",name:"Pineapple in Juice (canned)",kcal:60, protein:0.4, carbs:15.7,fat:0.1, tags:[], crave:["sweet","nocook"]},
       {key:"peachcan",   name:"Peaches in Juice (canned)",  kcal:54,  protein:0.6, carbs:14,  fat:0.1, tags:[], crave:["sweet","nocook"]},

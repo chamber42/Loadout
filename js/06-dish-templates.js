@@ -1292,7 +1292,7 @@
        "Something sweet and something acidic in every mouthful is the whole idea."]},
     {name:"Frozen Berry Protein Sorbet", goals:["extreme_loss","loss","maintain"], season:["vanilla","monkfruit","mint"], pattern:"{F} Protein Sorbet", form:"Frozen", slots:["snack"], crave:["sweet","fresh","nocook","treat"],
      protein:["skyr","yogurt0","whey","cottage1","casein"], carb:["honey","agave","maple"], fat:["cacaonibs","pbpowder","darkchoc"],
-     fruit:["mixberryfroz","strawbfroz","cherryfroz","mangofroz"], veg:[], sauce:[],
+     fruit:["mixberryfroz","strawbfroz","blueberryfroz","cherryfroz","mangofroz"], veg:[], sauce:[],
      steps:[
        "Frozen fruit straight from the freezer. Thawed fruit gives you a smoothie, not a sorbet.",
        "Use a food processor rather than a blender if you have one — it handles the low liquid far better.",

@@ -394,7 +394,8 @@
     cashewcream:"nutbutter", seedmix:"seeds", redonion:"onion", roastedgarlic:"onion", tomatillo:"tomato",
     broccolirabe:"brassica", savoy:"cabbage", coleslawmix:"cabbage", microgreens:"leafygreen", mixveg:"peas",
     stirfryveg:"brassica", peasfroz:"peas", nopales:"leafygreen", mangofroz:"tropical", pineapplecan:"tropical",
-    strawbfroz:"berry", mixberryfroz:"berry", cherryfroz:"berry", peachcan:"peach", mandarincan:"orange",
+    strawbfroz:"berry", mixberryfroz:"berry", blueberryfroz:"berry", cherryfroz:"berry",
+    peachcan:"peach", mandarincan:"orange",
     oj:"orange", figsdried:"driedfruit", bananachips:"driedfruit",
   };
 

@@ -51,7 +51,7 @@
     lentils:30.5, blackbeans:24.9, chickpeas:17.4, splitpeas:25.5,
     oats:10.6, steelcut:10.1, quinoa:7.0, bulgur:12.5, farro:6.0, barley:15.6,
     chia:34.4, flaxseed:27.3, almonds:12.5, pistachios:10.6, pecans:9.6,
-    avocado:6.7, hassavo:6.7, raspberry:6.5, blackberry:5.3, dates:8.0,
+    avocado:6.7, hassavo:6.7, raspberry:6.5, blackberry:5.3, blueberryfroz:2.7, dates:8.0,
     prunes:7.1, popcorn:14.5, ricecakes:4.2, shirataki:3.0, caulirice:2.0,
     edamame:5.2, tempeh:5.0, tofu:0.9, seitan:0.6, hummus:6.0,
   };
