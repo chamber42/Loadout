@@ -20,7 +20,7 @@
     'assignedTierId','selectedTierId','preferences','cravings','mealCount',
     'favorites','discoveryMode','dislikes','eatingStyle','selections',
     'mealPlan','mealWeights','skipBreakfast','breakfastForDinner','breakfastAllDay',
-    'uniqueMeals','uniqueSnacks','prep','activeDay','portionOverrides','variety',
+    'uniqueMeals','uniqueSnacks','prep','prepDoneAsked','activeDay','portionOverrides','variety',
     'log','weights','healthWeights','journalMeals','calMode','calSel','calDate',
     'eaten','prepServings','pantry','cupboard','pantryUse','offCache','customFoods','importedRecipes'];
 

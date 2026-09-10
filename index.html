@@ -270,6 +270,22 @@
   </div>
 </div>
 
+<!-- Asked on the loadout screen the first time it is opened after the last
+     prepped day has passed. Answered once per prep; see 24-daily-loadout.js. -->
+<div class="modal-wrap" id="modalPrepDone" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="prepDoneTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="prepDoneTitle">PREP FINISHED</span>
+      <button class="modal-x" data-close="modalPrepDone" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body">
+      <p class="subtitle" style="margin-bottom:16px;">This meal prep has been completed. Would you like to reset and create a new one?</p>
+      <button class="btn-primary" id="prepDoneNew">START A NEW PREP</button>
+      <button class="btn-ghost" id="prepDoneKeep">KEEP THIS ONE</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-wrap" id="modalRecipePlace" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="recipePlaceTitle">
     <div class="modal-head">
@@ -711,6 +727,10 @@
          planning rather than a destination, so it is reached from the two
          screens where planning actually happens. -->
     <button class="btn-ghost" id="btnPrepRecipes"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> RECIPE BOOK</button>
+    <!-- The end of a prep comes round every few days, so starting the next
+         one belongs here with the other prep-wide actions rather than in the
+         System sheet behind the character screen. -->
+    <button class="btn-ghost" id="btnPrepNew"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> START A NEW PREP</button>
   </section>
 
   <section class="screen" id="screen-quest">

@@ -83,6 +83,33 @@
     return Math.max(0, n - offset);
   }
 
+  /* The prep has run its course: it had days, those days had dates, and the
+     last of them is behind us. Distinct from having no prep at all, and from
+     a prep that has not started yet — both of those are false here. */
+  function prepCycleDone(){
+    if (typeof prepReady !== 'function' || !prepReady()) return false;
+    return prepDaysLeft() === 0;
+  }
+
+  /* Identifies this particular prep. The offer to replace it is dismissed
+     against this, so it is asked once and stays dismissed — and building a
+     new prep re-arms it on its own, because the stamp changes. Nothing has
+     to be cleared. */
+  function prepStamp(){
+    const p = (typeof state !== 'undefined' && state.prep) || {};
+    return (p.startDate || '?') + ':' + ((p.schedule || []).length);
+  }
+
+  /* Whether to put the question up: the prep has finished its run, and this
+     particular prep has not been asked about yet. Separated from the showing
+     of it so the rule can be checked on its own — the failure it guards
+     against is being asked on every visit to the loadout screen, which is
+     the kind of thing that is only obvious once it is shipped. */
+  function prepOfferDue(asked){
+    if (!prepCycleDone()) return false;
+    return asked !== prepStamp();
+  }
+
   /* Stamps today onto a prep that has none.
 
      Called when a prep is built, and again on load for any prep saved

@@ -169,6 +169,56 @@
     saveState();
   }
 
+  /* ---------------------------------------------------------
+     WHEN THE PREP RUNS OUT
+
+     A prep is a fixed run of days, and the morning after the last one it is
+     simply over — the food is gone. Nothing said so, and the only way to
+     start another was the System sheet behind the character screen: a menu
+     you would otherwise only open to change a setting, three taps in. For
+     something that has to happen at the end of every prep, that is the
+     wrong place and the wrong number of taps.
+
+     So there are two ways now. The prep screen carries the action outright,
+     next to the rest of the prep-wide controls, whether the prep has run
+     out or not — starting over early is a legitimate thing to want. And the
+     loadout screen asks on the first visit after the last prepped day has
+     passed, which is the moment it actually matters.
+
+     Asked once. The dismissal is stored against this prep, so it does not
+     nag; a new prep changes the stamp and arms the question again for the
+     end of that one.
+  --------------------------------------------------------- */
+  function startNewPrep(){
+    if (typeof renderPrefs === 'function') renderPrefs();
+    showScreen('screen-prefs');
+  }
+
+  function maybeOfferNewPrep(){
+    if (typeof prepOfferDue !== 'function' || !prepOfferDue(state.prepDoneAsked)) return;
+    /* Marked as asked the moment it is shown, not when a button is pressed.
+       The question can also be dismissed by the close control, a tap on the
+       backdrop or Escape, and "asked once" has to mean once however it was
+       answered — otherwise a shrug turns into being asked every time the
+       loadout screen opens. */
+    if (typeof prepStamp === 'function') state.prepDoneAsked = prepStamp();
+    saveState();
+    if (typeof openModal === 'function') openModal('modalPrepDone');
+  }
+
+  (function(){
+    var neu = document.getElementById('prepDoneNew');
+    var keep = document.getElementById('prepDoneKeep');
+    var btn = document.getElementById('btnPrepNew');
+    /* Navigate first, close the modal after — a modal closing onto the
+       screen it is leaving is how a stale page gets shown for a moment. */
+    if (neu) neu.addEventListener('click', function(){
+      startNewPrep(); closeModal('modalPrepDone');
+    });
+    if (keep) keep.addEventListener('click', function(){ closeModal('modalPrepDone'); });
+    if (btn) btn.addEventListener('click', function(){ startNewPrep(); });
+  })();
+
   function currentTier(){
     return TIERS.find(t=>t.id === state.selectedTierId);
   }

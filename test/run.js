@@ -25,6 +25,7 @@ const SUITES = [
   './micronutrients.test.js',
   './screen-transitions.test.js',
   './tab-taps.test.js',
+  './prep-cycle.test.js',
 ];
 
 let passed = 0, failed = 0;

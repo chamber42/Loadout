@@ -191,6 +191,8 @@
        runs, so there is nothing left to scroll away from — a smooth scroll
        just drags the arriving page under its own fade. */
     window.scrollTo(0, 0);
+    /* Last, so the question lands on a screen that is already drawn. */
+    if (onLoadout && typeof maybeOfferNewPrep === 'function') maybeOfferNewPrep();
   }
 
   /* ---------------------------------------------------------

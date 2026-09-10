@@ -87,6 +87,7 @@
     uniqueMeals:null,   // distinct main dishes across the WHOLE prep
     uniqueSnacks:null,  // distinct snacks across the whole prep, counted apart
     prep:null,          // {days, mealKeys, snackKeys, meals[], snacks[], schedule[]}
+    prepDoneAsked:null, // the prep whose "this one is finished" offer was answered
     activeDay:1,        // which prepped day the loadout screen is editing
     portionOverrides:{},// mealKey -> slot -> index -> grams the person set by hand
     variety:{protein:2, carb:2, fat:2, veg:3},
