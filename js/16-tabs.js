@@ -293,6 +293,46 @@
     if (performance.now() - servedAt < 700) return;
     activateTab(e.target.closest('.tab'));
   });
+  /* ---------------------------------------------------------
+     THE BAR STANDS DOWN WHILE SOMETHING IS BEING TYPED INTO
+
+     iOS raises the keyboard by shrinking the visual viewport, but a
+     position:fixed element stays pinned to the LAYOUT viewport. So the tab
+     bar rides up the page instead of staying at the bottom of the screen,
+     and comes to rest on top of whatever content is there — measured on the
+     simulator at 68px of drift, and it lands squarely over other buttons.
+
+     This is not new and it is not something CSS can express: the same drift
+     reproduces on builds from well before the bar was ever touched. Closing
+     and reopening the app clears it, which is what makes it look
+     intermittent.
+
+     While a field has focus the bar is unreachable anyway — the keyboard is
+     over the top of it — so it stands down for the duration and comes back
+     when the field is left. Nothing floats, because there is nothing there
+     to float.
+  --------------------------------------------------------- */
+  function isTypingTarget(el){
+    if (!el) return false;
+    const tag = el.tagName;
+    if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if (tag !== 'INPUT') return false;
+    /* A checkbox or a file picker raises no keyboard and must not hide the
+       bar underneath somebody's thumb. */
+    return !/^(button|checkbox|radio|submit|reset|file|range|color)$/i.test(el.type || 'text');
+  }
+
+  document.addEventListener('focusin', (e)=>{
+    if (isTypingTarget(e.target)) document.body.classList.add('typing');
+  });
+  document.addEventListener('focusout', ()=>{
+    /* Next tick, so moving from one field straight to another does not
+       flash the bar back in between them. */
+    setTimeout(()=>{
+      if (!isTypingTarget(document.activeElement)) document.body.classList.remove('typing');
+    }, 80);
+  });
+
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=> showScreen(btn.getAttribute('data-back')));
   });

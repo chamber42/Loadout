@@ -508,6 +508,10 @@
             gap:1px; padding:calc(6px + var(--safe-top)) 4px 6px;
             background:var(--bg-1); border-bottom:1px solid var(--line); }
   .tab-bar[hidden]{ display:none; }
+  /* Out of the way while the keyboard is up — see the note in 16-tabs.js.
+     The keyboard covers the bar anyway, so nothing is lost, and a bar that
+     is not painted cannot drift up over the page. */
+  body.typing .tab-bar{ display:none; }
   .tab{ display:flex; flex-direction:column; align-items:center; gap:3px; padding:8px 1px;
         min-height:56px; background:transparent; border:0; border-radius:9px;
         color:var(--muted); cursor:pointer; overflow:hidden; }
