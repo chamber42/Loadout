@@ -343,6 +343,12 @@
      as it makes the swap. */
   .screen.active.no-rise{ animation:none; }
 
+  /* The snapshot sits in the top layer over the whole page while the
+     crossfade runs. It is a picture, not a surface: anything tapped during
+     those 260ms belongs to the button underneath it, and without this the
+     tab pressed just after a screen change did nothing at all. */
+  ::view-transition{ pointer-events:none; }
+
   ::view-transition-old(root),
   ::view-transition-new(root){
     animation-duration:.26s;

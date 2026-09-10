@@ -24,6 +24,7 @@ const SUITES = [
   './off-cache.test.js',
   './micronutrients.test.js',
   './screen-transitions.test.js',
+  './tab-taps.test.js',
 ];
 
 let passed = 0, failed = 0;

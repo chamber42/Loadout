@@ -249,8 +249,33 @@
     catch (e){ swapScreen(id, false); }
   }
 
-  document.getElementById('tabBar').addEventListener('click', (e)=>{
-    const b = e.target.closest('.tab');
+  /* ---------------------------------------------------------
+     TAPPING A TAB
+
+     A click was being dropped in two situations, and neither of them is
+     the tab bar's fault.
+
+     Straight after a screen change: a view transition puts a snapshot of
+     the page in the top layer for the length of the crossfade, and a tap
+     landing on that overlay never reaches the button underneath. So the
+     tab you pressed a fifth of a second after the last one did nothing.
+
+     And straight after a scroll: iOS spends the first touch stopping the
+     momentum rather than delivering it, so the click is never synthesised
+     at all. That one predates everything here and has nothing to do with
+     transitions — it is simply what the platform does.
+
+     A press and a release on the same tab, close together in space and
+     time, is a tap. Recognising it from the pointer events rather than
+     waiting for the click WebKit may or may not synthesise answers both:
+     pointerdown and pointerup arrive in either situation.
+
+     The click handler stays for the keyboard, where there are no pointer
+     events at all — guarded so a tap that has already been served does not
+     arrive twice. */
+  const tabBar = document.getElementById('tabBar');
+
+  function activateTab(b){
     if (!b) return;
     const name = b.getAttribute('data-tab');
     /* Reaching the journal from the tab bar always lands on today. Done here
@@ -258,6 +283,42 @@
        by calling goTab('today') directly, and that date has to survive. */
     if (name === 'today' && typeof resetJournalToToday === 'function') resetJournalToToday();
     goTab(name);
+  }
+
+  const TAP_SLOP = 12;      // px of drift still counted as a tap, not a drag
+  const TAP_TIME = 700;     // ms held before it stops being a tap
+
+  /* Whether a press and a release are the same tap: same tab, close in
+     space, close in time. Named rather than inlined so it can be checked
+     without a device — the thresholds are the whole behaviour, and getting
+     one wrong means either a scroll that fires a tab or a tap that does
+     not. */
+  function isTap(press, target, x, y, now){
+    return !!press && target === press.b &&
+      Math.abs(x - press.x) <= TAP_SLOP &&
+      Math.abs(y - press.y) <= TAP_SLOP &&
+      (now - press.t) <= TAP_TIME;
+  }
+
+  let pressed = null, servedAt = 0;
+
+  tabBar.addEventListener('pointerdown', (e)=>{
+    const b = e.target.closest('.tab');
+    pressed = b ? {b, x:e.clientX, y:e.clientY, t:performance.now()} : null;
+  });
+  tabBar.addEventListener('pointercancel', ()=>{ pressed = null; });
+  tabBar.addEventListener('pointerup', (e)=>{
+    const p = pressed; pressed = null;
+    if (!isTap(p, e.target.closest('.tab'), e.clientX, e.clientY, performance.now())) return;
+    servedAt = performance.now();
+    activateTab(p.b);
+  });
+  tabBar.addEventListener('click', (e)=>{
+    /* A click following a tap this just served is that same tap arriving a
+       second time; anything else is the keyboard, or a browser with no
+       pointer events, and has to work. */
+    if (performance.now() - servedAt < 700) return;
+    activateTab(e.target.closest('.tab'));
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=> showScreen(btn.getAttribute('data-back')));
