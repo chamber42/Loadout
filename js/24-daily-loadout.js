@@ -986,12 +986,39 @@
   const CENTREPIECE_KCAL  = 140;
   const CENTREPIECE_GRAMS = 100;   // raw weight
 
-  function minPortion(slot, food){
+  /* What one main sitting is worth, which is what the floors above are
+     written against. */
+  function mainSittingKcal(){
+    const m = (typeof MEALS !== 'undefined') ? MEALS.find(x => x.required) : null;
+    const tg = currentTargets();
+    return (m && tg && tg.kcal) ? tg.kcal * m.share : 0;
+  }
+
+  /* The floors are a main meal's floors: 140 kcal of carb is a sensible
+     smallest serving of rice on a dinner plate. A snack sitting is worth a
+     fraction of a main, and holding it to a main meal's floors is not strict,
+     it is impossible — 140 kcal of carb against a 214 kcal snack is more than
+     the sitting can afford once anything else is on it. Held to those floors,
+     every one of the 57 snack recipes was ruled out and every snack in every
+     prep came back improvised and unnamed.
+
+     So a floor scales with the sitting it is being served at. The gram floor
+     underneath it does not scale — below 20g of anything you are weighing
+     dust — and nothing scales past a main meal's floor. */
+  function floorScale(budgetKcal){
+    if (!budgetKcal) return 1;
+    const main = mainSittingKcal();
+    if (!main) return 1;
+    return Math.max(0.3, Math.min(1, budgetKcal / main));
+  }
+
+  function minPortion(slot, food, budgetKcal){
+    const scale = floorScale(budgetKcal);
     if (slot === 'protein' && isMeat(food)){
-      const byKcal = food.kcal > 0 ? (CENTREPIECE_KCAL / food.kcal) * 100 : 0;
-      return Math.max(byKcal, CENTREPIECE_GRAMS);
+      const byKcal = food.kcal > 0 ? (CENTREPIECE_KCAL * scale / food.kcal) * 100 : 0;
+      return Math.max(byKcal, CENTREPIECE_GRAMS * scale);
     }
-    const byKcal = food.kcal > 0 ? (MIN_KCAL[slot] / food.kcal) * 100 : 0;
+    const byKcal = food.kcal > 0 ? (MIN_KCAL[slot] * scale / food.kcal) * 100 : 0;
     return Math.max(byKcal, MIN_GRAMS[slot] || 0);
   }
 
@@ -1335,7 +1362,7 @@
         // a hard unit food (tortilla, slice of bread) is already at a sensible
         // whole portion — leave it fixed and let everything else flex around it
         if (food.unit && !food.unit.soft) return;
-        const floor = Math.max(minPortion(def.slot, food), floorAt(floors, def.slot, i));
+        const floor = Math.max(minPortion(def.slot, food, mealKcal), floorAt(floors, def.slot, i));
         items.push({slot:def.slot, i, food, g:grams[def.slot][i], floor});
       });
     });

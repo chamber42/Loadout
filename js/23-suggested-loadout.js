@@ -713,7 +713,7 @@
   function foodFitsBudget(slot, f, budgetKcal){
     if (!budgetKcal) return true;
     const room = budgetKcal * 0.55;
-    const min = minPortion(slot, f);
+    const min = minPortion(slot, f, budgetKcal);
     if (f.unit && !f.unit.soft)
       return (f.kcal * Math.max(f.unit.g * unitStep(f), min) / 100) <= room;
     const floor = slot === 'protein' ? (MIN_GRAMS[slot] || 0) : min;
@@ -1984,7 +1984,7 @@
         // a snack can't carry a whole bagel
         if (!m.required){
           const budget = currentTargets().kcal * m.share;
-          const min = minPortion(slot, food);
+          const min = minPortion(slot, food, budget);
           const g = (food.unit && !food.unit.soft) ? Math.max(food.unit.g * unitStep(food), min) : min;
           if (food.kcal * g / 100 > budget * 0.55) return;
         }
