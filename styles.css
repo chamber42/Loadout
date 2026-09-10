@@ -326,8 +326,20 @@
     margin:0 auto;
   }
   body.hud-on .screen{ padding-top:22px; }
-  .screen.active{ display:block; animation:fadeUp .4s ease both; }
-  @keyframes fadeUp{ from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
+  /* The arrival moves; it does not fade.
+
+     It used to ramp opacity from 0 over four tenths of a second, and on a
+     dark theme that does not read as fading in — it reads as the whole page
+     sitting in shadow before it lights up. The pages are light parchment on
+     a near-black ground, so any opacity below 1 is just black showing
+     through, and four tenths of a second is long enough to see it happen.
+     Caught on the horror theme's satchel, but it was every screen on every
+     dark theme.
+
+     A short rise says "this arrived" without ever putting a veil over it,
+     and it cannot go wrong on a theme of any brightness. */
+  .screen.active{ display:block; animation:screenIn .18s ease-out both; }
+  @keyframes screenIn{ from{transform:translateY(8px);} to{transform:none;} }
 
   /* Screens do not crossfade. A view transition made the whole page
      non-hit-testable for the length of it — see the note in 16-tabs.js —
