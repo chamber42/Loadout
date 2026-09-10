@@ -705,6 +705,7 @@
       if (!opts.some(f => mealAllowsFood(role, f))) return false;
       if (budgetKcal && !opts.some(f => foodFitsBudget(slot, f, budgetKcal) && mealAllowsFood(role, f))) return false;
     }
+
     return true;
   }
 
@@ -1564,6 +1565,13 @@
 
   /* Calories a snack actually has to play with — used to keep bulky
      whole-unit foods out of them. */
+  /* What the smallest main sitting has to play with. */
+  function mainKcal(){
+    const mains = MEALS.filter(m=>m.required);
+    if (!mains.length) return null;
+    return currentTargets().kcal * Math.min.apply(null, mains.map(m=>m.share));
+  }
+
   function snackKcal(){
     const snack = MEALS.find(m=>!m.required);
     return snack ? currentTargets().kcal * snack.share : null;
@@ -1633,12 +1641,26 @@
            for rice or tortillas — never a banana, however much of one the
            palette happens to hold. */
         const recipeKeys = recipe ? recipeOptions(recipe, slot) : null;
+        /* Some dishes cannot be built small: a sandwich needs two slices of
+           bread and a taco dish two tortillas, and the portion engine rightly
+           refuses to go under that. So the bread has to be one the sitting
+           can actually afford — five sittings on a 1260 kcal day is 133 kcal
+           a meal, and two slices of rye is 160 before anything goes in it. */
+        const sittingKcal = role === 'snack' ? snackKcal() : mainKcal();
+        const buildFits = f => {
+          if (slot !== 'carb' || !sittingKcal || !recipe) return true;
+          if (typeof buildUnitsFor !== 'function') return true;
+          const n = buildUnitsFor(f, recipe);
+          if (!n) return true;
+          return (f.kcal * n * f.unit.g / 100) <= sittingKcal * 0.75;
+        };
         let pool = palette[slot].filter(f =>
           !sel[slot].includes(f.key)
           && (!recipeKeys || recipeKeys.includes(f.key))
           && !familyClash(f, sel)
           && !(f.powder && !POWDER_OK.includes(role))
           && mealAllowsFood(role, f)
+          && buildFits(f)
           && fitsBudget(slot, f));
 
         if (slot === 'protein' && sel.protein.some(k=>{
@@ -1683,7 +1705,7 @@
             return f;
           }).find(f => f && passesPrefs(f) && !isDisliked(f)
             && !sel[slot].includes(f.key) && !familyClash(f, sel)
-            && mealAllowsFood(role, f) && fitsBudget(slot, f)
+            && mealAllowsFood(role, f) && buildFits(f) && fitsBudget(slot, f)
             && !(f.powder && !POWDER_OK.includes(role))
             && !(slot === 'protein' && isMeat(f) && sel.protein.some(k=>{
                  const p = FOODS.protein.find(x=>x.key===k); return p && isMeat(p); })));

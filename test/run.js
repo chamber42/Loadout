@@ -25,6 +25,7 @@ const SUITES = [
   './general-method.test.js',
   './method-extras.test.js',
   './snack-portions.test.js',
+  './unit-overshoot.test.js',
   './pantry.test.js',
   './off-cache.test.js',
   './micronutrients.test.js',

@@ -612,6 +612,15 @@
     snapToUnits(grams, sel, floors, isFixed);
     enforceMinimums(grams, sel, mealKcal, floors, isFixed, isMain);
     snapToUnits(grams, sel, floors, isFixed);
+    /* That last snap rounds portions up to whole units after the balance has
+       already landed on the target, and nothing checked the total afterwards
+       — which is how a sitting came back carrying two 12" tortillas and twice
+       the calories it was given. trimUnitOvershoot was written for exactly
+       this and never called. Shed a unit, then re-balance what is left so the
+       meal lands on its target rather than under it. */
+    if (trimUnitOvershoot(grams, sel, mealKcal, floors)){
+      enforceMinimums(grams, sel, mealKcal, floors, isFixed, isMain);
+    }
     /* A belt-and-braces re-assert. Snapping and the minimum-portion floor
        both skip pinned items now, so this should already be a no-op — it
        stays because "if you said one slice of bread, you get one slice of
@@ -1314,6 +1323,7 @@
   /* Rounding up to whole units can push a small meal over its calorie budget.
      Where a food has more than one unit, give one back. */
   function trimUnitOvershoot(grams, sel, mealKcal, floors){
+    let shed = false;
     for (let pass = 0; pass < 4; pass++){
       let total = 0;
       const unitItems = [];
@@ -1326,7 +1336,7 @@
           if (food.unit && !food.unit.soft) unitItems.push({def, i, food});
         });
       });
-      if (total <= mealKcal * 1.02 || !unitItems.length) return;
+      if (total <= mealKcal * 1.02 || !unitItems.length) return shed;
       // shed one step from whichever unit food costs the most per unit
       unitItems.sort((a,b) => b.food.kcal*b.food.unit.g - a.food.kcal*a.food.unit.g);
       let trimmed = false;
@@ -1338,11 +1348,12 @@
         const floorU = Math.ceil(floorAt(floors, it.def.slot, it.i) / step);
         if (units > Math.max(1, floorU)){
           grams[it.def.slot][it.i] = (units - 1) * step;
-          trimmed = true; break;
+          trimmed = true; shed = true; break;
         }
       }
-      if (!trimmed) return;
+      if (!trimmed) return shed;
     }
+    return shed;
   }
 
   function enforceMinimums(grams, sel, mealKcal, floors, isFixed, keepFat){
