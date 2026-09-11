@@ -4,7 +4,8 @@
   "description": "",
   "main": "icons.js",
   "scripts": {
-    "test": "node test/run.js"
+    "test": "node test/run.js",
+    "audit": "node tools/audit.js"
   },
   "repository": {
     "type": "git",
