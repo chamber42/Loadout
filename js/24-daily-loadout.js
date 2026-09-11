@@ -1434,9 +1434,19 @@
        still carrying two vegetables — and shows an empty fat row on the card
        with the oil still on the shopping list. Over 600 preps that was 66
        required meals served with no fat at all. */
+    /* A dish named after its fruit needs that fruit for the same reason a
+       Mac & Cheese needs the cheese sauce: "Apple Nachos" without the apple
+       is a bowl of nut butter. Dropping it first is how a snack card came
+       back reading "none available" about an apple nobody had ruled out. */
+    const namedFruit = (()=>{
+      const r = sel && sel._recipe ? RECIPES.find(x=>x.name === sel._recipe) : null;
+      return !!(r && !sel._improvised && typeof promiseFor === 'function'
+        && promiseFor(r, 'fruit'));
+    })();
     let DROP_ORDER = coreSauce
       ? ['fruit','veg','fat','sauce']
       : ['sauce','fruit','veg','fat'];
+    if (namedFruit) DROP_ORDER = DROP_ORDER.filter(sl => sl !== 'fruit').concat('fruit');
     /* On a main meal the fat is not an extra to be shed. A sitting too small
        to hold every floor shrinks them all together below — a 4g drizzle of
        oil is a poorer serving than none at all only if you are not counting

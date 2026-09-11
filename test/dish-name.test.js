@@ -109,6 +109,23 @@ module.exports = () => suite('a dish is made of what its name says', t => {
   t.check('the beans stay', chili.includes('kidneycan'), chili);
   t.check('the soy curls do not', !chili.includes('tvp') && !chili.includes('veganground'), chili);
 
+  t.section('a dish named after a fruit is bound to that fruit');
+  /* "Apple Nachos" is apple slices and a drizzle. Without the apple it is a
+     bowl of nut butter, and that is exactly how it was being served: the
+     fruit was chosen and then dropped first when the snack could not hold
+     everything, so the card read "none available" about an apple nothing
+     had ruled out. */
+  const apples = app.promiseFor(dish('Apple Nachos'), 'fruit');
+  t.check('the title binds the fruit slot', typeof apples === 'function');
+  t.check('and it is not merely a placeholder that renames itself',
+    apples && apples.soft !== true, apples && apples.soft);
+  t.check('an apple keeps it', apples && apples('honeycrisp') === true);
+  t.check('a banana does not', apples && apples('bananamed') === false);
+
+  t.section('a title that names no fruit binds nothing');
+  t.check('a chicken dinner leaves its fruit slot alone',
+    app.promiseFor({name:'x', pattern:'{P} with {C}', fruit:['bananamed']}, 'fruit') === null);
+
   t.section('the family map keeps batter and pastry apart');
   t.check('a flapjack mix is not a croissant',
     app.FAMILY.kodiakmix !== app.FAMILY.croissant);

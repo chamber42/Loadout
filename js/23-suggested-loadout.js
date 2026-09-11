@@ -592,6 +592,20 @@
     fams('fat', ['nutbutter'], 'nut');
     fams('fat', ['nuts','nutbutter','seeds'], 'trail');
 
+    /* A dish named after a fruit has to have it. "Apple Nachos" is apple
+       slices and a drizzle; without the apple it is a bowl of nut butter. */
+    fams('fruit', ['apple'], 'apple');
+    fams('fruit', ['banana'], 'banana');
+    fams('fruit', ['berry'], 'berry berries');
+    fams('fruit', ['berry'], 'strawberry blueberry raspberry blackberry');
+    fams('fruit', ['citrus','orange'], 'orange citrus lemon lime');
+    fams('fruit', ['tropical'], 'pineapple mango tropical');
+    fams('fruit', ['peach'], 'peach');
+    fams('fruit', ['pear'], 'pear');
+    fams('fruit', ['melon'], 'melon watermelon');
+    fams('fruit', ['grape'], 'grape grapes');
+    fams('fruit', ['driedfruit'], 'dates raisins');
+
     keys('sauce', ['buffalo'], 'buffalo');
     keys('sauce', ['gravy','gravywhite'], 'gravy');
     keys('sauce', ['alfredo'], 'alfredo');
