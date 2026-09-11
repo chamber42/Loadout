@@ -565,6 +565,11 @@
     fams('carb', ['potato'], 'potato potatoes fries');
     fams('carb', ['dumpling'], 'pierogi dumplings');
     fams('carb', ['granola','oats','cereal'], 'parfait granola muesli');
+    /* "Rice Cakes" is not the rice family and not just any cracker: the word
+       "rice" finds no rice on that dish, so the promise lapsed and the carb
+       was free to roam the whole chips shelf. A Blueberry Rice Cakes made of
+       tortilla chips is still a name that does not describe the plate. */
+    keys('carb', ['ricecakes'], 'cakes');
     keys('carb', ['quinoa'], 'quinoa');
     keys('carb', ['couscous','couscousprl'], 'couscous');
 

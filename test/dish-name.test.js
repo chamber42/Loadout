@@ -80,15 +80,20 @@ module.exports = () => suite('a dish is made of what its name says', t => {
   t.check('and the dish still has oats enough to be built',
     oatmeal.filter(function(k){ return /oat|muesli|steelcut/.test(k); }).length >= 3, oatmeal);
 
-  t.section('a promise the dish cannot keep is not applied');
-  /* "Rice Cakes" is built out of rice cakes, which are filed with the
-     crackers rather than with rice. Reading "rice" as a promise about the
-     grain would have left the dish expanding into basmati. */
+  t.section('"Rice Cakes" means rice cakes');
+  /* Rice cakes are filed with the crackers rather than with rice, so reading
+     "rice" as a promise about the grain found nothing on the dish and lapsed
+     — which left the carb free to roam the whole chips shelf, and a Blueberry
+     Rice Cakes made of tortilla chips. The word "cakes" binds it instead. */
   const stack = carbs('Rice Cake Stack');
-  t.check('rice cakes still reach the other crunchy things',
-    stack.includes('popcorn'), stack);
-  t.check('and never turn into a pot of rice',
-    !stack.includes('rice') && !stack.includes('basmati'), stack);
+  t.check('it is rice cakes and nothing else', stack.length === 1 && stack[0] === 'ricecakes', stack);
+  t.check('not a pot of rice', !stack.includes('rice') && !stack.includes('basmati'), stack);
+
+  t.section('a promise the dish cannot keep is not applied');
+  /* A title word that names nothing the template lists is not about this
+     dish, and must not empty the slot. */
+  t.check('a carb promise no listed carb can keep lapses',
+    app.promiseFor({name:'x', pattern:'Quinoa Something', carb:['oats']}, 'carb') === null);
 
   t.section('a title that promises nothing keeps its full range');
   t.check('a pattern of nothing but placeholders binds no slot',
