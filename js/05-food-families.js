@@ -23,7 +23,7 @@
     // sliced breads and rolls
     bread:"bread", sourdough:"bread", ezekiel:"bread", protbread:"bread",
     sandthin:"bread", bagel:"bread", protbagel:"bread",
-    engmuffin:"bread", pita:"bread", naan:"bread", pretzel:"bread",
+    engmuffin:"bread", pita:"bread", naan:"bread",
     ryebread:"bread", marblerye:"bread", whitebread:"bread", texastoast:"bread",
     /* A bun is not a slice of bread. Keeping them apart stops a burger
        recipe substituting its way into a pita, and stops the meal builder
@@ -296,6 +296,14 @@
     arepas:"bread",
     injera:"bread",
     cornbread:"bread",
+    /* A soft pretzel is a crunchy snack, not a bread you slice. Filed with
+       the loaves it stood in for them and turned up as "Soft Pretzel Toast"
+       and as the bread of a chicken salad sandwich; filed with the crackers
+       it became the base of a plate of nachos. Nothing is a soft pretzel but
+       a soft pretzel, so it substitutes for nothing and nothing substitutes
+       for it — the four recipes that want one ask for it by name, and a
+       sandwich has pretzelbun. */
+    pretzel:"pretzel",
     proteinchips:"chips",
     lentilchips:"chips",
     proteinoats:"oats",
