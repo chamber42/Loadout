@@ -729,6 +729,7 @@
   /* What that setting actually buys. A snack usually wants a different kind
      of carb from a dinner, so the list runs to one more than the number when
      there is a snack in the plan — said here rather than found out later. */
+  .no-room{ color:var(--muted); font-size:12px; font-style:italic; }
   .var-buys{ display:block; font-size:12px; color:var(--muted); white-space:nowrap; }
   /* A bundled document shown inside the app. Sized to the modal rather than
      its content because the policy is long and the card must not grow past

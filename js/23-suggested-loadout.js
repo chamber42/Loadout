@@ -2150,6 +2150,18 @@
         return `${tag}${food.name} <span style="color:var(--green)">${ul ? ul : g.toFixed(0)+'g'}</span>${ul ? ` <span style="color:var(--muted)">(${g.toFixed(0)}g)</span>` : ''}`;
       }).filter(Boolean);
       if (!parts.length){
+        /* Something is in the slot, it just could not be afforded today —
+           that is not the same as having none, and saying "none available"
+           about a fat the prep went out and bought reads as a fault in the
+           shopping rather than the truth about this day's calories. */
+        const held = (sel[def.slot] || []).filter(Boolean)
+          .map(k => (def.list().find(f=>f.key === k) || {}).name)
+          .filter(Boolean);
+        if (held.length){
+          rows += `<div style="font-size:11px; color:var(--muted); margin-bottom:4px;">${
+            ic(def.icon)} ${escapeHtml(held.join(' · '))} — no room on this day</div>`;
+          return;
+        }
         /* Saying "none available" about a slot the recipe never asked for
            reads as a fault. A charcuterie plate has no sauce because it is
            a charcuterie plate. Only flag a gap the dish actually wanted. */

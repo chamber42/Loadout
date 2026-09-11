@@ -1694,7 +1694,13 @@
      Names are escaped because a scanned product's name comes from Open Food
      Facts, which is to say from the public. */
   function slotReadoutHtml(mealKey, slot, i, food, g, isSet){
-    if (!food || g == null) return '';
+    if (!food) return '';
+    /* A side this day cannot afford is dropped rather than plated as a
+       sliver, which is right — but it was dropped in silence, leaving the
+       ingredient sitting in the slot with no amount against it and nothing
+       to say why. A prep is sized against the average of its days, so this
+       is what a rest day looks like when the sitting is small. */
+    if (g == null) return '<span class="no-room">no room on this day</span>';
     const ulab = unitLabel(food, g);
     return `→ <button class="amt-tap${isSet ? ' set' : ''}" data-amt-edit="${mealKey}|${slot}|${i}"
         aria-label="Change the amount of ${escapeHtml(food.name)}">${
