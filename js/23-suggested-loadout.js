@@ -1815,7 +1815,11 @@
        Chili" is turkey AND beans. The placeholder takes the first protein,
        so the name gets the second rather than going unserved — which is how
        a Black Bean Chili turned up with no bean in it. */
-    ['protein','veg'].forEach(slot=>{
+    /* A title can name two things in one slot: "{P} & Eggs" is a steak AND
+       eggs, "{C} & {P} Tacos" is a sweet potato AND the tortillas its method
+       tells you to char. The placeholder takes the first, so the name gets
+       the second rather than going unserved and unshopped-for. */
+    ['protein','carb','veg'].forEach(slot=>{
       const named = recipe && promiseFor(recipe, slot);
       if (!named || !named.soft) return;
       if (sel[slot].some(k => named(k))) return;
