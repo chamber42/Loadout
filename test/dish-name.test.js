@@ -127,6 +127,19 @@ module.exports = () => suite('a dish is made of what its name says', t => {
   t.check('an apple keeps it', apples && apples('honeycrisp') === true);
   t.check('a banana does not', apples && apples('bananamed') === false);
 
+  t.section('a vegetable in a title is present, not exclusive');
+  /* A Cabbage Stir-Fry arriving as snap peas, a Broccoli Cheddar Bake as
+     onion and shallot, Cucumber Boats with no cucumber: vegetables were the
+     one slot a title never bound at all. They bind softly, because a plate
+     takes more than one vegetable — the cabbage is required, the peppers
+     beside it are not wrong. */
+  const slaw = app.promiseFor(dish('Chicken & Cabbage Stir-Fry'), 'veg');
+  t.check('the cabbage is bound', typeof slaw === 'function');
+  t.check('softly, so the other vegetables stay', slaw && slaw.soft === true);
+  t.check('cabbage keeps it', slaw && slaw('cabbage') === true);
+  t.check('so does napa, which is a cabbage', slaw && slaw('napa') === true);
+  t.check('a carrot does not', slaw && slaw('carrots') === false);
+
   t.section('a title that names no fruit binds nothing');
   t.check('a chicken dinner leaves its fruit slot alone',
     app.promiseFor({name:'x', pattern:'{P} with {C}', fruit:['bananamed']}, 'fruit') === null);

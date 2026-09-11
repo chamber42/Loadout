@@ -573,6 +573,22 @@
     /* A sushi burrito is wrapped in nori. Without it the same rice and fish
        is a poke bowl, and the card was calling it a burrito. */
     keys('veg', ['seaweed'], 'sushi nori');
+
+    /* Vegetables named in a title were never bound at all, and they are the
+       worst slot in the app for it: a Cabbage Stir-Fry arriving as snap peas,
+       a Broccoli Cheddar Bake as onion and shallot, Cucumber Boats with no
+       cucumber. Veg promises are the softer kind — present, not exclusive —
+       so a Cabbage Bowl still gets its peppers alongside the cabbage. */
+    fams('veg', ['cabbage'], 'cabbage slaw coleslaw');
+    fams('veg', ['pepper','chilli'], 'pepper peppers chile chiles poblano jalapeno');
+    fams('veg', ['tomato'], 'tomato tomatoes');
+    fams('veg', ['lettuce'], 'lettuce romaine');
+    fams('veg', ['brassica'], 'brassica');
+    keys('veg', ['cucumber'], 'cucumber');
+    keys('veg', ['broccoli','broccoflorets','broccolini','broccolirabe','broccolislaw'], 'broccoli');
+    keys('veg', ['cauliflower','cauliflorets'], 'cauliflower');
+    /* "Cauliflower Fried Rice" is cauliflower rice, which lives in the carbs. */
+    keys('carb', ['caulirice'], 'cauliflower');
     keys('carb', ['quinoa'], 'quinoa');
     keys('carb', ['couscous','couscousprl'], 'couscous');
 
@@ -1801,8 +1817,11 @@
        a Black Bean Chili turned up with no bean in it. */
     ['protein','veg'].forEach(slot=>{
       const named = recipe && promiseFor(recipe, slot);
-      if (!named || !named.soft || !sel[slot].length) return;
+      if (!named || !named.soft) return;
       if (sel[slot].some(k => named(k))) return;
+      /* A snack is built with no vegetables at all, which is right until the
+         snack is called Cucumber Boats. An empty slot the title names still
+         gets the thing it is named after. */
       const meatAlready = slot === 'protein' && sel.protein.some(k=>{
         const f = FOODS.protein.find(x=>x.key===k); return f && isMeat(f);
       });

@@ -1434,19 +1434,23 @@
        still carrying two vegetables — and shows an empty fat row on the card
        with the oil still on the shopping list. Over 600 preps that was 66
        required meals served with no fat at all. */
-    /* A dish named after its fruit needs that fruit for the same reason a
-       Mac & Cheese needs the cheese sauce: "Apple Nachos" without the apple
-       is a bowl of nut butter. Dropping it first is how a snack card came
-       back reading "none available" about an apple nobody had ruled out. */
-    const namedFruit = (()=>{
+    /* Anything the dish is named after is not a garnish the sitting can shed.
+       "Apple Nachos" without the apple is a bowl of nut butter, a Cabbage
+       Stir-Fry without the cabbage is a stir-fry, and both were coming back
+       that way — the ingredient was chosen and then dropped here, leaving the
+       card reading "none available" about something nothing had ruled out.
+       The same rule a core sauce gets, applied to every slot a title names. */
+    const namedSlots = (()=>{
       const r = sel && sel._recipe ? RECIPES.find(x=>x.name === sel._recipe) : null;
-      return !!(r && !sel._improvised && typeof promiseFor === 'function'
-        && promiseFor(r, 'fruit'));
+      const out = {};
+      if (!r || sel._improvised || typeof promiseFor !== 'function') return out;
+      ['fruit','veg','sauce'].forEach(sl=>{ if (promiseFor(r, sl)) out[sl] = 1; });
+      return out;
     })();
     let DROP_ORDER = coreSauce
       ? ['fruit','veg','fat','sauce']
       : ['sauce','fruit','veg','fat'];
-    if (namedFruit) DROP_ORDER = DROP_ORDER.filter(sl => sl !== 'fruit').concat('fruit');
+    DROP_ORDER = DROP_ORDER.filter(sl => !namedSlots[sl]);
     /* A core sauce was made the last thing to go rather than the first,
        because "dropping it leaves the dish unrecognisable" — but last is
        still droppable, and on a small breakfast that is what happened:
