@@ -1560,6 +1560,15 @@
     'flaxseed','hemphearts','coconutflake','cacaonibs','darkchoc','halfhalf','creme','mascarpone','skyrfat',
     'spinach','babyspinach','mushrooms','cremini','peppers','roastedpeppers','onion','scallion',
     'tomatoes','cherrytom','zucchini','kale','arugula','poblano','jalapeno','sweetpotfries',
+    /* Sauces were left out of this list altogether, so no breakfast dish in
+       the app could ever carry one: huevos rancheros with no salsa, biscuits
+       and gravy with no gravy, a breakfast burrito with nothing on it. These
+       are the sauces the breakfast recipes themselves ask for. */
+    'hotsauce','sriracha','salsa','salsaverde','salsaroja','chipotle','chipotleyog',
+    'chipotlemayo','chilicrisp','ketchup','gravywhite','gravy','harissa','zhoug',
+    'hpranch','ranch','ranchlight','boomboom','dijon','mustard','honeymust','aioli',
+    'protcheddarsc','whitecheddarsc','cheesesauce','protqueso','nachocheese','quesoblanco',
+    'soy','balsamic','chimichurri','pesto','tzatziki','hummus','maple','honeysriracha',
   ]);
 
   /* Things that read as breakfast-only and look odd at dinner */

@@ -1582,7 +1582,10 @@
     {name:"Buffalo Chicken Mac", season:["cayenne","garlicpwd","ranchdry","blackpepper"], pattern:"Buffalo {P} Mac", form:"Bake", slots:["lunch","dinner"], crave:["spicy","comfort","creamy"],
      core:["sauce"],
      protein:["chicken","rotisserie","chickthigh","cheddarsharp","bluecheese"], carb:["macaroni","cavatappi","promacaroni","shellpasta","propasta"], fat:["butter","heavycream","oil"],
-     veg:["celery","scallion","onion","broccoli"], fruit:[], sauce:["protcheddarsc","whitecheddarsc","cheesesauce","buffalowing","mornay"],
+     /* A Buffalo Chicken Mac with no buffalo sauce anywhere on its list took
+        its heat from the cayenne alone. "buffalowing" is not a buffalo sauce
+        either, whatever the key suggests — it is Garlic Parmesan. */
+     veg:["celery","scallion","onion","broccoli"], fruit:[], sauce:["buffalo","protcheddarsc","whitecheddarsc","cheesesauce","mornay"],
      steps:[
        "Toss the shredded chicken in buffalo sauce and let it sit while you make the cheese sauce, so it actually absorbs some.",
        "Build the cheese sauce separately and stir a few spoons of buffalo sauce into it at the end — enough to turn it orange.",
