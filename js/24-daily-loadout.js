@@ -1447,6 +1447,13 @@
       ? ['fruit','veg','fat','sauce']
       : ['sauce','fruit','veg','fat'];
     if (namedFruit) DROP_ORDER = DROP_ORDER.filter(sl => sl !== 'fruit').concat('fruit');
+    /* A core sauce was made the last thing to go rather than the first,
+       because "dropping it leaves the dish unrecognisable" — but last is
+       still droppable, and on a small breakfast that is what happened:
+       Biscuits & Gravy served with no gravy. The sauce IS the dish on these,
+       so it does not come off at all. A sitting that still cannot fit
+       everything shrinks the floors together further down instead. */
+    if (coreSauce) DROP_ORDER = DROP_ORDER.filter(sl => sl !== 'sauce');
     /* On a main meal the fat is not an extra to be shed. A sitting too small
        to hold every floor shrinks them all together below — a 4g drizzle of
        oil is a poorer serving than none at all only if you are not counting
