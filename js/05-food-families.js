@@ -171,6 +171,17 @@
     mushrooms:"mushroom", shiitake:"mushroom", portobello:"mushroom",
     onion:"onion", pearlonion:"onion", scallion:"onion", leek:"onion", shallot:"onion",
     peas:"peas", snappeas:"peas", snowpeas:"peas", edamamepod:"peas",
+    /* Vegetables that had no family at all, which meant nothing could ever
+       stand in for them and they only turned up where a recipe named them.
+       All of these families are MIXABLE below, so grouping them lets one
+       swap for another without stopping two of them sharing a plate. */
+    asparagus:"greenstem", greenbeans:"greenstem", okra:"greenstem",
+    corn:"corn", cornfroz:"corn", babycorn:"corn",
+    celery:"crisp", cucumber:"crisp", fennel:"crisp",
+    artichoke:"thistle", artichokehearts:"thistle", heartsofpalm:"thistle",
+    sprouts:"crunchveg", waterchest:"crunchveg", bambooshoot:"crunchveg",
+    eggplant:"squash",
+    garlic:"aromatic", ginger:"aromatic",
     carrots:"root", parsnip:"root", turnip:"root", rutabaga:"root",
     beets:"root", daikon:"root", radish:"root", jicama:"root",
     /* Sauce families exist mainly so a recipe that calls for one cheese
@@ -405,6 +416,12 @@
        entries were quietly winning. */
     stuffingmix:"bread", pierogi:"dumpling", wontonwrap:"dumpling",
     mashedflake:"potato", instantoat:"oats", graham:"chips",
+    /* Gnocchi is potato and so is a plantain, near enough to stand in for one
+       on a plate; cauliflower gnocchi is already filed there. */
+    gnocchi:"potato", plantain:"potato",
+    /* Dark chocolate belongs with the other chocolate, and cacao nibs are
+       what it is made of. Coconut flakes scatter over a bowl like nuts. */
+    darkchoc:"bar", cacaonibs:"bar", coconutflake:"nuts",
     granolabar:"granola", condensed:"cream", agave:"syrup", mochi:"rice", riceballs:"rice",
     bagelchips:"chips", coconutcream:"cream", tallow:"oil", lard:"oil", mctoil:"oil",
     milkchoc:"bar", whitechoc:"bar", almondflour:"nuts", crema:"cream", walnutbutter:"nutbutter",
@@ -430,6 +447,11 @@
        a sandwich can have pickles AND tomato AND onion without any of them
        being "the veg". */
     "pickle",
+    /* The same reasoning for the families added above: asparagus and green
+       beans are interchangeable on a tray, and they are also perfectly happy
+       side by side on one. Garlic and ginger are aromatics rather than the
+       vegetable at all. */
+    "greenstem","corn","crisp","thistle","crunchveg","aromatic",
   ]);
 
   /* A layer above families. Nobody serves a tortilla next to a pita, or
