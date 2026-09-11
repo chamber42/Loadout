@@ -35,6 +35,10 @@
     /* Oven pastries and griddle cakes were one "pastry" family, which made a
        dry flapjack mix a legal stand-in for a croissant. A batter you cook is
        not a thing you unwrap, so they are kept apart. */
+    /* Dry cubed bread for stuffing, not a bread you can put anything on. No
+       recipe asks for it; filed with the loaves it arrived only ever as a
+       substitution, which is how a salad sandwich came to be built on it. */
+    stuffingmix:"stuffing",
     biscuit:"pastry", englishcrumpet:"pastry",
     // rice
     buckwheat:"grain", freekeh:"grain", bulgur:"grain", farro:"grain", barley:"grain",
@@ -414,7 +418,7 @@
        deliberately NOT filed as "bread" — see the bun/subroll families
        above. They were here, and being an object literal, these later
        entries were quietly winning. */
-    stuffingmix:"bread", pierogi:"dumpling", wontonwrap:"dumpling",
+    pierogi:"dumpling", wontonwrap:"dumpling",
     mashedflake:"potato", instantoat:"oats", graham:"chips",
     /* Gnocchi is potato and so is a plantain, near enough to stand in for one
        on a plate; cauliflower gnocchi is already filed there. */

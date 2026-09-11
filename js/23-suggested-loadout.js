@@ -570,6 +570,9 @@
        was free to roam the whole chips shelf. A Blueberry Rice Cakes made of
        tortilla chips is still a name that does not describe the plate. */
     keys('carb', ['ricecakes'], 'cakes');
+    /* A sushi burrito is wrapped in nori. Without it the same rice and fish
+       is a poke bowl, and the card was calling it a burrito. */
+    keys('veg', ['seaweed'], 'sushi nori');
     keys('carb', ['quinoa'], 'quinoa');
     keys('carb', ['couscous','couscousprl'], 'couscous');
 
@@ -621,7 +624,7 @@
     keys('sauce', ['harissa'], 'harissa');
     keys('sauce', ['jerk'], 'jerk');
     keys('sauce', ['katsu'], 'katsu');
-    keys('sauce', ['caesar'], 'caesar');
+    keys('sauce', ['caesar','caesarhp'], 'caesar');   // the high-protein one is still caesar
     keys('sauce', ['hummus'], 'hummus');
     keys('sauce', ['honeymust'], 'mustard');
     keys('sauce', ['salsaverde'], 'verde');
@@ -656,7 +659,11 @@
     const keeps = k => keys.has(k) || fams.has(FAMILY[k]);
     // nothing the dish itself lists can keep it, so it was never about this dish
     if (!(recipe[slot] || []).some(keeps)) return null;
-    keeps.soft = !!(SLOT_TOKEN[slot] && pattern.indexOf(SLOT_TOKEN[slot]) >= 0);
+    /* A plate takes more than one vegetable, so naming one cannot mean the
+       others are wrong: "Sushi Burrito" wants nori AND cucumber. Veg is
+       therefore always the softer kind of promise — present, not exclusive. */
+    keeps.soft = slot === 'veg'
+      || !!(SLOT_TOKEN[slot] && pattern.indexOf(SLOT_TOKEN[slot]) >= 0);
     return keeps;
   }
 
@@ -1792,29 +1799,30 @@
        Chili" is turkey AND beans. The placeholder takes the first protein,
        so the name gets the second rather than going unserved — which is how
        a Black Bean Chili turned up with no bean in it. */
-    const namedProtein = recipe && promiseFor(recipe, 'protein');
-    if (namedProtein && namedProtein.soft && sel.protein.length
-        && !sel.protein.some(k => namedProtein(k))){
-      const meatAlready = sel.protein.some(k=>{
+    ['protein','veg'].forEach(slot=>{
+      const named = recipe && promiseFor(recipe, slot);
+      if (!named || !named.soft || !sel[slot].length) return;
+      if (sel[slot].some(k => named(k))) return;
+      const meatAlready = slot === 'protein' && sel.protein.some(k=>{
         const f = FOODS.protein.find(x=>x.key===k); return f && isMeat(f);
       });
-      const opts = recipeOptions(recipe, 'protein').filter(namedProtein)
+      const opts = recipeOptions(recipe, slot).filter(named)
         .map(k=>{
-          let f = FOODS.protein.find(x=>x.key===k);
-          if (f && isDisliked(f)) f = substituteFor('protein', k);
+          let f = listFor(slot).find(x=>x.key===k);
+          if (f && isDisliked(f)) f = substituteFor(slot, k);
           return f;
         })
         .filter(f => f && passesPrefs(f) && !isDisliked(f)
-          && !sel.protein.includes(f.key) && !familyClash(f, sel)
-          && mealAllowsFood(role, f) && fitsBudget('protein', f)
+          && !sel[slot].includes(f.key) && !familyClash(f, sel)
+          && mealAllowsFood(role, f) && fitsBudget(slot, f)
           && !(f.powder && !POWDER_OK.includes(role))
           && !(meatAlready && isMeat(f)));
       if (opts.length){
         const pick = randOf(opts);
-        if (!palette.protein.some(f=>f.key===pick.key)) palette.protein.push(pick);
-        sel.protein.push(pick.key);
+        if (!palette[slot].some(f=>f.key===pick.key)) palette[slot].push(pick);
+        sel[slot].push(pick.key);
       }
-    }
+    });
 
     /* A single protein that can't carry the meal — either because it needs
        an absurd portion or because it charges too much per gram — gets a
