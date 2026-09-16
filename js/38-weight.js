@@ -294,10 +294,27 @@
     const per = Math.abs(rate);
     if (per < 0.1) return state.goal === 'maintain' ? 'On target.' : 'Not moving yet.';
     const losing = rate < 0;
-    if (state.goal === 'maintain') return 'Drifting.';
-    const wantsLoss = state.goal === 'loss' || state.goal === 'extreme_loss';
-    if (wantsLoss !== losing) return 'Going the wrong way.';
+    const dir = goalDef(state.goal).dir;
+    if (dir === 0) return 'Drifting.';
+    if ((dir < 0) !== losing) return 'Going the wrong way.';
     return 'On target.';
+  }
+
+  /* Once the trend reaches the goal weight, the goal has done its job:
+     carrying on at a cutting deficit past it is a plan nobody chose. The
+     trend rather than the latest reading, so one dry morning on the scale
+     cannot end a cut early. Returns whether it switched. */
+  function checkGoalReached(){
+    if (typeof state === 'undefined' || state.mode !== 'calc') return false;
+    if (!(state.goalWeight > 0)) return false;
+    const dir = goalDef(state.goal).dir;
+    if (!dir) return false;
+    const now = trendWeightNow();
+    if (now == null) return false;
+    if (dir < 0 ? now > state.goalWeight : now < state.goalWeight) return false;
+    state.goal = 'maintain';
+    if (typeof toast === 'function') toast('Goal weight reached. Switched to Maintain.', 'flag');
+    return true;
   }
 
   function renderWeightPanel(){
@@ -354,6 +371,7 @@
         const v = (typeof storeWeight === 'function') ? storeWeight(typed) : typed;
         if (input.value === ''){ forgetWeight(todayKey()); }
         else if (!recordWeight(v)) return;
+        checkGoalReached();
         if (typeof syncTargets === 'function') syncTargets();
         if (typeof assignTier === 'function') assignTier();
         if (typeof saveState === 'function') saveState();
@@ -392,5 +410,6 @@
   window.trendWeightNow    = trendWeightNow;
   window.weightRatePerWeek = weightRatePerWeek;
   window.recordWeight      = recordWeight;
+  window.checkGoalReached  = checkGoalReached;
   window.seedWeightHistory = seedWeightHistory;
   window.renderWeightPanel = renderWeightPanel;

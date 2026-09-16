@@ -82,6 +82,7 @@
           var newest = series[series.length - 1];
           if (newest.lb > 0 && newest.lb !== state.bodyweight){
             state.bodyweight = newest.lb;
+            if (typeof checkGoalReached === 'function') checkGoalReached();
             if (typeof syncTargets === 'function') syncTargets();
             if (typeof assignTier === 'function') assignTier();
           }

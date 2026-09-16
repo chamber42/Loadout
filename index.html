@@ -576,11 +576,12 @@
     <!-- CALCULATOR -->
     <div class="panel" id="calcPanel" style="display:none;">
       <label class="field-label">GOAL</label>
-      <div class="choice-grid" id="goalGrid">
-        <button class="choice-btn" data-goal="extreme_loss"><span><strong>Cut Hard</strong><span class="desc">−1000 kcal/day (<span class="wk-rate" data-lbwk="2"></span>)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-fire"></use></svg></span></button>
-        <button class="choice-btn" data-goal="loss"><span><strong>Fat Loss</strong><span class="desc">−500 kcal/day (<span class="wk-rate" data-lbwk="1"></span>)</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-sword"></use></svg></span></button>
-        <button class="choice-btn" data-goal="maintain"><span><strong>Maintain</strong><span class="desc">Hold current weight</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-shield"></use></svg></span></button>
-        <button class="choice-btn" data-goal="gain"><span><strong>Bulk</strong><span class="desc">+300 kcal/day</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-muscle"></use></svg></span></button>
+      <div class="choice-grid" id="goalGrid"></div>
+
+      <div id="goalWeightRow" hidden>
+        <label class="field-label" id="goalWeightLabel">GOAL WEIGHT — OPTIONAL</label>
+        <input type="number" id="goalWeightInput" placeholder="e.g. 185" inputmode="decimal" min="70" max="500">
+        <p class="subtitle" id="goalEta" style="font-size:10px; margin:8px 0 0;"></p>
       </div>
 
       <label class="field-label" style="margin-top:18px;">DAILY LIFE — NOT YOUR WORKOUTS</label>

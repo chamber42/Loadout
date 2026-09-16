@@ -120,7 +120,18 @@
     });
   }
   wireSingleSelect(goalGrid, 'data-goal', 'goal');
-  goalGrid.addEventListener('click', ()=>{ syncExerciseKcal(); renderExerciseOptions(); });
+  goalGrid.addEventListener('click', (e)=>{
+    if (!e.target.closest('.choice-btn')) return;
+    syncExerciseKcal(); renderExerciseOptions(); renderGoalGrid();
+  });
+
+  const goalWeightInput = document.getElementById('goalWeightInput');
+  goalWeightInput.addEventListener('input', ()=>{
+    const n = parseFloat(goalWeightInput.value);
+    const lb = isFinite(n) ? ((typeof storeWeight === 'function') ? storeWeight(n) : n) : null;
+    state.goalWeight = lb > 0 ? lb : null;
+    renderGoalGrid();
+  });
   wireSingleSelect(activityGrid, 'data-activity', 'activity');
   wireSingleSelect(sexGrid, 'data-sex', 'sex');
 
@@ -141,7 +152,7 @@
   }
 
   function creditRate(){
-    return EXERCISE_CREDIT[state.goal] !== undefined ? EXERCISE_CREDIT[state.goal] : 0.85;
+    return state.goal ? goalDef(state.goal).credit : 0.85;
   }
 
   /* What gets added on a training day. No longer gated on a day-type choice —
@@ -202,7 +213,7 @@
       return;
     }
     exerciseNote.innerHTML = `${raw} kcal burned → training days add <strong class="n-green">+${credited}</strong> ` +
-      `(${pct}% for ${GOAL_LABEL[state.goal].split(' (')[0]} — ${CREDIT_NOTE[state.goal]}).`;
+      `(${pct}% for ${goalDef(state.goal).name} — ${goalDef(state.goal).creditNote}).`;
     exerciseNote.style.color = "var(--muted)";
     renderTargetPair();
   }
@@ -271,6 +282,7 @@
       readOnboardBody();
       syncExerciseKcal();
       renderExerciseOptions();
+      renderGoalGrid();
       validateOnboard();
     });
   });
@@ -315,16 +327,14 @@
       inInput.value = Math.round(state.heightIn % 12);
     }
 
-    /* The goal buttons quote a weekly rate, which is the one piece of
-       standing copy in this app carrying a unit of mass. Restated rather
-       than left in pounds, since a metric user reading "~2 lb/wk" has to do
-       the conversion the rest of this screen just saved them. */
-    document.querySelectorAll('.wk-rate').forEach(el=>{
-      const lbwk = parseFloat(el.getAttribute('data-lbwk')) || 0;
-      const v = (typeof showRate === 'function') ? showRate(lbwk) : lbwk;
-      const unit = (typeof weightUnitLabel === 'function') ? weightUnitLabel() : 'lb';
-      el.textContent = '~' + (metric ? v.toFixed(1) : Math.round(v)) + ' ' + unit + '/wk';
-    });
+    goalWeightInput.placeholder = metric ? 'e.g. 84' : 'e.g. 185';
+    if (state.goalWeight > 0 && typeof showWeight === 'function'){
+      goalWeightInput.value = showWeight(state.goalWeight, metric ? 1 : 0);
+    }
+
+    /* The goal buttons quote a weekly rate, which is standing copy carrying
+       a unit of mass — restated in the unit on screen. */
+    renderGoalGrid();
   }
   window.renderOnboardUnits = renderOnboardUnits;
   renderOnboardUnits();
@@ -373,26 +383,117 @@
      39-expenditure.js for why it is never applied automatically. */
   function computeTDEE(){
     if (state.tdeeMeasured > 0) return state.tdeeMeasured;
-    const kg = state.bodyweight * 0.453592;
+    return formulaTDEE(state.bodyweight);
+  }
+
+  function formulaTDEE(lb){
+    const kg = lb * 0.453592;
     const cm = state.heightIn * 2.54;
     const base = (10*kg) + (6.25*cm) - (5*state.age);
     const bmr = state.sex === 'male' ? base + 5 : base - 161;
     return bmr * state.activity;
   }
 
+  /* The burn at some other weight, for projecting a goal forward. A
+     measured burn is carried along by however much the formula says the
+     weight itself moves it, rather than frozen at today's figure. */
+  function tdeeAtWeight(lb){
+    if (state.tdeeMeasured > 0){
+      return state.tdeeMeasured + formulaTDEE(lb) - formulaTDEE(state.bodyweight);
+    }
+    return formulaTDEE(lb);
+  }
+
   /* Base + goal adjustment, floored for safety. Training days add the
-     credited burn on top; rest days are the base on its own. */
-  function computeCalcKcal(kind){
+     credited burn on top; rest days are the base on its own. `goal`
+     defaults to the character's own, and is passed when the goal buttons
+     quote what each speed would come to. */
+  function computeCalcKcal(kind, goal){
     const add = kind === 'train' ? (state.exerciseKcal || 0) : 0;
-    const raw = computeTDEE() + GOAL_ADJUST[state.goal] + add;
+    const tdee = computeTDEE();
+    const raw = tdee + goalAdjustKcal(goal || state.goal, tdee, state.bodyweight) + add;
     return Math.round(Math.max(raw, KCAL_FLOOR[state.sex]));
+  }
+
+  function calcReady(){
+    return !!(state.activity && state.sex &&
+      state.bodyweight > 0 && state.heightIn > 0 && state.age > 0);
+  }
+
+  /* Pounds a week this goal actually comes to for this person today — after
+     the cap and the calorie floor, so a speed the floor won't allow is not
+     quoted as though it would. Null until the stats are in. */
+  function goalRateLbWeek(goal){
+    if (state.mode !== 'calc' || !calcReady()) return null;
+    return (computeCalcKcal('rest', goal) - computeTDEE()) / KCAL_DAY_PER_LB_WEEK;
+  }
+
+  /* When the goal weight lands, for the character as it stands. */
+  function goalEta(){
+    if (state.mode !== 'calc' || !calcReady() || !(state.goalWeight > 0)) return null;
+    const p = goalProjection(state.goal, state.bodyweight, state.goalWeight,
+                             tdeeAtWeight, KCAL_FLOOR[state.sex]);
+    if (!p || p.weeks == null) return p;
+    const d = new Date();
+    d.setDate(d.getDate() + Math.round(p.weeks * 7));
+    return {weeks: p.weeks, date: d};
+  }
+
+  function goalEtaText(){
+    const e = goalEta();
+    if (!e) return '';
+    const unit = (typeof weightUnitLabel === 'function') ? weightUnitLabel() : 'lb';
+    const shown = (typeof showWeight === 'function')
+      ? showWeight(state.goalWeight, (typeof isMetric === 'function' && isMetric()) ? 1 : 0)
+      : Math.round(state.goalWeight);
+    const target = shown + ' ' + unit;
+    if (e.mismatch){
+      return goalDef(state.goal).dir === 0
+        ? `Pick a speed to reach ${target}.`
+        : `${target} is the other way — pick a ${state.goalWeight > state.bodyweight ? 'gaining' : 'cutting'} speed.`;
+    }
+    if (e.stalled) return `The calorie floor stops this speed short of ${target}.`;
+    if (!e.weeks) return `You're at ${target}.`;
+    const when = e.date.toLocaleDateString(undefined, {day:'numeric', month:'short', year:'numeric'});
+    const wk = Math.max(1, Math.round(e.weeks));
+    return `${target} around ${when} · ${wk} week${wk === 1 ? '' : 's'}`;
+  }
+
+  /* "−2.1 lb/wk", in whichever unit is on screen. */
+  function rateLabel(lbwk){
+    if (lbwk == null) return '';
+    const v = (typeof showRate === 'function') ? showRate(Math.abs(lbwk)) : Math.abs(lbwk);
+    const unit = (typeof weightUnitLabel === 'function') ? weightUnitLabel() : 'lb';
+    return (lbwk < 0 ? '−' : '+') + v.toFixed(1) + ' ' + unit + '/wk';
+  }
+
+  /* The goal buttons, quoted for this person once the stats are in. */
+  function renderGoalGrid(){
+    goalGrid.innerHTML = GOAL_KEYS.map(k=>{
+      const d = GOAL_DEFS[k];
+      let desc;
+      if (k === 'maintain') desc = 'Hold current weight';
+      else if (d.tdeePct) desc = 'Build muscle at a steady weight';
+      else {
+        const r = goalRateLbWeek(k);
+        desc = r != null
+          ? rateLabel(r)
+          : (d.pctBW < 0 ? '−' : '+') + (Math.abs(d.pctBW) * 100) + '% bodyweight/wk';
+      }
+      return `<button class="choice-btn${state.goal === k ? ' selected' : ''}" data-goal="${k}"><span><strong>${d.name}</strong><span class="desc">${desc}</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-${d.icon}"></use></svg></span></button>`;
+    }).join('');
+
+    const row = document.getElementById('goalWeightRow');
+    if (row) row.hidden = !state.goal || goalDef(state.goal).dir === 0;
+    const eta = document.getElementById('goalEta');
+    if (eta) eta.textContent = goalEtaText();
   }
 
   function previewText(){
     const tdee = Math.round(computeTDEE());
     const rest = computeCalcKcal('rest');
     const train = computeCalcKcal('train');
-    const base = `Daily burn before training: <strong style="color:var(--cyan)">${tdee}</strong> · ${GOAL_LABEL[state.goal]}`;
+    const base = `Daily burn before training: <strong style="color:var(--cyan)">${tdee}</strong> · ${goalDef(state.goal).name}`;
     return train > rest
       ? `${base} → <strong style="color:var(--cyan)">${rest}</strong> resting, ` +
         `<strong class="n-green">${train} kcal</strong> training`
@@ -525,7 +626,7 @@
       // 1. Protein is the protected macro — hit the g/lb target, but it can't
       //    swallow the whole budget
       protein = Math.min(
-        Math.round(state.bodyweight * PROTEIN_PER_LB[goal]),
+        Math.round(state.bodyweight * goalDef(goal).protein),
         Math.round((kcal * L.proteinMaxPct) / 4)
       );
       // 2. Fat sits at its target, lifted to the per-lb floor if calories are

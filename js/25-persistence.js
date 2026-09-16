@@ -14,7 +14,7 @@
      without saving rather than breaking.
   ========================================================= */
   const SAVE_KEY = 'gfl.state.v1';
-  const SAVE_FIELDS = ['theme','mode','directKcal','directP','directC','directF','goal',
+  const SAVE_FIELDS = ['theme','mode','directKcal','directP','directC','directF','goal','goalWeight',
     'activity','sex','units','bodyweight','heightIn','age','exerciseMode','exerciseRaw','exerciseKcal',
     'tdee','tdeeMeasured','tdeeMeasuredAt','finalKcal','restKcal','trainKcal','trainingDays','sheetDayView',
     'assignedTierId','selectedTierId','preferences','cravings','mealCount',

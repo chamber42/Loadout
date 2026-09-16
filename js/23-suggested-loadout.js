@@ -261,7 +261,7 @@
 
   /* Sauces the person's goal can afford */
   function sauceAllowed(food){
-    const levels = SAUCE_LEVELS[state.goal || 'maintain'] || SAUCE_LEVELS.maintain;
+    const levels = SAUCE_LEVELS[goalBand(state.goal)] || SAUCE_LEVELS.maintain;
     /* A sauce added without a level used to fail this test silently and
        disappear from the inventory altogether. Treat it as standard. */
     return levels.includes(food.level || 'standard');
@@ -980,7 +980,7 @@
     // On a deficit, high-protein swaps (Barilla Protein+, edamame pasta,
     // low-carb tortillas) let you eat a full serving and still hit protein,
     // so they get preference where they exist in the dish.
-    if (slot === 'carb' && (state.goal === 'loss' || state.goal === 'extreme_loss')){
+    if (slot === 'carb' && goalDef(state.goal).dir < 0){
       const smart = opts.filter(f => f.macroFriendly);
       if (smart.length && Math.random() < 0.65) opts = smart;
     }

@@ -20,14 +20,109 @@
     {id:5, name:"The Juggernaut", min:3150, max:4000},
   ];
 
-  /* Goal → flat daily calorie adjustment, on the standard
-     "500 kcal a day per pound a week" model rather than a percentage. */
-  const GOAL_ADJUST = {
-    extreme_loss: -1000,
-    loss:          -500,
-    maintain:         0,
-    gain:          +300,
+  /* ---------------------------------------------------------
+     GOALS
+     A goal is a speed, measured as a share of bodyweight per week.
+
+     These used to be flat daily adjustments — −1000, −500, 0, +300 — and a
+     flat number means something different on every body. −1000 is a 0.70%
+     a week cut at 285 lb and a 0.94% cut at 213, so the same "Cut Hard"
+     quietly got harsher the longer it worked. On a 125 lb desk worker both
+     cuts hit the 1200 floor and the two buttons produced the same number.
+
+     A share of bodyweight tapers on its own: every weigh-in shrinks the
+     weekly target a little. The bands follow the evidence on keeping lean
+     mass — roughly 0.5–1% a week down, 0.25–0.5% up.
+
+     `cap` bounds the adjustment as a share of daily burn, so a heavy,
+     sedentary frame is not handed a 1500 kcal deficit. The caps differ per
+     goal so that where one binds, the goals still come out in order rather
+     than collapsing onto the same figure. The gains also carry an absolute
+     `maxKcal`: half a percent of 300 lb is a pound and a half a week, and
+     past about a pound a week a surplus is mostly fat whatever the frame.
+     Cuts carry none — a heavier body can safely lose faster.
+
+     Where the calorie floor decides, two goals can still land on the same
+     number. That is the floor doing its job; the goal buttons quote the
+     rate that actually results, so they never pretend to differ.
+
+     `protein` is grams per lb of bodyweight, higher in a deficit.
+     `credit` is how much of a training session's estimated burn is eaten
+     back. Those estimates typically run high, so the credit slides with the
+     goal and an error hurts least where it matters most: cutting
+     under-credits to protect the deficit, bulking over-credits to protect
+     the surplus.
+
+     Recomp is not a rate. It is a small deficit off maintenance with extra
+     protein, held at a steady weight.
+
+     `band` is which of the four eating profiles the planner, sauces and
+     recipe book use — they describe portion sizes, not speeds, so the new
+     goals borrow the nearest one rather than retagging every dish.
+
+     The keys of the original four are kept, so saved characters still load.
+  --------------------------------------------------------- */
+  const GOAL_DEFS = {
+    extreme_loss: {name:'Cut Hard',  pctBW:-0.010,  cap:0.40, protein:1.10, credit:0.50, dir:-1, band:'extreme_loss', icon:'fire',
+                   creditNote:"half credited so an over-estimate can't erase your deficit"},
+    loss:         {name:'Fat Loss',  pctBW:-0.0075, cap:0.30, protein:1.05, credit:0.65, dir:-1, band:'loss', icon:'sword',
+                   creditNote:"under-credited to keep your deficit intact"},
+    slow_cut:     {name:'Slow Cut',  pctBW:-0.005,  cap:0.20, protein:1.00, credit:0.75, dir:-1, band:'loss', icon:'turtle',
+                   creditNote:"under-credited to keep your deficit intact"},
+    recomp:       {name:'Recomp',    tdeePct:-0.05,           protein:1.00, credit:0.80, dir:0,  band:'maintain', icon:'swap',
+                   creditNote:"trimmed so the small deficit survives"},
+    maintain:     {name:'Maintain',  pctBW:0,                 protein:0.90, credit:0.85, dir:0,  band:'maintain', icon:'shield',
+                   creditNote:"lightly trimmed, since trackers tend to read high"},
+    lean_gain:    {name:'Lean Bulk', pctBW:+0.0025, cap:0.15, maxKcal:250, protein:0.90, credit:1.00, dir:+1, band:'gain', icon:'feather',
+                   creditNote:"credited in full to protect your surplus"},
+    gain:         {name:'Bulk',      pctBW:+0.005,  cap:0.25, maxKcal:500, protein:0.85, credit:1.10, dir:+1, band:'gain', icon:'muscle',
+                   creditNote:"credited generously to protect your surplus"},
   };
+  const GOAL_KEYS = Object.keys(GOAL_DEFS);
+
+  /* One pound a week is 500 kcal a day — the same 3,500 kcal per pound
+     every app in this category uses. */
+  const KCAL_DAY_PER_LB_WEEK = 500;
+
+  function goalDef(goal){ return GOAL_DEFS[goal] || GOAL_DEFS.maintain; }
+  function goalBand(goal){ return goalDef(goal).band; }
+
+  /* Daily calories added to (or taken off) the burn for this goal, at this
+     burn and bodyweight. Floors are applied by the caller, which knows sex. */
+  function goalAdjustKcal(goal, tdee, bodyweight){
+    const d = goalDef(goal);
+    if (d.tdeePct) return Math.round(tdee * d.tdeePct);
+    if (!d.pctBW || !(bodyweight > 0)) return 0;
+    const byRate = Math.abs(d.pctBW) * bodyweight * KCAL_DAY_PER_LB_WEEK;
+    const byCap  = tdee > 0 ? tdee * d.cap : byRate;
+    return Math.round(Math.sign(d.pctBW) * Math.min(byRate, byCap, d.maxKcal || Infinity));
+  }
+
+  /* Walks the goal forward a week at a time — each week's target re-sized
+     for the weight reached, the way weigh-ins re-size it in the app — and
+     returns how many weeks until `to`. `tdeeAt(lb)` gives the burn at a
+     weight; `floor` is the calorie floor. {weeks} when it gets there,
+     {mismatch} when the goal points the other way, {stalled} when the floor
+     or the goal stops it short. */
+  function goalProjection(goal, from, to, tdeeAt, floor){
+    const d = goalDef(goal);
+    if (!(from > 0) || !(to > 0)) return null;
+    const want = Math.sign(to - from);
+    if (want === 0) return {weeks:0};
+    if (d.dir !== want) return {mismatch:true};
+    let w = from, weeks = 0;
+    while (weeks < 520){
+      const tdee = tdeeAt(w);
+      const kcal = Math.max(tdee + goalAdjustKcal(goal, tdee, w), floor || 0);
+      const perWeek = (kcal - tdee) / KCAL_DAY_PER_LB_WEEK;   // lb a week
+      if (Math.sign(perWeek) !== want || Math.abs(perWeek) < 0.05) return {stalled:true};
+      const next = w + perWeek;
+      if (want < 0 ? next <= to : next >= to) return {weeks: weeks + (to - w) / perWeek};
+      w = next; weeks++;
+    }
+    return {stalled:true};
+  }
+
   const ACTIVITY_LABEL = {
     1.25:'Desk job', 1.4:'Lightly active', 1.6:'Active', 1.8:'Very active',
   };
@@ -39,14 +134,6 @@
     return ACTIVITY_LABEL[near] || '';
   }
 
-  const GOAL_LABEL = {
-    extreme_loss: "Extreme Fat Loss (−1000/day)",
-    loss:         "Fat Loss (−500/day)",
-    maintain:     "Maintenance",
-    gain:         "Muscle Gain (+300/day)",
-  };
-  /* Protein grams per lb of bodyweight, by goal (higher in a deficit) */
-  const PROTEIN_PER_LB = { extreme_loss:1.10, loss:1.05, maintain:0.90, gain:0.85 };
   /* Guard rails on the split. Without a ceiling on fat and a floor under
      carbs, a shrinking calorie budget pushes protein and fat up while carbs
      collapse — you end up training hard on 20% carbs. */
@@ -65,23 +152,6 @@
      MET formula (kcal/min = MET x 3.5 x kg / 200) so it scales with bodyweight
      instead of handing everyone the same flat number. */
   const AUTO_SESSION = { met:5.0, mins:45 };
-
-  /* Exercise burn estimates typically run high. How much of that burn we
-     credit back slides with the goal, so an error hurts least where it
-     matters most: cutting under-credits to protect the deficit, bulking
-     over-credits to protect the surplus. */
-  const EXERCISE_CREDIT = {
-    extreme_loss: 0.50,
-    loss:         0.65,
-    maintain:     0.85,
-    gain:         1.10,
-  };
-  const CREDIT_NOTE = {
-    extreme_loss: "half credited so an over-estimate can't erase your deficit",
-    loss:         "under-credited to keep your deficit intact",
-    maintain:     "lightly trimmed, since trackers tend to read high",
-    gain:         "credited generously to protect your surplus",
-  };
 
   /* ---------------------------------------------------------
      SEARCH MATCHING

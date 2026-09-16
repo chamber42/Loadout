@@ -33,6 +33,7 @@ const SUITES = [
   './screen-transitions.test.js',
   './tab-taps.test.js',
   './prep-cycle.test.js',
+  './goals.test.js',
 ];
 
 let passed = 0, failed = 0;

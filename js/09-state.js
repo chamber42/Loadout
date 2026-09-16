@@ -14,6 +14,7 @@
     mode:'direct',        // 'direct' = paste a target, 'calc' = estimate it
     directKcal:null, directP:null, directC:null, directF:null,
     goal:null,
+    goalWeight:null,      // lb; where the goal is heading, optional
     activity:null,
     sex:null,
     /* 'imperial' or 'metric'. Presentation only — bodyweight below stays

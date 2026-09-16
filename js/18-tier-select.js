@@ -324,9 +324,7 @@
     document.getElementById('sheetRank').textContent =
       `${(t.words && t.words.tier) || 'TIER'} ${tier ? tier.id : '—'}`;
     renderSheetKcal();
-    document.getElementById('sheetGoal').textContent =
-      (GOAL_LABEL[state.goal] || 'Maintenance') +
-      (state.activity ? ' · ' + activityLabel(state.activity) : '');
+    document.getElementById('sheetGoal').textContent = sheetGoalText();
 
     /* ---- vitals ---- */
     const VITALS = vitalDefs();
@@ -351,10 +349,23 @@
       <div class="vital vital-wide">
         <span class="vital-lbl">Goal</span>
         <select id="vital-goal" aria-label="Goal">
-          ${Object.entries(GOAL_LABEL).map(([k,l])=>
-            `<option value="${k}"${state.goal===k?' selected':''}>${l}</option>`).join('')}
+          ${GOAL_KEYS.map(k=>
+            `<option value="${k}"${(state.goal || 'maintain')===k?' selected':''}>${GOAL_DEFS[k].name}</option>`).join('')}
         </select>
       </div>` + (state.mode === 'calc' ? `
+      <div class="vital vital-wide" id="vital-goalweight-row"${goalDef(state.goal).dir === 0 ? ' hidden' : ''}>
+        <span class="vital-lbl">Goal weight</span>
+        <span class="vital-edit">
+          <input type="number" id="vital-goalweight" inputmode="decimal" placeholder="—"
+                 value="${state.goalWeight > 0 ? showWeight(state.goalWeight, isMetric() ? 1 : 0) : ''}"
+                 min="${weightBounds().min}" max="${weightBounds().max}" step="${weightBounds().step}"
+                 aria-label="Goal weight in ${weightUnitLabel()}">
+          <span class="vital-unit">${weightUnitLabel()}</span>
+        </span>
+      </div>
+      <div class="vital vital-wide" id="vital-eta-row" hidden>
+        <span class="vital-lbl" id="vital-eta"></span>
+      </div>` : '') + (state.mode === 'calc' ? `
       <div class="vital vital-wide">
         <span class="vital-lbl">Training session burn</span>
         <span class="vital-edit">
@@ -376,14 +387,32 @@
            what they weigh today. Recording it keeps the history and the
            current figure from disagreeing, which they would the first
            time anybody edited this field instead of the panel below. */
-        if (v.key === 'bodyweight' && typeof recordWeight === 'function') recordWeight(state[v.key]);
+        if (v.key === 'bodyweight' && typeof recordWeight === 'function'){
+          recordWeight(state[v.key]);
+          if (typeof checkGoalReached === 'function' && checkGoalReached()){
+            document.getElementById('vital-goal').value = state.goal;
+          }
+        }
         recalcFromVitals();
       });
     });
     document.getElementById('vital-goal').addEventListener('change', (e)=>{
       state.goal = e.target.value;
+      /* The training credit slides with the goal, so it is re-sized too. */
+      state.exerciseKcal = creditedExerciseKcal();
       recalcFromVitals();
     });
+    const goalWeightEl = document.getElementById('vital-goalweight');
+    if (goalWeightEl){
+      goalWeightEl.addEventListener('input', ()=>{
+        if (goalWeightEl.value === ''){ state.goalWeight = null; recalcFromVitals(); return; }
+        const n = parseFloat(goalWeightEl.value);
+        const b = weightBounds();
+        if (!(n >= b.min && n <= b.max)) return;   // ignore half-typed values
+        state.goalWeight = storeWeight(n);
+        recalcFromVitals();
+      });
+    }
     /* Editing the burn here is what creates (or removes) the second target,
        so someone who set up as "no training" can pick it up later. */
     const trainEl = document.getElementById('vital-train');
@@ -396,6 +425,8 @@
         recalcFromVitals();
       });
     }
+
+    renderSheetGoalEta();
 
     /* ---- attributes (per day kind) ---- */
     renderSheetRank();
@@ -422,7 +453,11 @@
       bits.push(['Entered target', `${targetsFor('rest').kcal} kcal`]);
     } else {
       if (state.tdee) bits.push(['Daily burn (TDEE)', `${Math.round(state.tdee)} kcal`]);
-      bits.push(['Goal', GOAL_LABEL[state.goal] || state.goal]);
+      bits.push(['Goal', goalDef(state.goal).name]);
+      if (state.tdee){
+        const adj = targetsFor('rest').kcal - Math.round(state.tdee);
+        bits.push(['Goal adjustment', `${adj > 0 ? '+' : adj < 0 ? '−' : ''}${Math.abs(adj)} kcal/day`]);
+      }
       bits.push(['Rest-day target', `${targetsFor('rest').kcal} kcal`]);
       if (hasSplit()){
         bits.push(['Training added back', `+${Math.round(state.exerciseKcal)} kcal`]);
@@ -463,6 +498,29 @@
      The training-burn input is deliberately not redrawn here — editing it is
      what can create the second target, and rewriting the field mid-keystroke
      would fight the person typing into it. */
+  /* "Cut Hard · −2.1 lb/wk · Desk job" */
+  function sheetGoalText(){
+    const rate = (typeof goalRateLbWeek === 'function' && goalDef(state.goal).dir !== 0)
+      ? goalRateLbWeek(state.goal) : null;
+    return goalDef(state.goal).name +
+      (rate != null ? ' · ' + rateLabel(rate) : '') +
+      (state.activity ? ' · ' + activityLabel(state.activity) : '');
+  }
+
+  function renderSheetGoalEta(){
+    /* A weigh-in can end the goal (see checkGoalReached), so the picker
+       follows state rather than only the other way round. */
+    const sel = document.getElementById('vital-goal');
+    if (sel) sel.value = state.goal || 'maintain';
+    const row = document.getElementById('vital-goalweight-row');
+    if (row) row.hidden = goalDef(state.goal).dir === 0;
+    const etaRow = document.getElementById('vital-eta-row');
+    if (!etaRow) return;
+    const text = (row && !row.hidden) ? goalEtaText() : '';
+    document.getElementById('vital-eta').textContent = text;
+    etaRow.hidden = !text;
+  }
+
   function refreshSheetReadouts(){
     const tier = TIERS.find(t=>t.id === state.assignedTierId) || currentTier();
     const t = THEMES[state.theme] || THEMES.cyberpunk;
@@ -470,10 +528,9 @@
     document.getElementById('sheetClass').textContent = tier ? tier.name : '—';
     document.getElementById('sheetRank').textContent =
       `${(t.words && t.words.tier) || 'TIER'} ${tier ? tier.id : '—'}`;
-    document.getElementById('sheetGoal').textContent =
-      (GOAL_LABEL[state.goal] || 'Maintenance') +
-      (state.activity ? ' · ' + activityLabel(state.activity) : '');
+    document.getElementById('sheetGoal').textContent = sheetGoalText();
     applyPortrait(state.theme || 'cyberpunk', tier ? tier.id : 1);
+    renderSheetGoalEta();
     renderSheetRank();
     renderSheetDaySeg();
     renderSheetMacros();

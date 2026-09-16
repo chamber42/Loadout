@@ -361,7 +361,7 @@
     /* The goal band is a separate axis from the filters above: "high protein"
        and "for a bulk" are different questions and people ask both. */
     const goal = state.recipeGoal || 'any';
-    const myGoal = state.goal || null;
+    const myGoal = state.goal ? goalBand(state.goal) : null;
     const goalBtns = [{key:'any', label:'All goals'}]
       .concat(GOAL_ORDER.map(g=>({key:g, label:GOAL_SHORT[g] + (g === myGoal ? ' <svg class="px" aria-hidden="true"><use href="#i-star"></use></svg>' : '')})));
     document.getElementById('recipeGoals').innerHTML = goalBtns.map(g=>
