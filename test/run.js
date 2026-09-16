@@ -34,6 +34,7 @@ const SUITES = [
   './tab-taps.test.js',
   './prep-cycle.test.js',
   './goals.test.js',
+  './diet-break.test.js',
 ];
 
 let passed = 0, failed = 0;

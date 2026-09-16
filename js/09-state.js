@@ -15,6 +15,9 @@
     directKcal:null, directP:null, directC:null, directF:null,
     goal:null,
     goalWeight:null,      // lb; where the goal is heading, optional
+    /* The day the current cut began, a break in progress {resume, until},
+       and the day a declined break may be offered again. See 53-diet-break.js. */
+    cutSince:null, dietBreak:null, dietBreakSnoozed:null,
     activity:null,
     sex:null,
     /* 'imperial' or 'metric'. Presentation only — bodyweight below stays

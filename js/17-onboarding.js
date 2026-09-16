@@ -364,6 +364,7 @@
     }
     if (state.restKcal != null) state.finalKcal = state.restKcal;
     clampTrainingDays();
+    if (typeof trackCutPhase === 'function') trackCutPhase();
   }
 
   /* You can't prep more training days than days, and a character with no
