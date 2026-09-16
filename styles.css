@@ -2043,6 +2043,17 @@
   .pc{ display:block; image-rendering:pixelated; shape-rendering:crispEdges;
        width:100%; height:100%; }
   .portrait-fallback .pc{ width:auto; height:100%; margin:0 auto; }
+  /* The class offer: the class you are, and the one on offer. Sprites at a
+     whole 2x so they stay crisp. */
+  .promo-cast{ display:flex; align-items:center; justify-content:center; gap:18px; margin:4px 0 14px; }
+  .promo-who{ display:flex; flex-direction:column; align-items:center; gap:6px;
+              font-family:var(--font-body); font-size:12px; color:var(--muted); }
+  .promo-who .pc{ width:48px; height:64px; }
+  .promo-who.next{ color:var(--text); }
+  .promo-arrow{ color:var(--cyan); }
+  .promo-arrow .px{ width:16px; height:16px; }
+  .promo-acts{ display:flex; gap:8px; }
+  .promo-acts .btn-primary, .promo-acts .btn-ghost{ margin:0; flex:1; }
   .portrait-fallback{ padding:6px; display:flex; align-items:flex-end;
                       justify-content:center; }
   /* The card's art strip carried no height, so it was a background wash with

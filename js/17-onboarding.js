@@ -94,6 +94,7 @@
   });
 
   btnUseDirect.addEventListener('click', ()=>{
+    releaseClassHold();
     state.goal = state.goal || 'maintain';
     state.finalKcal = state.directKcal;
     /* "I have my number" means one number, full stop — no rest/training
@@ -502,6 +503,7 @@
   }
 
   btnRecommend.addEventListener('click', ()=>{
+    releaseClassHold();
     syncTargets();
     assignTier();
     renderTiers();
@@ -509,12 +511,66 @@
   });
 
   /* ---- tier is a LABEL derived from the number; it never changes it ---- */
-  function assignTier(){
-    const k = state.finalKcal;
+  function tierForKcal(k){
     const hit = TIERS.find(t => k >= t.min && k < t.max);
-    const tier = hit || (k < TIERS[0].min ? TIERS[0] : TIERS[TIERS.length-1]);
-    state.assignedTierId = tier.id;
-    state.selectedTierId = tier.id;
+    return hit || (k < TIERS[0].min ? TIERS[0] : TIERS[TIERS.length-1]);
+  }
+
+  /* The class normally follows the calorie target. Two moments hold it
+     still (state.classHold):
+
+       a diet break — two weeks at maintenance is a pause, not a new
+       character, so the class waits for the cut to come back;
+
+       reaching the goal weight — the switch to Maintain moves the number,
+       but a new class there is earned, so it is offered (state.classOffer)
+       rather than simply applied. Declining keeps the class, and that same
+       offer is not made again.
+
+     Any deliberate goal change — the sheet's goal picker, or recreating the
+     character — releases the hold. */
+  function assignTier(){
+    const natural = tierForKcal(state.finalKcal).id;
+    const hold = state.classHold;
+    if (hold && hold.id){
+      state.assignedTierId = hold.id;
+      state.selectedTierId = hold.id;
+      state.classOffer = (hold.why === 'goal' && natural !== hold.id && natural !== hold.declined)
+        ? natural : null;
+      return;
+    }
+    state.classOffer = null;
+    state.assignedTierId = natural;
+    state.selectedTierId = natural;
+  }
+
+  function holdClass(why){
+    if (!state.assignedTierId) return;
+    /* A goal reached mid-break outranks the break's hold. */
+    if (state.classHold && state.classHold.why === 'goal' && why === 'break') return;
+    state.classHold = {id: state.assignedTierId, why};
+  }
+
+  /* `why` limits the release to one kind of hold; omitted, any hold goes. */
+  function releaseClassHold(why){
+    if (!state.classHold) return;
+    if (why && state.classHold.why !== why) return;
+    state.classHold = null;
+    state.classOffer = null;
+  }
+
+  function acceptClassOffer(){
+    if (!state.classOffer) return false;
+    releaseClassHold();
+    assignTier();
+    return true;
+  }
+
+  function declineClassOffer(){
+    if (!state.classOffer || !state.classHold) return false;
+    state.classHold.declined = state.classOffer;
+    state.classOffer = null;
+    return true;
   }
 
   /* ---------------------------------------------------------

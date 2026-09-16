@@ -312,6 +312,8 @@
     const now = trendWeightNow();
     if (now == null) return false;
     if (dir < 0 ? now > state.goalWeight : now < state.goalWeight) return false;
+    /* The class stays put; any new one is offered on the sheet. */
+    if (typeof holdClass === 'function') holdClass('goal');
     state.goal = 'maintain';
     if (typeof toast === 'function') toast('Goal weight reached. Switched to Maintain.', 'flag');
     return true;

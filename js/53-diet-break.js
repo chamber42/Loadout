@@ -77,7 +77,10 @@
     if (typeof state === 'undefined') return;
     const day = today || todayKey();
     /* Picking a different goal mid-break is choosing to end it. */
-    if (state.dietBreak && state.goal !== 'maintain') state.dietBreak = null;
+    if (state.dietBreak && state.goal !== 'maintain'){
+      state.dietBreak = null;
+      if (typeof releaseClassHold === 'function') releaseClassHold('break');
+    }
     if (state.dietBreak) return;
     if (state.mode === 'calc' && goalDef(state.goal).dir < 0){
       if (!state.cutSince){
@@ -106,6 +109,7 @@
   function startDietBreak(today){
     const day = today || todayKey();
     state.dietBreak = {resume: state.goal, until: keyPlusDays(day, BREAK_DAYS)};
+    if (typeof holdClass === 'function') holdClass('break');
     state.dietBreakSnoozed = null;
     state.goal = 'maintain';
   }
@@ -119,6 +123,7 @@
     if (!b || (!force && day < b.until)) return false;
     state.goal = b.resume || 'loss';
     state.dietBreak = null;
+    if (typeof releaseClassHold === 'function') releaseClassHold('break');
     state.cutSince = day;
     return true;
   }
