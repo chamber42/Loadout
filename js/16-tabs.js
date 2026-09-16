@@ -328,10 +328,26 @@
   document.addEventListener('focusout', ()=>{
     /* Next tick, so moving from one field straight to another does not
        flash the bar back in between them. */
-    setTimeout(()=>{
-      if (!isTypingTarget(document.activeElement)) document.body.classList.remove('typing');
-    }, 80);
+    setTimeout(releaseTypingIfIdle, 80);
   });
+
+  function releaseTypingIfIdle(){
+    const el = document.activeElement;
+    if (!isTypingTarget(el) || !el.isConnected) document.body.classList.remove('typing');
+  }
+
+  /* focusout is not the only way a field stops being typed into. When a
+     redraw replaces the field that has focus — entering a weigh-in rebuilds
+     its panel, a Health read rebuilds the whole sheet — WebKit drops the
+     element without firing focusout for it, the class stays on, and the
+     bar never comes back. So any change to the page while typing re-checks,
+     and so does the next touch. */
+  new MutationObserver(()=>{
+    if (document.body.classList.contains('typing')) releaseTypingIfIdle();
+  }).observe(document.body, {childList:true, subtree:true});
+  document.addEventListener('pointerdown', ()=>{
+    if (document.body.classList.contains('typing')) setTimeout(releaseTypingIfIdle, 80);
+  }, true);
 
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=> showScreen(btn.getAttribute('data-back')));

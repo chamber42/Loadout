@@ -398,7 +398,6 @@
     });
     document.getElementById('vital-goal').addEventListener('change', (e)=>{
       state.goal = e.target.value;
-      releaseClassHold();
       /* The training credit slides with the goal, so it is re-sized too. */
       state.exerciseKcal = creditedExerciseKcal();
       recalcFromVitals();
@@ -500,9 +499,9 @@
      The training-burn input is deliberately not redrawn here — editing it is
      what can create the second target, and rewriting the field mid-keystroke
      would fight the person typing into it. */
-  /* The goal weight was reached and the class was held (see assignTier).
-     The new one is offered in the theme's own words, and nothing changes
-     until the person answers. */
+  /* The target has moved into another class (see assignTier). The new one
+     is offered in the theme's own words, and nothing changes until the
+     person answers. */
   function renderClassOffer(){
     const panel = document.getElementById('sheetPromoPanel');
     const host  = document.getElementById('sheetPromo');
@@ -516,7 +515,9 @@
     const theme = state.theme || 'cyberpunk';
     document.getElementById('sheetPromoTitle').textContent = words.promoTitle || 'PROMOTION AVAILABLE';
     host.innerHTML = `
-      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">Goal weight reached.</p>
+      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">${state.classOfferWhy === 'goal'
+        ? 'Goal weight reached.'
+        : `Your target is now ${targetsFor('rest').kcal} kcal a day.`}</p>
       <div class="promo-cast">
         <span class="promo-who">${ch(theme, now.id)}${escapeHtml(now.name)}</span>
         <span class="promo-arrow">${ic('chevron-r')}</span>

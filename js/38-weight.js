@@ -312,8 +312,8 @@
     const now = trendWeightNow();
     if (now == null) return false;
     if (dir < 0 ? now > state.goalWeight : now < state.goalWeight) return false;
-    /* The class stays put; any new one is offered on the sheet. */
-    if (typeof holdClass === 'function') holdClass('goal');
+    /* Any new class that follows is offered as this goal's reward. */
+    state.classOfferWhy = 'goal';
     state.goal = 'maintain';
     if (typeof toast === 'function') toast('Goal weight reached. Switched to Maintain.', 'flag');
     return true;
@@ -379,6 +379,15 @@
         if (typeof saveState === 'function') saveState();
         renderWeightPanel();
         if (typeof refreshSheetReadouts === 'function') refreshSheetReadouts();
+        /* The vitals' weight box is the same figure. refreshSheetReadouts
+           leaves inputs alone so nobody's typing is overwritten, which left
+           this one showing the old weight beside the new targets. */
+        const vital = document.getElementById('vital-bodyweight');
+        if (vital && document.activeElement !== vital && state.bodyweight > 0){
+          vital.value = (typeof showWeight === 'function')
+            ? showWeight(state.bodyweight, (typeof isMetric === 'function' && isMetric()) ? 1 : 0)
+            : state.bodyweight;
+        }
       });
     }
   }

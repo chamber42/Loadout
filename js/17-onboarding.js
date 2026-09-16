@@ -94,7 +94,6 @@
   });
 
   btnUseDirect.addEventListener('click', ()=>{
-    releaseClassHold();
     state.goal = state.goal || 'maintain';
     state.finalKcal = state.directKcal;
     /* "I have my number" means one number, full stop — no rest/training
@@ -103,7 +102,7 @@
     state.exerciseKcal = 0;
     state.trainingDays = 0;
     syncTargets();
-    assignTier();
+    assignTier(true);
     renderTiers();
     showScreen('screen-tiers');
   });
@@ -503,9 +502,8 @@
   }
 
   btnRecommend.addEventListener('click', ()=>{
-    releaseClassHold();
     syncTargets();
-    assignTier();
+    assignTier(true);
     renderTiers();
     showScreen('screen-tiers');
   });
@@ -516,60 +514,60 @@
     return hit || (k < TIERS[0].min ? TIERS[0] : TIERS[TIERS.length-1]);
   }
 
-  /* The class normally follows the calorie target. Two moments hold it
-     still (state.classHold):
+  /* The class is cosmetic — a name and a portrait for the calorie band the
+     target sits in. Nothing is sized from it.
 
-       a diet break — two weeks at maintenance is a pause, not a new
-       character, so the class waits for the cut to come back;
+     It is set when the character is made. After that it never changes on
+     its own: when the target moves into another band — a weigh-in, a new
+     goal, a reached goal weight — the new class is offered
+     (state.classOffer) and waits on the character sheet until the person
+     takes it or keeps what they have. Keeping it is remembered
+     (state.classDeclined), so the same offer is not pushed again; a move
+     into a different band offers that one instead.
 
-       reaching the goal weight — the switch to Maintain moves the number,
-       but a new class there is earned, so it is offered (state.classOffer)
-       rather than simply applied. Declining keeps the class, and that same
-       offer is not made again.
+     Nothing is offered during a diet break. Two weeks at maintenance is a
+     pause, not a new character.
 
-     Any deliberate goal change — the sheet's goal picker, or recreating the
-     character — releases the hold. */
-  function assignTier(){
+     `fresh` is for making or remaking the character, where the class is
+     simply whatever the number says. */
+  function assignTier(fresh){
     const natural = tierForKcal(state.finalKcal).id;
-    const hold = state.classHold;
-    if (hold && hold.id){
-      state.assignedTierId = hold.id;
-      state.selectedTierId = hold.id;
-      state.classOffer = (hold.why === 'goal' && natural !== hold.id && natural !== hold.declined)
-        ? natural : null;
+    if (fresh || !state.assignedTierId){
+      state.assignedTierId = natural;
+      state.selectedTierId = natural;
+      state.classOffer = state.classDeclined = state.classOfferWhy = null;
       return;
     }
-    state.classOffer = null;
-    state.assignedTierId = natural;
-    state.selectedTierId = natural;
-  }
-
-  function holdClass(why){
-    if (!state.assignedTierId) return;
-    /* A goal reached mid-break outranks the break's hold. */
-    if (state.classHold && state.classHold.why === 'goal' && why === 'break') return;
-    state.classHold = {id: state.assignedTierId, why};
-  }
-
-  /* `why` limits the release to one kind of hold; omitted, any hold goes. */
-  function releaseClassHold(why){
-    if (!state.classHold) return;
-    if (why && state.classHold.why !== why) return;
-    state.classHold = null;
-    state.classOffer = null;
+    state.selectedTierId = state.assignedTierId;
+    const before = state.classOffer;
+    if (natural === state.assignedTierId){
+      state.classOffer = state.classDeclined = state.classOfferWhy = null;
+      return;
+    }
+    if (state.dietBreak || natural === state.classDeclined){
+      state.classOffer = null;
+      return;
+    }
+    state.classOffer = natural;
+    /* Said once as it arrives, since the sheet may not be on screen. */
+    if (before !== natural && typeof toast === 'function' && typeof THEMES !== 'undefined'){
+      const w = (THEMES[state.theme] || THEMES.cyberpunk || {}).words || {};
+      const title = String(w.promoTitle || 'NEW CLASS AVAILABLE').toLowerCase();
+      toast(title.charAt(0).toUpperCase() + title.slice(1) + '.', 'star');
+    }
   }
 
   function acceptClassOffer(){
     if (!state.classOffer) return false;
-    releaseClassHold();
-    assignTier();
+    state.assignedTierId = state.selectedTierId = state.classOffer;
+    state.classOffer = state.classDeclined = state.classOfferWhy = null;
     return true;
   }
 
   function declineClassOffer(){
-    if (!state.classOffer || !state.classHold) return false;
-    state.classHold.declined = state.classOffer;
-    state.classOffer = null;
+    if (!state.classOffer) return false;
+    state.classDeclined = state.classOffer;
+    state.classOffer = state.classOfferWhy = null;
     return true;
   }
 
