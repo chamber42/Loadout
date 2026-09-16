@@ -157,10 +157,10 @@
     return hasSplit() && state.sheetDayView === 'train' ? 'train' : 'rest';
   }
 
-  /* ---- rank pips and the class band --------------------------------------
-     A class here is a calorie range, not a single number, so the sheet shows
-     where inside its band the person actually sits. That answers the obvious
-     question a bare class name raises: am I at the bottom of this or the top? */
+  /* ---- rank pips and the class progress bar ------------------------------
+     A class is earned (54-class-progress.js), so the bar under the portrait
+     is how far through earning the next one the person is — in pounds on a
+     cut or a bulk, in logged days on a steady goal. */
   function renderSheetRank(){
     const tier = TIERS.find(t=>t.id === state.assignedTierId) || currentTier();
     const pips = document.getElementById('sheetPips');
@@ -170,21 +170,31 @@
     }
     const band = document.getElementById('sheetBand');
     if (!band) return;
-    if (!tier){ band.innerHTML = ''; return; }
-    const kc   = targetsFor('rest').kcal;
-    const span = Math.max(1, tier.max - tier.min);
-    const pct  = Math.min(100, Math.max(0, Math.round((kc - tier.min) / span * 100)));
-    const t    = THEMES[state.theme] || THEMES.cyberpunk;
+    if (!tier || typeof classProgress !== 'function'){ band.innerHTML = ''; return; }
+    const t = THEMES[state.theme] || THEMES.cyberpunk;
+    const p = classProgress();
+    /* An earned class not yet taken is shown as reached, not as progress
+       toward it — the offer panel below is where it is taken. */
+    const reached = Math.max(p.earned, tier.id);
+    const next = TIERS.find(x=>x.id === reached + 1);
+    const pct = (p.max || !next) ? 100 : Math.min(100, Math.max(0, Math.round((p.frac || 0) * 100)));
+    const wt = lb => (typeof showWeight === 'function')
+      ? showWeight(lb, 1) + ' ' + weightUnitLabel() : lb.toFixed(1) + ' lb';
+
+    let left = '', right = '';
+    if (next && p.dir && p.now != null && p.nextLb){ left = wt(p.now); right = wt(p.nextLb); }
+    else if (next && p.dir === 0 && p.days != null){ left = `${p.days} days`; right = `${p.needDays} days`; }
+
     band.innerHTML = `
       <div class="cs-band-head">
-        <span class="cs-band-lbl">${(t.words && t.words.tier) || 'TIER'} BAND</span>
-        <span class="cs-band-pct">${pct}%</span>
+        <span class="cs-band-lbl">${(t.words && t.words.tier) || 'TIER'} PROGRESS</span>
+        <span class="cs-band-pct">${next ? pct + '%' : 'MAX'}</span>
       </div>
       <div class="cs-band-track"><span style="width:${pct}%"></span><b style="left:${pct}%"></b></div>
       <div class="cs-band-foot">
-        <span>${tier.min}</span>
-        <span class="cs-band-you">\u25B2 ${kc} kcal</span>
-        <span>${tier.max}</span>
+        <span>${escapeHtml(left)}</span>
+        <span class="cs-band-you">${next ? '\u25B2 ' + escapeHtml(next.name) : escapeHtml(tier.name)}</span>
+        <span>${escapeHtml(right)}</span>
       </div>`;
   }
 
@@ -469,13 +479,10 @@
       (typeof showWeight === 'function')
         ? `${showWeight(state.bodyweight, isMetric() ? 1 : 0)} ${weightUnitLabel()}`
         : `${state.bodyweight} lb`]);
-    bits.push(['Band', `${tier ? tier.min : ''}–${tier ? tier.max : ''} kcal`]);
     document.getElementById('sheetBreakdown').innerHTML =
       bits.map(([k,v])=>`<div class="kv"><span>${k}</span><span>${v}</span></div>`).join('') +
       `<div class="season-hint" style="margin-top:10px;">
-         ${hasSplit()
-           ? 'Your class is set by the rest-day number — training days are a bonus on top of it, not a different character. '
-           : ''}Calories and the three macros drive the plan. Fuller nutrition is
+         Calories and the three macros drive the plan. Fuller nutrition is
          behind View Full Stats.
        </div>`;
 
@@ -499,9 +506,23 @@
      The training-burn input is deliberately not redrawn here — editing it is
      what can create the second target, and rewriting the field mid-keystroke
      would fight the person typing into it. */
-  /* The target has moved into another class (see assignTier). The new one
-     is offered in the theme's own words, and nothing changes until the
-     person answers. */
+  /* What earned it, in the person's own numbers. */
+  function classOfferReason(){
+    const j = state.classJourney;
+    const p = (typeof classProgress === 'function') ? classProgress() : {};
+    if (!j) return '';
+    const since = weightKeyToDate(j.startDay).toLocaleDateString(undefined, {day:'numeric', month:'short'});
+    if (p.dir && p.moved != null){
+      const amt = (typeof showWeight === 'function')
+        ? showWeight(p.moved, 1) + ' ' + weightUnitLabel() : p.moved.toFixed(1) + ' lb';
+      return (p.dir < 0 ? 'Down ' : 'Up ') + amt + ' since ' + since + '.';
+    }
+    if (p.days != null) return p.days + ' days logged since ' + since + '.';
+    return '';
+  }
+
+  /* A class has been earned (see 54-class-progress.js). It is offered in the
+     theme's own words, and nothing changes until the person answers. */
   function renderClassOffer(){
     const panel = document.getElementById('sheetPromoPanel');
     const host  = document.getElementById('sheetPromo');
@@ -515,9 +536,7 @@
     const theme = state.theme || 'cyberpunk';
     document.getElementById('sheetPromoTitle').textContent = words.promoTitle || 'PROMOTION AVAILABLE';
     host.innerHTML = `
-      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">${state.classOfferWhy === 'goal'
-        ? 'Goal weight reached.'
-        : `Your target is now ${targetsFor('rest').kcal} kcal a day.`}</p>
+      <p class="subtitle" style="font-size:11px; margin:0 0 10px;">${escapeHtml(classOfferReason())}</p>
       <div class="promo-cast">
         <span class="promo-who">${ch(theme, now.id)}${escapeHtml(now.name)}</span>
         <span class="promo-arrow">${ic('chevron-r')}</span>

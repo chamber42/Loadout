@@ -312,8 +312,6 @@
     const now = trendWeightNow();
     if (now == null) return false;
     if (dir < 0 ? now > state.goalWeight : now < state.goalWeight) return false;
-    /* Any new class that follows is offered as this goal's reward. */
-    state.classOfferWhy = 'goal';
     state.goal = 'maintain';
     if (typeof toast === 'function') toast('Goal weight reached. Switched to Maintain.', 'flag');
     return true;

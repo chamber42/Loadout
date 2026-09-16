@@ -7,17 +7,16 @@
    ============================================================ */
 
   /* =========================================================
-     DATA: TIERS — each tier is a contiguous calorie RANGE.
-     The exact target inside the range is computed per person from
-     their TDEE and goal (see computeTargets), so two people in
-     "The Paladin" can sit at different points in the same band.
+     DATA: TIERS — the five classes, lowest first. Each theme renames them
+     (02-themes.js). A class is earned by progress toward the goal, not
+     read off the calorie target; see 54-class-progress.js.
   ========================================================= */
   const TIERS = [
-    {id:1, name:"The Scout",      min:1400, max:1850},
-    {id:2, name:"The Warrior",    min:1850, max:2250},
-    {id:3, name:"The Paladin",    min:2250, max:2700},
-    {id:4, name:"The Berserker",  min:2700, max:3150},
-    {id:5, name:"The Juggernaut", min:3150, max:4000},
+    {id:1, name:"The Scout"},
+    {id:2, name:"The Warrior"},
+    {id:3, name:"The Paladin"},
+    {id:4, name:"The Berserker"},
+    {id:5, name:"The Juggernaut"},
   ];
 
   /* ---------------------------------------------------------

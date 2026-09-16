@@ -18,9 +18,9 @@
     /* The day the current cut began, a break in progress {resume, until},
        and the day a declined break may be offered again. See 53-diet-break.js. */
     cutSince:null, dietBreak:null, dietBreakSnoozed:null,
-    /* A class the target has moved into but the person has not taken yet,
-       one they chose to keep instead of, and why it came up. See assignTier. */
-    classOffer:null, classDeclined:null, classOfferWhy:null,
+    /* The class journey under way, a class earned but not yet taken, and one
+       the person chose to keep theirs instead of. See 54-class-progress.js. */
+    classJourney:null, classOffer:null, classDeclined:null,
     activity:null,
     sex:null,
     /* 'imperial' or 'metric'. Presentation only — bodyweight below stays

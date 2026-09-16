@@ -102,7 +102,7 @@
     state.exerciseKcal = 0;
     state.trainingDays = 0;
     syncTargets();
-    assignTier(true);
+    assignTier();
     renderTiers();
     showScreen('screen-tiers');
   });
@@ -503,73 +503,12 @@
 
   btnRecommend.addEventListener('click', ()=>{
     syncTargets();
-    assignTier(true);
+    assignTier();
     renderTiers();
     showScreen('screen-tiers');
   });
 
-  /* ---- tier is a LABEL derived from the number; it never changes it ---- */
-  function tierForKcal(k){
-    const hit = TIERS.find(t => k >= t.min && k < t.max);
-    return hit || (k < TIERS[0].min ? TIERS[0] : TIERS[TIERS.length-1]);
-  }
-
-  /* The class is cosmetic — a name and a portrait for the calorie band the
-     target sits in. Nothing is sized from it.
-
-     It is set when the character is made. After that it never changes on
-     its own: when the target moves into another band — a weigh-in, a new
-     goal, a reached goal weight — the new class is offered
-     (state.classOffer) and waits on the character sheet until the person
-     takes it or keeps what they have. Keeping it is remembered
-     (state.classDeclined), so the same offer is not pushed again; a move
-     into a different band offers that one instead.
-
-     Nothing is offered during a diet break. Two weeks at maintenance is a
-     pause, not a new character.
-
-     `fresh` is for making or remaking the character, where the class is
-     simply whatever the number says. */
-  function assignTier(fresh){
-    const natural = tierForKcal(state.finalKcal).id;
-    if (fresh || !state.assignedTierId){
-      state.assignedTierId = natural;
-      state.selectedTierId = natural;
-      state.classOffer = state.classDeclined = state.classOfferWhy = null;
-      return;
-    }
-    state.selectedTierId = state.assignedTierId;
-    const before = state.classOffer;
-    if (natural === state.assignedTierId){
-      state.classOffer = state.classDeclined = state.classOfferWhy = null;
-      return;
-    }
-    if (state.dietBreak || natural === state.classDeclined){
-      state.classOffer = null;
-      return;
-    }
-    state.classOffer = natural;
-    /* Said once as it arrives, since the sheet may not be on screen. */
-    if (before !== natural && typeof toast === 'function' && typeof THEMES !== 'undefined'){
-      const w = (THEMES[state.theme] || THEMES.cyberpunk || {}).words || {};
-      const title = String(w.promoTitle || 'NEW CLASS AVAILABLE').toLowerCase();
-      toast(title.charAt(0).toUpperCase() + title.slice(1) + '.', 'star');
-    }
-  }
-
-  function acceptClassOffer(){
-    if (!state.classOffer) return false;
-    state.assignedTierId = state.selectedTierId = state.classOffer;
-    state.classOffer = state.classDeclined = state.classOfferWhy = null;
-    return true;
-  }
-
-  function declineClassOffer(){
-    if (!state.classOffer) return false;
-    state.classDeclined = state.classOffer;
-    state.classOffer = state.classOfferWhy = null;
-    return true;
-  }
+  /* The class — assignTier and its offer — lives in 54-class-progress.js. */
 
   /* ---------------------------------------------------------
      TWO TARGETS, NOT ONE
