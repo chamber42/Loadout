@@ -200,14 +200,31 @@
     },
   };
 
+  /* The worlds that can be picked right now. Every theme above is kept, but
+     only these are offered in the library and the system menu, and a save
+     that names any other is moved onto the first of them. The rest come back
+     one at a time, by adding them here, once each has been reworked. */
+  const THEMES_OPEN = ['horror'];
+  function openThemeKey(key){
+    return THEMES_OPEN.includes(key) ? key : THEMES_OPEN[0];
+  }
+  function openThemes(){
+    return THEMES_OPEN.filter(k => THEMES[k]).map(k => [k, THEMES[k]]);
+  }
+
   /* What each world's paper is made of. Themes that share a material still
      set their own ink and stock colours, so parchment and a water-stained
      horror page are the same construction in different hands. */
   const THEME_MATERIAL = {
     cyberpunk:'digital', arcade:'pixel',  craft:'pixel',   fantasy:'paper',
-    horror:'paper',      survival:'salvage', fps:'steel',  outdoors:'ledger',
+    horror:'plain',      survival:'salvage', fps:'steel',  outdoors:'ledger',
     farm:'cozy',         racing:'race'
   };
+  /* Horror was paper — a case file on notebook stock — and that never came
+     together, so it is set aside rather than deleted. 'plain' has no rules
+     of its own, and every horror rule in styles.css that builds the paper is
+     scoped to [data-material="paper"], so putting horror back to 'paper'
+     here brings the whole construction back exactly as it was. */
 
   /* "#39ff88" -> "57,255,136". Tints are the one thing a palette variable
      cannot express on its own: a rule that wants the accent at 10% has to
@@ -383,7 +400,8 @@
   }
 
   function applyTheme(key){
-    const t = THEMES[key] || THEMES.cyberpunk;
+    key = openThemeKey(key);
+    const t = THEMES[key];
     state.theme = key;
     const r = document.documentElement.style;
     Object.entries(t.colors).forEach(([k,v]) => {

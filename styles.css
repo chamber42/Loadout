@@ -2889,13 +2889,17 @@
      are set per theme; the mottling, deckled edge and vignette are shared.
      Text has to invert here, so every child that inherits a light colour is
      brought back to ink explicitly.
+
+     Horror is not paper for now (THEME_MATERIAL in js/02-themes.js). Its
+     paper rules here and below stay in the file, each scoped to
+     [data-material="paper"] so they lie dormant until it is paper again.
      ========================================================================= */
   body[data-theme="fantasy"]{
     --pp-1:#f3e6c6; --pp-2:#dcc79c; --pp-ink:#3d2c17; --pp-soft:#6b5433;
     --pp-rule:rgba(80,55,20,.32); --pp-stain:rgba(140,105,50,.11); --pp-seal:#982d23;
     --pp-seal-ink:#78241c;
   }
-  body[data-theme="horror"]{
+  body[data-theme="horror"][data-material="paper"]{
     --pp-1:#d5cfc3; --pp-2:#b3ada1; --pp-ink:#241d1d; --pp-soft:#544b4b;
     --pp-rule:rgba(40,30,30,.36); --pp-stain:rgba(70,45,40,.14); --pp-seal:#7d1f1f;
     --pp-seal-ink:#781e1e;
@@ -3120,11 +3124,11 @@
 
   /* Horror's page has been handled badly: the stock is colder, the stains
      bloom darker, and the whole sheet sits a degree off square. */
-  body[data-theme="horror"] #screen-quest .cal-panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel{
     transform:rotate(-.35deg);
     box-shadow:inset 0 0 46px rgba(20,8,8,.5), 0 3px 14px rgba(0,0,0,.65);
   }
-  body[data-theme="horror"] .cal-cell.today{ box-shadow:inset 0 0 0 2px var(--pp-seal), inset 0 0 14px rgba(125,31,31,.3); }
+  body[data-theme="horror"][data-material="paper"] .cal-cell.today{ box-shadow:inset 0 0 0 2px var(--pp-seal), inset 0 0 14px rgba(125,31,31,.3); }
 
   /* Post-apocalyptic is typed, so the rules are pencil-dashed and the
      current day is rubber-stamped rather than ruled. */
@@ -3531,8 +3535,8 @@
      darker ink, so the rules run behind it — which is exactly what a hand-
      drawn month in a notebook looks like.
      ========================================================================= */
-  body[data-theme="horror"] #screen-quest .cal-panel,
-  body[data-theme="horror"] #screen-quest #calDayPanel .panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel,
+  body[data-theme="horror"][data-material="paper"] #screen-quest #calDayPanel .panel{
     padding:40px 14px 26px 34px;
     background:
       /* margin rule */
@@ -3550,7 +3554,7 @@
   }
   /* wire binding: punched holes with the coil crossing over them.
      Switched off below — the page reads better as a loose sheet. */
-  body[data-theme="horror"] #screen-quest .paper-edge::before{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .paper-edge::before{
     content:''; position:absolute; left:0; right:0; top:0; height:30px;
     background:
       repeating-linear-gradient(72deg,
@@ -3563,12 +3567,12 @@
       linear-gradient(180deg, rgba(0,0,0,.34), rgba(0,0,0,0));
   }
   /* a cold vignette — the page has not been kept well */
-  body[data-theme="horror"] #screen-quest .paper-edge::after{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .paper-edge::after{
     content:''; position:absolute; inset:0;
     box-shadow:inset 0 0 44px rgba(28,20,20,.5), inset 0 0 12px rgba(28,20,20,.34);
   }
-  body[data-theme="horror"] #screen-quest #calDayPanel .panel{ padding-top:26px; }
-  body[data-theme="horror"] #screen-quest #calDayPanel .paper-edge::before{ display:none; }
+  body[data-theme="horror"][data-material="paper"] #screen-quest #calDayPanel .panel{ padding-top:26px; }
+  body[data-theme="horror"][data-material="paper"] #screen-quest #calDayPanel .paper-edge::before{ display:none; }
 
   /* =========================================================================
      POST-APOCALYPTIC — A SCORCHED SHEET
@@ -3648,8 +3652,8 @@
 
   /* The notebook's feint was so faint it may as well not have been ruled.
      A page you can see the ruling on is the whole point of a notebook. */
-  body[data-theme="horror"] #screen-quest .cal-panel,
-  body[data-theme="horror"] #screen-quest #calDayPanel .panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel,
+  body[data-theme="horror"][data-material="paper"] #screen-quest #calDayPanel .panel{
     background:
       linear-gradient(90deg, transparent 0 25px,
         rgba(150,44,44,.5) 25px 26px, transparent 26px),
@@ -3925,10 +3929,10 @@
      cannot express that, so one SVG tile is repeated along the edge instead.
      The page is shortened by the strip so the wire has an edge to wrap over.
      ---------------------------------------------------------------------- */
-  body[data-theme="horror"] #screen-quest .cal-panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel{
     padding-top:58px;
   }
-  body[data-theme="horror"] #screen-quest .cal-panel .paper-edge::before{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel .paper-edge::before{
     content:''; position:absolute; left:0; right:0; top:0; height:46px;
     background:
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='27' height='46' viewBox='0 0 27 46'%3E%3Cdefs%3E%3ClinearGradient id='w' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%232b2d31'/%3E%3Cstop offset='.22' stop-color='%238c9199'/%3E%3Cstop offset='.44' stop-color='%23e4e8ec'/%3E%3Cstop offset='.62' stop-color='%23a5aab1'/%3E%3Cstop offset='.82' stop-color='%23565b62'/%3E%3Cstop offset='1' stop-color='%2324262a'/%3E%3C/linearGradient%3E%3CclipPath id='onpage'%3E%3Crect x='-6' y='15' width='39' height='31'/%3E%3C/clipPath%3E%3CclipPath id='offpage'%3E%3Crect x='-6' y='-6' width='39' height='21'/%3E%3C/clipPath%3E%3C/defs%3E%3C%21-- the far side of the coil, glimpsed over the top edge --%3E%3Cg clip-path='url(%23offpage)'%3E%3Cpath d='M3 24 L9.5 1' stroke='%230d1013' stroke-opacity='.5' stroke-width='4' stroke-linecap='round' fill='none'/%3E%3C/g%3E%3C%21-- the shadow the wire throws, only where there is page to catch it --%3E%3Cg clip-path='url(%23onpage)'%3E%3Cpath d='M17 31 L24 8' stroke='%23000' stroke-opacity='.3' stroke-width='6' stroke-linecap='round' fill='none'/%3E%3C/g%3E%3C%21-- the punched hole, with the stock's thickness showing at its lower rim --%3E%3Cellipse cx='13.5' cy='31' rx='4.4' ry='4.6' fill='%23171311'/%3E%3Cellipse cx='13.5' cy='29.3' rx='4.4' ry='2.9' fill='%23000' fill-opacity='.55'/%3E%3Cpath d='M9.2 32.2a4.4 4.6 0 0 0 8.6 0' stroke='%23fff' stroke-opacity='.32' stroke-width='1.1' fill='none'/%3E%3C%21-- the wire, stopping inside the hole so the punch still reads --%3E%3Cpath d='M13.5 29.2 L21 3.5' stroke='%231b1e23' stroke-width='6.2' stroke-linecap='round' fill='none'/%3E%3Cpath d='M13.5 29.2 L21 3.5' stroke='url(%23w)' stroke-width='4.5' stroke-linecap='round' fill='none'/%3E%3Cpath d='M14.7 27.6 L21.3 5' stroke='%23fff' stroke-opacity='.38' stroke-width='1' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") repeat-x 0 0 / 27px 46px,
@@ -3940,7 +3944,7 @@
         transparent    calc(15px + 11px));
   }
   /* the cut edge of the stock catches a little light along the punch line */
-  body[data-theme="horror"] #screen-quest .cal-panel .paper-edge{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel .paper-edge{
     box-shadow:inset 0 15px 0 -14px rgba(255,255,255,.22);
   }
 
@@ -3955,15 +3959,15 @@
      rather than rebuilt from scratch. It reads better as a loose sheet, so
      it goes.
      ---------------------------------------------------------------------- */
-  body[data-theme="horror"] #screen-quest .paper-edge::before,
-  body[data-theme="horror"] #screen-quest .cal-panel .paper-edge::before{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .paper-edge::before,
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel .paper-edge::before{
     display:none;
   }
-  body[data-theme="horror"] #screen-quest .cal-panel .paper-edge{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel .paper-edge{
     box-shadow:none;
   }
   /* 58px and 40px of it were head-room for a coil that is no longer there. */
-  body[data-theme="horror"] #screen-quest .cal-panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .cal-panel{
     padding-top:22px;
   }
 
@@ -4427,7 +4431,7 @@
 
      Left off the loadout screen's own inner strips deliberately: those are
      components sitting on the page, not the page itself. */
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel{
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel{
     padding-left:34px;
     background:
       /* the margin rule, in the same red as the case seal */
@@ -4449,8 +4453,8 @@
   /* A panel that is a strip of controls rather than a page — the HUD and
      the timer rows — keeps its own surface. Ruling a control reads as a
      printing fault. */
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel.quest-brief,
-  body[data-theme="horror"] .screen:not(#screen-quest) .streak-panel{
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel.quest-brief,
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .streak-panel{
     padding-left:14px;
     background:linear-gradient(158deg, var(--pp-1), var(--pp-2));
   }
@@ -4826,20 +4830,20 @@
      The quest screen was corrected when its plates were relit; this is the
      same correction for the screens that pass did not name. The red is not
      lost — it moves to the seal, which is what red means on paper here. */
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital,
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital strong,
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital input{
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital,
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital strong,
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital input{
     color:var(--pp-ink);
   }
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .vital-lbl,
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .vital-unit{
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital .vital-lbl,
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital .vital-unit{
     color:var(--pp-soft);
   }
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .btn-ghost,
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital .mini-btn{
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital .btn-ghost,
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital .mini-btn{
     color:var(--pp-seal-text); border-color:var(--pp-rule);
   }
-  body[data-theme="horror"] .screen:not(#screen-quest) .panel .vital input{
+  body[data-theme="horror"][data-material="paper"] .screen:not(#screen-quest) .panel .vital input{
     caret-color:var(--pp-ink);
   }
   body[data-material="paper"] .screen:not(#screen-quest) .panel .choice-btn::before,
@@ -4889,7 +4893,7 @@
   /* The stock carries stain and vignette, so the background under a caption
      is darker than the swatch these were chosen against. */
   body[data-theme="fantasy"]{  --pp-soft:#4d381c; }
-  body[data-theme="horror"]{   --pp-soft:#2c2525; }
+  body[data-theme="horror"][data-material="paper"]{   --pp-soft:#2c2525; }
   body[data-theme="survival"]{ --pp-soft:#3d3830; }
 
 
@@ -5456,7 +5460,7 @@
      stamp, so it gets the text-safe draft; stamps and rules keep --pp-seal.
      ---------------------------------------------------------------------- */
   body[data-theme="fantasy"]{  --pp-seal-text:#79241c; }
-  body[data-theme="horror"]{   --pp-seal-text:#4e1313; }
+  body[data-theme="horror"][data-material="paper"]{   --pp-seal-text:#4e1313; }
   body[data-theme="survival"]{ --pp-seal-text:#712517; }
 
   /* Only where the panel is ACTUALLY parchment. Salvage panels are parchment on
@@ -5830,7 +5834,7 @@
     --cyan-rgb:121,36,28;
     --green:#4d5c22; --amber:#6e4b0e; --red:#9c2a1f; --magenta:#5a3566;
   }
-  body[data-theme="horror"] .modal-card{
+  body[data-theme="horror"][data-material="paper"] .modal-card{
     --cyan-rgb:78,19,19;
     --green:#40522f; --amber:#63450f; --red:#8a2222; --magenta:#55365e;
   }
@@ -6004,7 +6008,7 @@
      a ruled grid, a torn edge and a seal — and a second set of rules
      underneath a table reads as a printing fault rather than as stationery.
      ---------------------------------------------------------------------- */
-  body[data-theme="horror"] #screen-quest .panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest .panel{
     padding-left:34px;
     background:
       linear-gradient(90deg, transparent 0 25px,
@@ -6019,7 +6023,7 @@
     background-position:0 0, 0 18px, 0 0, 0 0, 0 0, 0 0, 0 0;
   }
   /* the day sheet under the calendar keeps its own stock */
-  body[data-theme="horror"] #screen-quest #calDayPanel .panel{
+  body[data-theme="horror"][data-material="paper"] #screen-quest #calDayPanel .panel{
     padding-left:var(--pad);
   }
 

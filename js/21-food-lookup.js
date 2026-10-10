@@ -705,7 +705,12 @@
   /* ---- system menu ---- */
   function renderSystemMenu(){
     const host = document.getElementById('sysThemeGrid');
-    host.innerHTML = Object.entries(THEMES).map(([k,t])=>
+    /* With one world open there is nothing to switch to */
+    const open = openThemes();
+    const show = open.length > 1 ? '' : 'none';
+    host.style.display = show;
+    if (host.previousElementSibling) host.previousElementSibling.style.display = show;
+    host.innerHTML = open.map(([k,t])=>
       `<button class="theme-btn${state.theme===k?' selected':''}" data-systheme="${k}"
         aria-label="${t.name} theme"><span class="ic">${ic(t.icon)}</span><span class="nm">${t.name}</span></button>`).join('');
     host.querySelectorAll('[data-systheme]').forEach(b=>b.addEventListener('click', ()=>{

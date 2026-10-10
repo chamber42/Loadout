@@ -14,7 +14,7 @@
      card previews what you're picking. */
   function renderLibrary(){
     const host = document.getElementById('libraryGrid');
-    host.innerHTML = Object.entries(THEMES).map(([k,t])=>{
+    host.innerHTML = openThemes().map(([k,t])=>{
       const c = t.colors;
       return `<button class="game-case" data-game="${k}">
         <span class="case-body" style="--plastic:${c['panel']}; --edge:${c['line']};">
