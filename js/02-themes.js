@@ -200,6 +200,21 @@
     },
   };
 
+  /* One typeface for the whole app, whatever the world. Each theme above
+     still carries the pairing it was drafted with, for when they are
+     reworked, but none of them is applied: every heading and every line of
+     body copy is set in Chakra Petch, a squared face with clipped corners —
+     hard-edged enough to read as a game, open enough to read at the small
+     sizes the labels run at. It is under the SIL Open Font License, which
+     allows it to be bundled into a paid app. Headings are told apart by
+     weight rather than by face. */
+  const APP_TYPE = {
+    fonts:{ display:"'Chakra Petch', 'Arial Narrow', Arial, sans-serif",
+            body:"'Chakra Petch', 'Arial Narrow', Arial, sans-serif",
+            spacing:"0.5px" },
+    sizes:{ "fs-6":"10px","fs-7":"11px","fs-8":"12px","fs-9":"13px","fs-10":"14px","fs-11":"15px","fs-12":"16px","fs-13":"17px","fs-18":"26px","fs-body":"15px" }
+  };
+
   /* The worlds that can be picked right now. Every theme above is kept, but
      only these are offered in the library and the system menu, and a save
      that names any other is moved onto the first of them. The rest come back
@@ -409,14 +424,14 @@
       const rgb = rgbTriplet(v);
       if (rgb) r.setProperty('--' + k + '-rgb', rgb);
     });
-    r.setProperty('--font-display', t.fonts.display);
-    r.setProperty('--font-body', t.fonts.body);
-    r.setProperty('--display-spacing', t.fonts.spacing);
+    r.setProperty('--font-display', APP_TYPE.fonts.display);
+    r.setProperty('--font-body', APP_TYPE.fonts.body);
+    r.setProperty('--display-spacing', APP_TYPE.fonts.spacing);
     r.setProperty('--title-glow', t.glow || 'none');
     r.setProperty('--accent-soft', t.accentSoft || 'rgba(255,255,255,.08)');
     r.setProperty('--accent-line', t.accentLine || 'rgba(255,255,255,.35)');
     r.setProperty('--bg-wash', t.wash || 'none');
-    Object.entries(t.sizes || {}).forEach(([k,v]) => r.setProperty('--' + k, v));
+    Object.entries(APP_TYPE.sizes).forEach(([k,v]) => r.setProperty('--' + k, v));
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', t.colors['bg-0']);
     document.body.style.backgroundColor = t.colors['bg-0'];
@@ -439,6 +454,7 @@
        stale text sitting there until you changed screens. Re-label in place. */
     const cur = document.querySelector('.screen.active');
     if (cur) refreshTabs(cur.id);
+    if (typeof sentenceCaseLabels === 'function') sentenceCaseLabels();
   }
 
   /* Each genre names its own character classes. The calorie bands never

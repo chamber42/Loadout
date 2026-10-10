@@ -16,15 +16,15 @@
     const dt = new Date(y, m-1, d);
     const isToday = key === todayKey();
     document.getElementById('journalDateLbl').innerHTML =
-      `${isToday ? 'Today · ' : ''}${DOW[mondayIndex(dt)]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
-    /* Now that any day can be opened, a fixed "Log Today" would be a plain
+      `${DOW[mondayIndex(dt)]}, ${MONTHS[dt.getMonth()]} ${dt.getDate()}`;
+    /* Now that any day can be opened, a fixed "Today" would be a plain
        lie on every other one. Shortened month: the heading is set in the
        display face at title size, where "Log September 24" wraps badly. */
     const jTitle = document.getElementById('journalTitle');
     if (jTitle){
       jTitle.textContent = isToday
-        ? 'Log Today'
-        : `Log ${MONTHS[dt.getMonth()].slice(0,3)} ${dt.getDate()}`;
+        ? 'Today'
+        : `${MONTHS[dt.getMonth()].slice(0,3)} ${dt.getDate()}`;
     }
     renderJournalDateStrip();
 
@@ -65,28 +65,7 @@
        rest-day number once the week moves on. */
     const tg = (typeof targetsFor === 'function') ? targetsFor(dayKind) : currentTargets();
     const t = dayTotals(key);
-    const fromPlan = slots.length && slots[0].planned;
-    const planned = characterExists() && Object.values(state.selections||{})
-      .some(sel => SLOT_DEFS.some(dd => (sel[dd.slot]||[]).some(Boolean)));
 
-    /* The journal is the one screen that is genuinely a tracker: a target,
-       some objectives, and a running count of what is done. Drawing it as
-       an open quest rather than four stacked totals panels is closer to
-       what it actually is. */
-    const done  = slots.filter(sl => (log.meals[sl.name] || []).length).length;
-
-    /* Which sittings could be filled from an earlier day, and what to call
-       that day. Worked out once here rather than inside the map below, so a
-       sitting with nothing to copy simply gets no button rather than one
-       that would fail. */
-    const repeatable = {};
-    if (typeof lastMealBefore === 'function'){
-      slots.forEach(sl => {
-        if ((log.meals[sl.name] || []).length) return;   // already has something
-        const src = lastMealBefore(sl.name, key);
-        if (src) repeatable[sl.name] = repeatDayLabel(src.key, key);
-      });
-    }
 
     /* A whole day is only offered on a day with nothing in it at all. */
     const wholeDay = (t.items === 0 && typeof lastDayBefore === 'function')
@@ -115,41 +94,60 @@
                         ? state.prep.schedule.length : 0;
     const showSplit = (typeof hasSplit === 'function') && hasSplit();
     const goal     = tg.kcal + (buff ? buff.kcal : 0);
-    const pct      = goal ? Math.round(t.kcal / goal * 100) : 0;
-    const macro = (label, got, want, cls)=>{
-      const p = want ? Math.min(100, Math.round(got / want * 100)) : 0;
-      return `<div class="qbm">
-        <span class="qbm-k">${label}</span>
-        <span class="qbm-track"><i class="${cls}" style="width:${p}%"></i></span>
-        <span class="qbm-v">${Math.round(got)}${want ? '/' + want : ''}g</span>
+    /* What is left of each macro, as a number in the macro's own colour
+       under the name the character sheet gives it. No bars and no rings:
+       the run of meals below already shows how far the day has got. */
+    const macro = (stat, label, got, want, cls)=>{
+      const togo = want ? Math.round(want - got) : Math.round(got);
+      return `<div class="jstat ${cls}">
+        <span class="jstat-n">${want ? Math.abs(togo) : togo}<small>g</small></span>
+        <span class="jstat-k"><b>${stat}</b>${want ? (togo < 0 ? ' over' : ' left') : ''}</span>
+        <span class="jstat-m">${label}</span>
       </div>`;
     };
+    /* The day opens on who is eating it: the class portrait, its name, and
+       where in the prep this day falls. */
+    const tierNow = TIERS.find(x => x.id === state.assignedTierId);
+    const thm = THEMES[state.theme] || {};
+    const tierRaw = ((thm.words || {}).tier) || 'TIER';
+    const tierWord = tierRaw.charAt(0) + tierRaw.slice(1).toLowerCase();
+    const prepDay = (typeof prepReady === 'function' && prepReady() && isToday)
+      ? `Day ${dayIndex() + 1} of ${state.prep.schedule.length}` : '';
+    const left = goal - Math.round(t.kcal);
+    const over = goal && left < 0;
 
+    /* The day opens on the one number it is about: what is left. The sum
+       that makes it sits under it, so the number never has to be taken on
+       trust, and the three macros follow in their own colours. */
     body.innerHTML = `
-      <div class="panel quest-brief">
-        <div class="qb-top">
-          <span class="qb-tag">ACTIVE</span>
-          <span class="qb-count">${done} / ${slots.length} logged</span>
+      <div class="panel jsum">
+        <div class="jhero">
+          <div class="jhero-art" aria-hidden="true">${tierNow && typeof ch === 'function'
+            ? (ch(state.theme || 'cyberpunk', tierNow.id) || '') : ''}</div>
+          <div class="jhero-txt">
+            <span class="jhero-who">${tierNow ? escapeHtml(tierNow.name) : ''}<em>${escapeHtml(tierWord)} ${tierNow ? tierNow.id : ''}${prepDay ? ' · ' + prepDay : ''}</em></span>
+            <span class="jhero-left${over ? ' over' : ''}"><strong>${goal ? Math.abs(left).toLocaleString() : Math.round(t.kcal).toLocaleString()}</strong>${
+              !goal ? 'kcal eaten' : over ? 'kcal over' : 'kcal left'}</span>
+            <span class="jhero-sub">${Math.round(t.kcal).toLocaleString()} of ${goal.toLocaleString()} eaten${buff ? ` · +${buff.kcal} from steps` : ''}</span>
+          </div>
         </div>
-        <div class="qb-title">${isToday ? 'Fuel today' : 'Fuel this day'}</div>
-        ${fromPlan ? `<div class="qb-from">Following your prep — ${slots.length} ${slots.length === 1 ? 'sitting' : 'sittings'}
-          (${escapeHtml(planFor(state.mealPlan).label)}). Change it in the Loadout tab and this follows.</div>` : ''}
-        <div class="qb-bar${goal && t.kcal > goal ? ' over' : ''}">
-          <i style="width:${Math.min(100, pct)}%"></i>
-          <span>${Math.round(t.kcal)}${goal ? ' / ' + goal : ''} kcal</span>
+        <div class="jstats">
+          ${macro('Repair',  'protein', t.protein, tg.protein, 'p')}
+          ${macro('Energy',  'carbs',   t.carbs,   tg.carbs,   'c')}
+          ${macro('Reserve', 'fat',     t.fat,     tg.fat,     'f')}
         </div>
-        ${wholeDay ? `<button class="mini-btn add" data-jrepeatday="1" style="margin-top:10px;"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg> COPY ${escapeHtml(repeatDayLabel(wholeDay.key, key).toUpperCase())}</button>` : ''}
-        ${daySteps != null ? `<div class="qb-buff${buff ? '' : ' flat'}">
-          <span class="qb-buff-icon"><svg class="px" aria-hidden="true"><use href="#i-run"></use></svg></span>
-          <span class="qb-buff-body">
-            <span class="qb-buff-head">${buff
-              ? `STEP BUFF <strong>+${buff.kcal} kcal</strong>`
-              : `STEPS <strong>${daySteps.toLocaleString()}</strong>`}</span>
-            <span class="qb-buff-sub">${buff
+        ${typeof waterRowHtml === 'function' ? waterRowHtml(key) : ''}
+        ${daySteps != null ? `<div class="jsum-steps${buff ? ' buff' : ''}">
+          <span class="jsum-steps-ic"><svg class="px" aria-hidden="true"><use href="#i-run"></use></svg></span>
+          <span class="jsum-steps-body">
+            <span class="jsum-steps-head">${buff
+              ? `Step bonus <strong>+${buff.kcal} kcal</strong>`
+              : `<strong>${daySteps.toLocaleString()}</strong> steps`}</span>
+            <span class="jsum-steps-sub">${buff
               ? (buff.source === 'energy'
-                  ? `${daySteps != null ? daySteps.toLocaleString() + ' steps · ' : ''}measured from your activity, beyond a usual day`
-                  : `${buff.extra != null ? buff.extra.toLocaleString() + ' past your usual ' + buff.average.toLocaleString() + ' · ' : ''}estimated from steps`)
-              : `${dayAverage ? `Your usual is about ${dayAverage.toLocaleString()}. ` : ''}${
+                  ? `${daySteps.toLocaleString()} steps, measured from your activity`
+                  : `${buff.extra != null ? buff.extra.toLocaleString() + ' past your usual ' + buff.average.toLocaleString() : 'estimated from steps'}`)
+              : `${dayAverage ? `Usual is about ${dayAverage.toLocaleString()}. ` : ''}${
                   /* Never claim the day was no further than usual when the
                      number printed on the line above says it was further.
                      A buff can be declined for reasons that have nothing to
@@ -161,15 +159,11 @@
                     ? (dayKind === 'train'
                         ? 'Your training session already covers it.'
                         : 'Already counted in your activity level.')
-                    : (isToday ? 'Go past that and today\'s target goes up.'
-                               : 'No further than usual, so no buff.')}`}</span>
+                    : (isToday ? 'Go past it and today\'s goal goes up.'
+                               : 'No further than usual, so no bonus.')}`}</span>
           </span>
         </div>` : ''}
-        <div class="qb-macros">
-          ${macro('PROTEIN', t.protein, tg.protein, 'p')}
-          ${macro('CARBS',   t.carbs,   tg.carbs,   'c')}
-          ${macro('FAT',     t.fat,     tg.fat,     'f')}
-        </div>
+        ${wholeDay ? `<button class="text-link jsum-copy" data-jrepeatday="1">Copy ${escapeHtml(repeatDayLabel(wholeDay.key, key))}</button>` : ''}
       </div>` +
       /* Shown only where the answer changes the target, which means only
          where a rest/training split exists at all. Without one every prep
@@ -209,33 +203,43 @@
               : 'Remembered against this date — it does not change your plan.'}
           </p>` : ''}
       </div>` : '') +
-      slots.map(sl=>{
+      /* The day as a run of checkpoints, one per meal. A meal shows only what
+       was logged into it — nothing from the prep is put there, or shown as
+       if it were, until the person says they ate it. Logging the prepped
+       dish is an action inside the meal's own sheet. The first meal not yet
+       logged is the one you are on. */
+      (()=>{
+        const nextIdx = slots.findIndex(sl => !(log.meals[sl.name] || []).length);
+        return `<div class="panel jrun">` + slots.map((sl, si)=>{
         const items = log.meals[sl.name] || [];
         const sub = items.reduce((a,i)=>a + (+i.kcal||0), 0);
-        return `<div class="panel obj${items.length ? ' done' : ''}">
-          <div class="jmeal-head">
-            <span class="obj-mark" aria-hidden="true"></span>
-            <span class="eaten-title">${escapeHtml(sl.name)}</span>
-            <span class="eaten-total">${Math.round(sub)} kcal</span>
-          </div>
-          ${items.length
-            ? items.map((it,i)=>`<div class="jrow">
-                <span class="jname">${escapeHtml(it.name)}
-                  <small style="display:block;color:var(--muted);font-size:11px;">P${Math.round(+it.protein||0)} C${Math.round(+it.carbs||0)} F${Math.round(+it.fat||0)}${
-                    (it._food || it._foodData) ? ` · <button class="amt-tap tiny" data-jamtedit="${escapeHtml(sl.name)}|${i}">change amount <svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg></button>` : ''}${
+        const state_ = items.length ? ' done' : si === nextIdx ? ' next' : '';
+        return `<div class="jnode${state_}">
+          <span class="jnode-dot" aria-hidden="true">${items.length ? '<svg class="px"><use href="#i-check"></use></svg>' : ''}</span>
+          <div class="jnode-body">
+            <div class="jnode-head">
+              <button class="jmeal-open" data-jmeal="${escapeHtml(sl.key)}|${escapeHtml(sl.name)}" aria-label="Open ${escapeHtml(sl.name)}">
+                <span class="jmeal-name">${escapeHtml(sl.name)}</span>
+                <span class="jmeal-kcal">${items.length ? Math.round(sub).toLocaleString() + ' kcal' : ''}</span>
+              </button>
+              <button class="jmeal-add" data-jadd="${escapeHtml(sl.name)}" aria-label="Add food to ${escapeHtml(sl.name)}"><svg class="px" aria-hidden="true"><use href="#i-plus"></use></svg></button>
+            </div>
+            ${items.map((it,i)=>`<div class="jrow">
+                <button class="jname" data-jedit="${escapeHtml(sl.name)}|${i}" aria-label="Edit ${escapeHtml(it.name)}">
+                  <span class="jname-t">${escapeHtml(it.name)}<svg class="px jname-ed" aria-hidden="true"><use href="#i-edit"></use></svg></span>
+                  <small>P ${Math.round(+it.protein||0)} · C ${Math.round(+it.carbs||0)} · F ${Math.round(+it.fat||0)}${
                     it._pantryTook ? ` · <span class="jpantry">−${it._pantryTook}g from pantry</span>` : ''}${
                     it._partial ? ` · <span class="label-warn-inline">a missing macro counts as zero</span>` : ''}${
                     it._suspect ? ` · <span class="label-warn-inline">label works out to ${Math.round(it._impliedKcal)} kcal</span>` : ''}</small>
-                </span>
+                </button>
                 <span class="jkcal">${Math.round(+it.kcal||0)}</span>
                 <button class="mini-btn remove" data-jdel="${escapeHtml(sl.name)}|${i}" aria-label="Remove"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
-              </div>`).join('')
-            : '<div class="fav-nores">Nothing here yet. Add what you ate.</div>'}
-          <button class="mini-btn add" data-jadd="${escapeHtml(sl.name)}">+ ADD FOOD</button>
-          ${repeatable[sl.name] ? `<button class="mini-btn add" data-jrepeat="${escapeHtml(sl.name)}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg> SAME AS ${escapeHtml(repeatable[sl.name].toUpperCase())}</button>` : ''}
-          ${planned ? `<button class="mini-btn add" data-jplan="${escapeHtml(sl.key)}|${escapeHtml(sl.name)}" style="margin-top:6px;"><svg class="px" aria-hidden="true"><use href="#i-clipboard"></use></svg> COPY FROM MY PREP PLAN</button>` : ''}
+              </div>`).join('')}
+          </div>
         </div>`;
-      }).join('');
+      }).join('') + `</div>`;
+      })() +
+      (typeof workoutCardHtml === 'function' ? workoutCardHtml(key) : '');
 
     /* Switching prep day goes through the same path the loadout strip uses:
        write back whatever the current day was showing first, or the edits
@@ -281,10 +285,28 @@
 
     body.querySelectorAll('[data-jadd]').forEach(b=>b.addEventListener('click', ()=>
       openJournalFoodPicker(b.getAttribute('data-jadd'))));
-    // a logged library food keeps its amount editable — tap it to change
-    body.querySelectorAll('[data-jamtedit]').forEach(b=>b.addEventListener('click', ()=>{
-      const [meal, idx] = b.getAttribute('data-jamtedit').split('|');
-      openJournalAmountEditor(meal, parseInt(idx,10));
+    if (typeof wireWater === 'function') wireWater(body, key);
+    if (typeof wireWorkouts === 'function') wireWorkouts(body, key);
+    body.querySelectorAll('[data-jmeal]').forEach(b=>b.addEventListener('click', ()=>{
+      const [mk, mn] = b.getAttribute('data-jmeal').split('|');
+      openJournalMeal(mk, mn);
+    }));
+    /* Every logged food can be changed by tapping it. One that came from
+       the library or a scan reopens the amount step, where the numbers
+       follow the weight; one typed in by hand reopens the form it was
+       typed into. */
+    body.querySelectorAll('[data-jedit]').forEach(b=>b.addEventListener('click', ()=>{
+      const [meal, idx] = b.getAttribute('data-jedit').split('|');
+      const i = parseInt(idx,10);
+      const it = (log.meals[meal] || [])[i];
+      if (!it) return;
+      if (it._food || it._foodData) openJournalAmountEditor(meal, i);
+      else {
+        commitOrDiscardJournalEditor();
+        renderJournal();
+        renderJournalEditor(meal, i, true);
+        window.scrollTo({top: 0});
+      }
     }));
     body.querySelectorAll('[data-jdel]').forEach(b=>b.addEventListener('click', ()=>{
       const [meal, idx] = b.getAttribute('data-jdel').split('|');
@@ -293,15 +315,87 @@
       if (gone) pantryReturnForEntry(gone);
       renderJournal(); saveState();
     }));
-    body.querySelectorAll('[data-jplan]').forEach(b=>b.addEventListener('click', ()=>{
-      const [mealKey, mealName] = b.getAttribute('data-jplan').split('|');
-      journalCopyFromPlan(mealKey, mealName);
-    }));
-    body.querySelectorAll('[data-jrepeat]').forEach(b=>b.addEventListener('click', ()=>{
-      if (repeatMealInto(b.getAttribute('data-jrepeat'), key)){ renderJournal(); saveState(); }
-    }));
     body.querySelectorAll('[data-jrepeatday]').forEach(b=>b.addEventListener('click', ()=>{
       if (repeatDayInto(key)){ renderJournal(); saveState(); }
+    }));
+  }
+
+  /* ---------------------------------------------------------
+     ONE MEAL, OPENED
+     Tapping a meal on Today opens it as a sheet: what is in it, each item
+     editable, and the things done to a meal as a whole — add to it, swap
+     it for what the prep cooked, copy an earlier day's, or clear it.
+     Edits made here redraw both the sheet and the day behind it.
+  --------------------------------------------------------- */
+  function openJournalMeal(mealKey, mealName){
+    renderJournalMeal(mealKey, mealName);
+    openModal('modalJMeal');
+  }
+
+  function renderJournalMeal(mealKey, mealName){
+    const key = state.journalDate || todayKey();
+    const log = dayLog(key);
+    const items = log.meals[mealName] || [];
+    const tot = items.reduce((a,i)=>({kcal:a.kcal + (+i.kcal||0), p:a.p + (+i.protein||0),
+                                     c:a.c + (+i.carbs||0), f:a.f + (+i.fat||0)}), {kcal:0,p:0,c:0,f:0});
+    const planned = characterExists() && Object.values(state.selections||{})
+      .some(sel => SLOT_DEFS.some(dd => (sel[dd.slot]||[]).some(Boolean)));
+    const sel = planned && (state.selections || {})[mealKey];
+    const dish = sel && sel.dish;
+    const src = (typeof lastMealBefore === 'function') ? lastMealBefore(mealName, key) : null;
+    const srcLabel = src ? repeatDayLabel(src.key, key) : '';
+
+    document.getElementById('jmealTitle').textContent = mealName;
+    const host = document.getElementById('jmealBody');
+    host.innerHTML = `
+      <div class="jm-sum">
+        <strong>${Math.round(tot.kcal).toLocaleString()}</strong> kcal
+        <span>P ${Math.round(tot.p)} · C ${Math.round(tot.c)} · F ${Math.round(tot.f)}</span>
+      </div>
+      ${items.length ? `<div class="jm-items">${items.map((it,i)=>`
+        <div class="jm-item">
+          <button class="jm-edit" data-jmedit="${i}">
+            <span class="jm-name">${escapeHtml(it.name || 'Unnamed item')}<svg class="px jname-ed" aria-hidden="true"><use href="#i-edit"></use></svg></span>
+            <span class="jm-sub">${Math.round(+it.kcal||0)} kcal · P ${Math.round(+it.protein||0)} · C ${Math.round(+it.carbs||0)} · F ${Math.round(+it.fat||0)}</span>
+          </button>
+          <button class="jm-del" data-jmdel="${i}" aria-label="Remove ${escapeHtml(it.name || 'item')}"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+        </div>`).join('')}</div>`
+        : `<div class="jm-empty">Nothing logged yet.</div>`}
+      <div class="panel action-list jm-actions">
+        <button class="action-row" data-jmact="add"><svg class="px" aria-hidden="true"><use href="#i-plus"></use></svg><span>Add food</span></button>
+        ${planned ? `<button class="action-row" data-jmact="plan"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg><span>${
+          items.length ? 'Replace with' : 'Log'} my prep${dish ? ': ' + escapeHtml(dish) : ''}</span></button>` : ''}
+        ${src ? `<button class="action-row" data-jmact="repeat"><svg class="px" aria-hidden="true"><use href="#i-back"></use></svg><span>${
+          items.length ? 'Replace with' : 'Same as'} ${escapeHtml(srcLabel)}</span></button>` : ''}
+        ${items.length ? `<button class="action-row" data-jmact="save"><svg class="px" aria-hidden="true"><use href="#i-star"></use></svg><span>Save as a meal</span></button>` : ''}
+        ${items.length ? `<button class="action-row danger" data-jmact="clear"><svg class="px" aria-hidden="true"><use href="#i-reset"></use></svg><span>Clear this meal</span></button>` : ''}
+      </div>`;
+
+    const refresh = ()=>{ renderJournal(); saveState(); renderJournalMeal(mealKey, mealName); };
+    const empty = ()=>{
+      (log.meals[mealName] || []).forEach(e => pantryReturnForEntry(e));
+      log.meals[mealName] = [];
+    };
+
+    host.querySelectorAll('[data-jmedit]').forEach(b=>b.addEventListener('click', ()=>{
+      const i = parseInt(b.getAttribute('data-jmedit'), 10);
+      const it = items[i];
+      closeModal('modalJMeal');
+      if (it && (it._food || it._foodData)) openJournalAmountEditor(mealName, i);
+      else { commitOrDiscardJournalEditor(); renderJournal(); renderJournalEditor(mealName, i, true); window.scrollTo({top:0}); }
+    }));
+    host.querySelectorAll('[data-jmdel]').forEach(b=>b.addEventListener('click', ()=>{
+      const gone = (log.meals[mealName] || []).splice(parseInt(b.getAttribute('data-jmdel'), 10), 1)[0];
+      if (gone) pantryReturnForEntry(gone);
+      refresh();
+    }));
+    host.querySelectorAll('[data-jmact]').forEach(b=>b.addEventListener('click', ()=>{
+      const act = b.getAttribute('data-jmact');
+      if (act === 'add'){ closeModal('modalJMeal'); openJournalFoodPicker(mealName); return; }
+      if (act === 'save'){ closeModal('modalJMeal'); openSaveMeal(mealName); return; }
+      if (act === 'plan'){ empty(); journalCopyFromPlan(mealKey, mealName); renderJournalMeal(mealKey, mealName); return; }
+      if (act === 'repeat'){ empty(); repeatMealInto(mealName, key); refresh(); return; }
+      if (act === 'clear'){ empty(); refresh(); }
     }));
   }
 
@@ -402,18 +496,25 @@
             </button>`).join('')
         : '';
 
-      if (!recents.length && !held.length){
+      /* Meals saved whole come first: one tap logs the lot. */
+      const savedHtml = (typeof savedMealsHtml === 'function') ? savedMealsHtml() : '';
+
+      if (!recents.length && !held.length && !savedHtml){
         host.innerHTML = `<div class="fav-nores">Start typing to search ${items.length} foods —
           “chicken”, “bread”, “rice”…</div>`;
         return;
       }
-      host.innerHTML = pantryHtml +
-        (recents.length ? `<div class="fp-group">YOURS</div>` +
+      host.innerHTML = savedHtml + pantryHtml +
+        (recents.length ? `<div class="fp-group">RECENT</div>` +
         recents.map((r,i)=>`
           <button class="fp-row" data-jr="${i}">
             <span class="nm">${ic(r.icon)} ${escapeHtml(r.label)}</span>
             <span class="kc">${r.uses}&times;${r.kind === 'food' && r.grams ? ' · ' + r.grams + ' g' : ''}</span>
           </button>`).join('') : '');
+
+      if (typeof wireSavedMeals === 'function'){
+        wireSavedMeals(host, jfoodTarget.mealName, ()=> renderJournalFoodList(''));
+      }
 
       host.querySelectorAll('[data-jp]').forEach(b=>b.addEventListener('click', ()=>{
         const it = held[parseInt(b.getAttribute('data-jp'),10)];
@@ -759,7 +860,9 @@
   }
 
   /* Inline editor for a hand-entered item */
-  function renderJournalEditor(mealName, idx){
+  /* existing: the row was already logged, so cancelling leaves it as it
+     was instead of throwing away a row that was only just started. */
+  function renderJournalEditor(mealName, idx, existing){
     const key = state.journalDate || todayKey();
     jEditing = {mealName, idx, key};
     const log = dayLog(key);
@@ -777,7 +880,7 @@
         <label>CARB<input type="number" id="jeC" inputmode="numeric" value="${it.carbs||''}" placeholder="0"></label>
         <label>FAT<input type="number" id="jeF" inputmode="numeric" value="${it.fat||''}" placeholder="0"></label>
       </div>
-      <button class="btn-primary" id="jeSave" style="margin-top:12px;">SAVE TO ${escapeHtml(mealName)}</button>
+      <button class="btn-primary" id="jeSave" style="margin-top:12px;">${existing ? 'SAVE CHANGES' : 'SAVE TO ' + escapeHtml(mealName)}</button>
       <button class="btn-ghost" id="jeCancel">CANCEL</button>`;
     wrap.prepend ? wrap.prepend(card) : wrap.insertBefore(card, wrap.firstChild);
     const nameEl = document.getElementById('jeName');
@@ -792,7 +895,7 @@
     });
     document.getElementById('jeCancel').addEventListener('click', ()=>{
       jEditing = null;
-      log.meals[mealName].splice(idx, 1);
+      if (!existing) log.meals[mealName].splice(idx, 1);
       renderJournal();
     });
   }

@@ -184,17 +184,38 @@
 
   const pantrySearch = document.getElementById('pantrySearch');
   const pantryClear  = document.getElementById('pantryClear');
+  /* The one field takes both. Nothing on a shelf is named with eight or
+     more digits and nothing else, so a run of them is a barcode and goes to
+     the lookup; anything else is a name. */
+  const PANTRY_BARCODE = /^\d{8,14}$/;
+  let pantryTypeTimer = null;
   pantrySearch.addEventListener('input', ()=>{
+    const v = pantrySearch.value.trim();
+    pantryClear.style.display = pantrySearch.value ? '' : 'none';
+    clearTimeout(pantryTypeTimer);
+    if (PANTRY_BARCODE.test(v)){
+      pantryQuery = '';
+      renderPantryResults();
+      pantryTypeTimer = setTimeout(function(){ pantryScanLookup(v); }, 300);
+      return;
+    }
+    resetPantryScanRow();
     pantryQuery = pantrySearch.value;
-    pantryClear.style.display = pantryQuery ? '' : 'none';
     renderPantryResults();
   });
   pantryClear.addEventListener('click', ()=>{
+    clearTimeout(pantryTypeTimer);
     pantryQuery = ''; pantrySearch.value = ''; pantryClear.style.display = 'none';
+    resetPantryScanRow();
     renderPantryResults(); pantrySearch.focus();
   });
 
-  document.getElementById('pantryPlanToggle').addEventListener('click', ()=>{
+  document.getElementById('pantryShopBtn').addEventListener('click', ()=>{
+    renderPrepGrid(); renderShoppingList(); showScreen('screen-shop');
+  });
+
+  const pantryPlanToggle = document.getElementById('pantryPlanToggle');
+  if (pantryPlanToggle) pantryPlanToggle.addEventListener('click', ()=>{
     state.pantryUse = !state.pantryUse;
     saveState();
     renderPantry();
@@ -233,10 +254,6 @@
   function resetPantryScanRow(){
     const host = document.getElementById('pantryScanResults');
     if (host) host.innerHTML = '';
-    const input = document.getElementById('pantryBarcode');
-    if (input) input.value = '';
-    const clear = document.getElementById('pantryBarcodeClear');
-    if (clear) clear.style.display = 'none';
   }
 
   /* ---- how much did you just buy? ----
@@ -376,21 +393,3 @@
     });
   }
 
-  const pantryBarcode = document.getElementById('pantryBarcode');
-  const pantryBarcodeClear = document.getElementById('pantryBarcodeClear');
-  if (pantryBarcode){
-    let typeTimer = null;
-    pantryBarcode.addEventListener('input', function(){
-      if (pantryBarcodeClear) pantryBarcodeClear.style.display = pantryBarcode.value ? '' : 'none';
-      clearTimeout(typeTimer);
-      const v = pantryBarcode.value.trim();
-      if (!v){ resetPantryScanRow(); return; }
-      typeTimer = setTimeout(function(){ pantryScanLookup(v); }, 300);
-    });
-  }
-  if (pantryBarcodeClear){
-    pantryBarcodeClear.addEventListener('click', function(){
-      resetPantryScanRow();
-      pantryBarcode.focus();
-    });
-  }

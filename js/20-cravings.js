@@ -346,7 +346,6 @@
   const craveGrid = document.getElementById('craveGrid');
   const craveSummary = document.getElementById('craveSummary');
   const btnConfirmCravings = document.getElementById('btnConfirmCravings');
-  const btnSkipCravings = document.getElementById('btnSkipCravings');
 
   const mealRuleGrid = document.getElementById('mealRuleGrid');
   function renderMealRules(){

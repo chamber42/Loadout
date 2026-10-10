@@ -79,7 +79,12 @@
     breakfastForDinner:false,
     breakfastAllDay:false,
     prepServings:1,     // days being cooked for
-    log:{},             // date -> what was actually eaten
+    log:{},             // date -> what was actually eaten, drunk and trained
+    waterGoalMl:0,      // 0 = the default for the units (2 L, or 64 fl oz)
+    savedMeals:[],      // {id, name, items[]} — meals saved whole, logged in one tap
+    measurements:{},    // date -> {waist, chest, ...} in inches
+    photos:[],          // {key, file} — progress photos kept in the app's data folder
+    healthWorkouts:false, // whether workouts have been asked for from Health
     /* date -> a scale reading in lb. bodyweight above stays the single
        current figure everything else reads; this is the history behind
        it, which is what a trend and an adaptive expenditure need. */

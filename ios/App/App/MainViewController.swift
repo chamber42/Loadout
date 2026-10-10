@@ -24,6 +24,7 @@ class MainViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(HealthKitPlugin())
         bridge?.registerPluginInstance(NotificationsPlugin())
+        bridge?.registerPluginInstance(WidgetBridgePlugin())
     }
 
     /* The bar down the right-hand edge while scrolling is drawn by the web

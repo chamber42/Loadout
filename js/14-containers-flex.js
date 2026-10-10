@@ -58,28 +58,20 @@
     return out;
   }
 
-  /* One serving, logged and taken off the ledger in a single tap. This is
-     the whole point of prepping: it was weighed once when it was cooked, so
-     eating it should not mean weighing it again. */
+  /* One serving taken out of the fridge. Only the fridge: what was eaten
+     is logged on Today by the person, never written there on their behalf
+     — a meal that appears in the journal without being logged reads as
+     something they did not do. */
   function eatOneServing(dayIdx, mealKey){
     const ref = dishRefFor(mealKey, dayIdx);
     if (!ref || !dishLeft(ref)) return;
-    const keep = state.activeDay;
-    applyDayToSelections(dayIdx + 1);
-    const mi = MEALS.findIndex(m => m.key === mealKey);
-    const slots = journalSlots() || [];
-    const slotName = (slots[mi] || {}).name || (MEALS[mi] ? MEALS[mi].name : 'MEAL');
     const dish = dishAt(ref);
-    state.journalDate = todayKey();
-    journalCopyFromPlan(mealKey, slotName);
-    applyDayToSelections(keep);
     takeContainer(ref, 1);
-    renderJournal();
     const name = (dish && dish.dish) || 'Serving';
     const short = name.length > 30 ? name.slice(0, 29).trim() + '…' : name;
     const rest = dishLeft(ref);
-    toast(short + ' logged — ' +
-          (rest ? rest + ' left' : 'that was the last one'));
+    toast(short + ' — ' +
+          (rest ? rest + ' left in the fridge' : 'that was the last one'));
     saveState();
   }
 
@@ -225,11 +217,24 @@
 
     renderPrepDates();
 
+    /* The prep-wide actions only mean something once there is a prep, and
+       the pantry one only once the pantry holds something it would use. */
+    const actions = document.getElementById('prepActions');
+    if (actions) actions.hidden = !prepReady();
+    const reshuffle = document.getElementById('btnPrepReshuffle');
+    if (reshuffle) reshuffle.hidden = !prepReady();
+    const cooked = document.getElementById('pantryCookedBtn');
+    if (cooked) cooked.style.display =
+      (typeof pantryItems === 'function' && pantryItems().some(i=>i.grams)) ? '' : 'none';
+    const fresh = document.getElementById('btnPrepNew');
+    if (fresh){
+      fresh.className = prepReady() ? 'btn-ghost' : 'btn-primary';
+      fresh.lastChild.nodeValue = prepReady() ? ' Start a new prep' : ' Plan a prep';
+    }
+
     if (!prepReady()){
-      intro.textContent = 'No prep built yet.';
-      host.innerHTML = `<div class="panel"><div class="fav-nores">
-        Nothing prepped yet. Head to the Loadout tab, set how many days you're cooking for
-        and how many different meals you want, and this fills in.</div></div>`;
+      intro.textContent = 'Pick how many days you are cooking for and what you like to eat, and the meals are built around your targets.';
+      host.innerHTML = '';
       summary.innerHTML = '';
       return;
     }
@@ -422,7 +427,7 @@
           : 'where it is'}. Nothing needs re-shopping.</p>
       </div>` : '') + `
       <button class="btn-ghost" id="pdEditDay"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> EDIT THIS DAY</button>
-      <button class="btn-ghost" id="pdLogDay"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg> LOG THIS DAY TO THE JOURNAL</button>`;
+      <button class="btn-ghost" id="pdLogDay"><svg class="px" aria-hidden="true"><use href="#i-check"></use></svg> ATE THIS WHOLE DAY</button>`;
 
     body.querySelectorAll('[data-pd-amt]').forEach(b=>b.addEventListener('click', ()=>{
       const [mealKey, slot, idx] = b.getAttribute('data-pd-amt').split('|');
@@ -456,8 +461,9 @@
       closeModal('modalPrepDay');
     });
     document.getElementById('pdLogDay').addEventListener('click', ()=>{
-      logPrepDayToJournal(dayIdx);
-      closeModal('modalPrepDay');
+      eatPrepDay(dayIdx);
+      openPrepDay(dayIdx);
+      renderPrepDays();
     });
 
     openModal('modalPrepDay');
@@ -465,19 +471,18 @@
     applyDayToSelections(keep);
   }
 
-  /* Drop a whole prepped day into today's journal in one go */
-  function logPrepDayToJournal(dayIdx){
-    const keep = state.activeDay;
-    applyDayToSelections(dayIdx + 1);
-    const slots = journalSlots() || [];
-    MEALS.forEach((meal, mi)=>{
-      const slotName = (slots[mi] || {}).name || meal.name;
-      journalCopyFromPlan(meal.key, slotName);
+  /* A whole prepped day eaten: one serving of each of its dishes comes out
+     of the fridge. A meal marked as eaten out is skipped — its serving is
+     still in there. Nothing is written to Today. */
+  function eatPrepDay(dayIdx){
+    let n = 0;
+    MEALS.forEach(meal=>{
+      if (isAteOut(dayIdx, meal.key)) return;
+      const ref = dishRefFor(meal.key, dayIdx);
+      if (ref && dishLeft(ref)){ takeContainer(ref, 1); n++; }
     });
-    applyDayToSelections(keep);
-    state.journalDate = todayKey();
-    renderJournal();
-    goTab('today');
+    toast(n ? n + ' serving' + (n === 1 ? '' : 's') + ' taken out of the fridge'
+            : 'Nothing left in the fridge for this day', 'check');
     saveState();
   }
 

@@ -36,6 +36,7 @@ const SUITES = [
   './goals.test.js',
   './diet-break.test.js',
   './class-progress.test.js',
+  './trackers.test.js',
 ];
 
 let passed = 0, failed = 0;

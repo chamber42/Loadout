@@ -785,9 +785,6 @@
   document.getElementById('sysRecreate').addEventListener('click', ()=>{
     showScreen('screen-onboard'); closeModal('modalSystem');
   });
-  document.getElementById('sysReprep').addEventListener('click', ()=>{
-    renderPrefs(); showScreen('screen-prefs'); closeModal('modalSystem');
-  });
   document.getElementById('sysReset').addEventListener('click', (e)=>{
     const btn = e.currentTarget;
     // a destructive action shouldn't fire on a single stray tap
@@ -851,11 +848,4 @@
   }
 
   btnConfirmCravings.addEventListener('click', goToStyle);
-  btnSkipCravings.addEventListener('click', ()=>{
-    state.cravings = [];
-    state.favorites = {protein:[], carb:[], fat:[], veg:[], fruit:[], sauce:[]};
-    state.discoveryMode = 'favorites';
-    renderCravings();
-    goToStyle();
-  });
 

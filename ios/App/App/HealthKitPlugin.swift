@@ -34,6 +34,8 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "readProfile", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "readSteps", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "readWeights", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "readWorkouts", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestWorkoutAuthorization", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "canWrite", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "requestWriteAuthorization", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "writeNutrition", returnType: CAPPluginReturnPromise)
@@ -137,9 +139,8 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
        steps to someone who walked all day would be worse than saying
        nothing.
 
-       Counted per source and then taken as the largest, not the sum — see
-       the note inside dailyTotals. Summing double-counted any day where a
-       phone and a Watch both recorded the same walk. */
+       Read as HealthKit's own merged total — see the note inside
+       dailyTotals — so the figure matches what the Health app shows. */
     @objc func readSteps(_ call: CAPPluginCall) {
         guard HKHealthStore.isHealthDataAvailable(),
               let type = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
@@ -178,10 +179,14 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         dailyTotals(of: type, in: HKUnit.count(), from: windowStart,
                     anchoredTo: startOfToday, calendar: calendar,
                     keyed: keyFormatter) { byDay, today, average, days in
-            out["byDay"] = byDay
-            if let today = today { out["today"] = today }
-            if let average = average { out["average"] = average; out["days"] = days }
-            group.leave()
+            /* Each reading finishes on its own background queue, so every
+               write into `out` is made on main, one at a time. */
+            DispatchQueue.main.async {
+                out["byDay"] = byDay
+                if let today = today { out["today"] = today }
+                if let average = average { out["average"] = average; out["days"] = days }
+                group.leave()
+            }
         }
 
         if let energy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
@@ -189,10 +194,28 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             dailyTotals(of: energy, in: HKUnit.kilocalorie(), from: windowStart,
                         anchoredTo: startOfToday, calendar: calendar,
                         keyed: keyFormatter) { byDay, today, average, days in
-                out["energyByDay"] = byDay
-                if let today = today { out["energyToday"] = today }
-                if let average = average { out["energyAverage"] = average; out["energyDays"] = days }
-                group.leave()
+                DispatchQueue.main.async {
+                    out["energyByDay"] = byDay
+                    if let today = today { out["energyToday"] = today }
+                    if let average = average { out["energyAverage"] = average; out["energyDays"] = days }
+                    group.leave()
+                }
+            }
+
+            /* Which days an Apple Watch was being worn. A Watch measures
+               active energy from heart rate all day, and an iPhone on its own
+               estimates a small fraction of it from motion — so the same day
+               reads several hundred kilocalories apart depending on what was
+               worn. A "usual" averaged across both kinds is meaningless: every
+               Watch day lands far above it. The caller compares a day only
+               against days measured the same way. */
+            group.enter()
+            watchCoverage(of: energy, in: HKUnit.kilocalorie(), from: windowStart,
+                          anchoredTo: startOfToday, keyed: keyFormatter) { byDay in
+                DispatchQueue.main.async {
+                    out["energyWatchByDay"] = byDay
+                    group.leave()
+                }
             }
         }
 
@@ -217,31 +240,23 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         var oneDay = DateComponents()
         oneDay.day = 1
 
-        /* separateBySource, and then the LARGEST source rather than the sum
-           of all of them.
+        /* One merged total per day, exactly as the Health app shows it.
 
-           A plain cumulativeSum adds every matching sample, and an iPhone and
-           an Apple Watch worn together both record steps for the same walk —
-           so the total came out close to double what the Health app shows for
-           the same day. Health does not sum; it applies its own source
-           priority and reports one figure.
+           A statistics query does the merging itself: where an iPhone and an
+           Apple Watch both recorded the same walk, HealthKit keeps one of the
+           overlapping readings by the person's source priority instead of
+           adding them, and still counts the parts of the day only one device
+           saw. That is the figure Health reports, and it can only be had from
+           a statistics query without .separateBySource.
 
-           Taking the maximum is the closest approximation available through
-           this API, and it is right for the reason the double count happens:
-           the two devices are recording the SAME walk, not two different
-           ones, so the honest answer is the better-instrumented of the two
-           readings rather than their sum. A Watch worn all day sees strictly
-           more than a phone left on a desk, so the maximum picks it without
-           anything here having to know what a Watch is — and it degrades to
-           exactly the old behaviour when there is only one source.
-
-           Deliberately not hardcoding a preference for Apple Watch by bundle
-           identifier: it would need updating for every other device somebody
-           might wear, and picking the largest reading gets there anyway. */
+           An earlier version asked for each source separately and kept the
+           larger. That avoided the double count but lost everything the other
+           device recorded on its own — a morning on the phone and an
+           afternoon on the Watch came out as only the bigger half. */
         let query = HKStatisticsCollectionQuery(
             quantityType: type,
             quantitySamplePredicate: HKQuery.predicateForSamples(withStart: windowStart, end: Date()),
-            options: [.cumulativeSum, .separateBySource],
+            options: [.cumulativeSum],
             anchorDate: startOfToday,
             intervalComponents: oneDay)
 
@@ -251,17 +266,7 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
             var completed: [(Date, Double)] = []
 
             collection?.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
-                var total = 0.0
-                if let sources = stat.sources, !sources.isEmpty {
-                    for source in sources {
-                        let v = stat.sumQuantity(for: source)?.doubleValue(for: unit) ?? 0
-                        if v > total { total = v }
-                    }
-                } else {
-                    /* No per-source breakdown available: fall back to the
-                       combined figure, which is what it always was. */
-                    total = stat.sumQuantity()?.doubleValue(for: unit) ?? 0
-                }
+                let total = stat.sumQuantity()?.doubleValue(for: unit) ?? 0
                 byDay[keyFormatter.string(from: stat.startDate)] = Int(total.rounded())
                 if calendar.isDate(stat.startDate, inSameDayAs: startOfToday) {
                     today = total
@@ -278,6 +283,178 @@ public class HealthKitPlugin: CAPPlugin, CAPBridgedPlugin {
         }
 
         store.execute(query)
+    }
+
+    /* For each day in the window, whether an Apple Watch contributed to it.
+
+       Per-source sums say which sources recorded something on a day, but a
+       source is an app, not a device, and its name is whatever the owner
+       called their hardware. The device model is only on the samples, so
+       each source is classified once by the newest sample it wrote — its
+       productType reads "Watch7,1" on a Watch and "iPhone17,2" on a phone.
+
+       A Watch counts as worn on a day when it recorded a real amount of
+       active energy, not a trace: one left on its charger writes nothing,
+       and one put on for an hour should not reclassify the day. 150 kcal
+       sits between the two in real data — a Watch worn for a day reads 200
+       to 900, one slipped on briefly reads 40 to 140. */
+    private func watchCoverage(of type: HKQuantityType,
+                               in unit: HKUnit,
+                               from windowStart: Date,
+                               anchoredTo startOfToday: Date,
+                               keyed keyFormatter: DateFormatter,
+                               done: @escaping (JSObject) -> Void) {
+        var oneDay = DateComponents()
+        oneDay.day = 1
+        let query = HKStatisticsCollectionQuery(
+            quantityType: type,
+            quantitySamplePredicate: HKQuery.predicateForSamples(withStart: windowStart, end: Date()),
+            options: [.cumulativeSum, .separateBySource],
+            anchorDate: startOfToday,
+            intervalComponents: oneDay)
+
+        query.initialResultsHandler = { [weak self] _, collection, _ in
+            guard let self = self, let collection = collection else { done(JSObject()); return }
+            var perDay: [(String, [(HKSource, Double)])] = []
+            var sources = Set<HKSource>()
+            collection.enumerateStatistics(from: windowStart, to: Date()) { stat, _ in
+                var row: [(HKSource, Double)] = []
+                for source in stat.sources ?? [] {
+                    let v = stat.sumQuantity(for: source)?.doubleValue(for: unit) ?? 0
+                    row.append((source, v))
+                    sources.insert(source)
+                }
+                perDay.append((keyFormatter.string(from: stat.startDate), row))
+            }
+            self.watchSources(Array(sources), of: type) { watches in
+                var out = JSObject()
+                for (key, row) in perDay {
+                    let fromWatch = row.filter { watches.contains($0.0) }.reduce(0.0) { $0 + $1.1 }
+                    out[key] = fromWatch >= 150
+                }
+                done(out)
+            }
+        }
+        store.execute(query)
+    }
+
+    private func watchSources(_ sources: [HKSource],
+                              of type: HKQuantityType,
+                              done: @escaping (Set<HKSource>) -> Void) {
+        guard !sources.isEmpty else { done([]); return }
+        let group = DispatchGroup()
+        let lock = NSLock()
+        var watches = Set<HKSource>()
+        let newestFirst = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        for source in sources {
+            group.enter()
+            let q = HKSampleQuery(sampleType: type,
+                                  predicate: HKQuery.predicateForObjects(from: source),
+                                  limit: 1,
+                                  sortDescriptors: [newestFirst]) { _, samples, _ in
+                if let model = samples?.first?.sourceRevision.productType, model.hasPrefix("Watch") {
+                    lock.lock(); watches.insert(source); lock.unlock()
+                }
+                group.leave()
+            }
+            store.execute(q)
+        }
+        group.notify(queue: .global()) { done(watches) }
+    }
+
+    /* ---- workouts --------------------------------------------------------
+
+       Sessions Health holds for the last ninety days — a Watch records a
+       strength session as readily as a run — as plain facts: when, what,
+       how long and the energy it measured. Read, never written.
+
+       Asked for separately rather than added to the main read request:
+       someone who connected steps long ago was never asked about workouts,
+       and a request that quietly widened would ask them at a moment they
+       did not choose. This is asked when they tap to bring workouts in. */
+    @objc func requestWorkoutAuthorization(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            call.resolve(["granted": false]); return
+        }
+        store.requestAuthorization(toShare: [], read: [HKObjectType.workoutType()]) { completed, error in
+            if let error = error { call.reject(error.localizedDescription); return }
+            call.resolve(["granted": completed])
+        }
+    }
+
+    @objc func readWorkouts(_ call: CAPPluginCall) {
+        guard HKHealthStore.isHealthDataAvailable() else { call.resolve(["workouts": []]); return }
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: Date())
+        guard let windowStart = calendar.date(byAdding: .day, value: -90, to: startOfToday) else {
+            call.resolve(["workouts": []]); return
+        }
+        let keyFormatter = DateFormatter()
+        keyFormatter.dateFormat = "yyyy-MM-dd"
+        keyFormatter.locale = Locale(identifier: "en_US_POSIX")
+        keyFormatter.timeZone = calendar.timeZone
+
+        let newestFirst = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
+        let query = HKSampleQuery(sampleType: HKObjectType.workoutType(),
+                                  predicate: HKQuery.predicateForSamples(withStart: windowStart, end: Date()),
+                                  limit: 300,
+                                  sortDescriptors: [newestFirst]) { [weak self] _, samples, _ in
+            var list: [JSObject] = []
+            for case let w as HKWorkout in samples ?? [] {
+                var o = JSObject()
+                o["id"] = w.uuid.uuidString
+                o["day"] = keyFormatter.string(from: w.startDate)
+                o["start"] = ISO8601DateFormatter().string(from: w.startDate)
+                o["minutes"] = Int((w.duration / 60).rounded())
+                o["kind"] = self?.workoutKind(w.workoutActivityType) ?? "other"
+                o["name"] = self?.workoutName(w.workoutActivityType) ?? "Workout"
+                /* iOS 16 keeps a workout's energy as a statistic; earlier
+                   versions as totalEnergyBurned. */
+                var kcal: Double?
+                if #available(iOS 16.0, *) {
+                    if let type = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+                        kcal = w.statistics(for: type)?.sumQuantity()?.doubleValue(for: .kilocalorie())
+                    }
+                } else {
+                    kcal = w.totalEnergyBurned?.doubleValue(for: .kilocalorie())
+                }
+                if let kcal = kcal { o["kcal"] = Int(kcal.rounded()) }
+                o["source"] = w.sourceRevision.source.name
+                list.append(o)
+            }
+            DispatchQueue.main.async { call.resolve(["workouts": list]) }
+        }
+        store.execute(query)
+    }
+
+    private func workoutKind(_ t: HKWorkoutActivityType) -> String {
+        switch t {
+        case .traditionalStrengthTraining, .functionalStrengthTraining, .coreTraining: return "strength"
+        case .running, .walking, .cycling, .swimming, .elliptical, .rowing, .stairClimbing,
+             .highIntensityIntervalTraining, .mixedCardio, .hiking: return "cardio"
+        default: return "other"
+        }
+    }
+
+    private func workoutName(_ t: HKWorkoutActivityType) -> String {
+        switch t {
+        case .traditionalStrengthTraining: return "Strength training"
+        case .functionalStrengthTraining:  return "Functional strength"
+        case .coreTraining:                return "Core training"
+        case .running:                     return "Run"
+        case .walking:                     return "Walk"
+        case .cycling:                     return "Ride"
+        case .swimming:                    return "Swim"
+        case .elliptical:                  return "Elliptical"
+        case .rowing:                      return "Row"
+        case .stairClimbing:               return "Stair climb"
+        case .highIntensityIntervalTraining: return "HIIT"
+        case .mixedCardio:                 return "Cardio"
+        case .hiking:                      return "Hike"
+        case .yoga:                        return "Yoga"
+        case .flexibility:                 return "Stretching"
+        default:                           return "Workout"
+        }
     }
 
     /* Every weigh-in Health holds for the last year, one figure per day.

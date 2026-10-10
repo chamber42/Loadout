@@ -23,7 +23,7 @@
    answer that looks live.
    ========================================================================== */
 
-const CACHE_VERSION = 'loadout-v8';
+const CACHE_VERSION = 'loadout-v11';
 
 /* Kept in the same order index.html loads them, so a missing file here is
    easy to spot against the <script> block there. */
@@ -40,7 +40,7 @@ const SHELL = [
   './app-icons/icon-192.png',
   './app-icons/icon-512.png',
   './fonts/pressstart2p_v16_e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2',
-  './fonts/sharetechmono_v16_J7aHnp1uDWRBEqV98dVQztYldFcLowEF.woff2',
+  './fonts/chakrapetch_v13_cIflMapbsEk7TDLdtEz1BwkebIl1R5_F_gUk0w.woff2',
   './js/01-boot.js',
   './js/02-themes.js',
   './js/03-data-tiers.js',

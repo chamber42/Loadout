@@ -19,18 +19,18 @@
       return `<button class="game-case" data-game="${k}">
         <span class="case-body" style="--plastic:${c['panel']}; --edge:${c['line']};">
           <span class="case-spine" style="background:${c['bg-1']};">
-            <span class="spine-txt" style="font-family:${t.fonts.display}; color:${c['muted']};">${t.name}</span>
+            <span class="spine-txt" style="font-family:${APP_TYPE.fonts.display}; color:${c['muted']};">${t.name}</span>
           </span>
           <span class="case-cover" style="background:${t.wash || c['bg-1']};">
             <span class="cover-rule" style="color:${c['cyan']};"></span>
-            <span class="cover-mark" style="font-family:${t.fonts.body};"><i></i>LOADOUT</span>
+            <span class="cover-mark" style="font-family:${APP_TYPE.fonts.body};"><i></i>LOADOUT</span>
             <span class="cover-logo" style="color:${c['cyan']};">${ic(t.icon)}</span>
             <span class="cover-txt">
-              <span class="cover-ttl" style="font-family:${t.fonts.display}; color:${c['text']};">${t.name}</span>
-              <span class="cover-dsc" style="font-family:${t.fonts.body}; color:${c['muted']};">${t.blurb}</span>
+              <span class="cover-ttl" style="font-family:${APP_TYPE.fonts.display}; color:${c['text']};">${t.name}</span>
+              <span class="cover-dsc" style="font-family:${APP_TYPE.fonts.body}; color:${c['muted']};">${t.blurb}</span>
               <span class="cover-band">
                 <span class="rating" style="color:${c['text']};">${t.tiers.length}</span>
-                <span class="band-txt" style="font-family:${t.fonts.body}; color:${c['muted']};">CLASSES</span>
+                <span class="band-txt" style="font-family:${APP_TYPE.fonts.body}; color:${c['muted']};">CLASSES</span>
               </span>
             </span>
           </span>

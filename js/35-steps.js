@@ -131,12 +131,14 @@
     var USUAL_WINDOW_DAYS = 28;
     var USUAL_MIN_DAYS    = 7;
 
-    function meanRecent(map, fallback){
+    /* keep: optional test a day must pass to count towards the mean */
+    function meanRecent(map, fallback, keep){
       if (!map) return fallback;
       var today = todayKeyLocal();
       var vals = Object.keys(map).filter(function(k){
         if (!/^\d{4}-\d{2}-\d{2}$/.test(k)) return false;
         if (k >= today) return false;                 // still being lived
+        if (keep && !keep(k)) return false;
         /* Zeros excluded, for the same reason sessionStepCost excludes them:
            a recorded zero is a phone left on a desk far more often than a
            day without a single step. The two means must also agree on which
@@ -152,9 +154,36 @@
       return Math.round(meanRecent(latest && latest.byDay,
                                    (latest && latest.average) || 0));
     }
-    function usualEnergy(){
-      return meanRecent(latest && latest.energyByDay,
-                        (latest && latest.energyAverage) || 0);
+    /* Whether a Watch was worn on a day, or null where Health did not say. */
+    window.watchWornOn = function(key){
+      var m = latest && latest.energyWatchByDay;
+      return (m && typeof m[key] === 'boolean') ? m[key] : null;
+    };
+
+    /* A usual day's active energy, measured the same way as the day being
+       judged.
+
+       A Watch reads active energy from heart rate all day; an iPhone on its
+       own estimates a small part of it from motion. The same ordinary day can
+       come out at 700 kcal on the wrist and 200 in a pocket. A usual taken
+       across both is a blend of two instruments, and every day the Watch was
+       worn lands hundreds above it — a surplus nobody walked. So a Watch day
+       is compared only with other Watch days, and a phone day only with
+       other phone days.
+
+       Where there are not yet enough days of the same kind to say what usual
+       is, energy says nothing at all (0), and the step count, which reads the
+       same on either device, decides alone. Without Watch information from
+       Health — an older build — this falls back to the plain mean. */
+    function usualEnergy(key){
+      var worn = key ? window.watchWornOn(key) : null;
+      if (worn == null){
+        return meanRecent(latest && latest.energyByDay,
+                          (latest && latest.energyAverage) || 0);
+      }
+      return meanRecent(latest && latest.energyByDay, 0, function(k){
+        return window.watchWornOn(k) === worn;
+      });
     }
 
     /* ---- how many steps a training session actually costs ---------------
@@ -257,10 +286,16 @@
          steps at all. It is only overruled when it says nothing happened and
          the step count says something did. */
       var fromEnergy = null, fromSteps = null;
-      var usualE = usualEnergy();
+      var usualE = usualEnergy(key);
       var usualS = usualSteps();
 
-      if (energy != null && usualE > 0){
+      /* Energy is evidence only where a Watch measured it. An iPhone on its
+         own writes almost no active energy — a day of 20,000 steps reads 25
+         kcal — and that near-zero figure, a few kilocalories above an equally
+         near-zero usual, used to win over the step count and pay a long walk
+         next to nothing. On a phone-only day the steps decide. */
+      var worn = window.watchWornOn(key);
+      if (energy != null && usualE > 0 && worn !== false){
         fromEnergy = (energy - usualE) - session;
       }
       if (steps != null && usualS > 0){
@@ -340,46 +375,103 @@
     /* Kept for the character sheet, which only ever means today. */
     window.stepBuff = function(){ return window.stepBuffFor(todayKeyLocal()); };
 
-    /* Today against the last six days. A bare number says nothing about
-       whether it is a good day; the comparison is the useful part. */
-    function verdict(today, average){
-      if (!average) return '';
-      var diff = Math.round((today / average - 1) * 100);
-      if (diff >= 15)  return 'Well above your usual ' + commas(average) + '.';
-      if (diff <= -15) return 'Below your usual ' + commas(average) + '.';
-      return 'About your usual ' + commas(average) + '.';
+
+    var DOW3 = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    var MON3 = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function dayLabel(key){
+      var p = key.split('-').map(Number), d = new Date(p[0], p[1] - 1, p[2]);
+      return DOW3[d.getDay()] + ' ' + MON3[d.getMonth()] + ' ' + d.getDate();
+    }
+    function niceCeil(n){
+      if (n <= 0) return 1000;
+      var step = n > 20000 ? 5000 : n > 8000 ? 2000 : 1000;
+      return Math.ceil(n / step) * step;
+    }
+
+    /* The last month of steps, one column a day, with the usual drawn across
+       it. A single series, so no legend: the heading says what it is. Today
+       is the column in the accent; the rest sit back in a quieter step of
+       it. Tapping a column reads that day out above the chart, including
+       whether a Watch was worn — which is the thing that explains a day
+       that looks out of line. */
+    function historyHtml(res){
+      var map = res.byDay || {};
+      var keys = Object.keys(map).filter(function(k){ return /^\d{4}-\d{2}-\d{2}$/.test(k); }).sort().slice(-30);
+      if (keys.length < 2) return '';
+      var usual = usualSteps();
+      var top = niceCeil(Math.max.apply(null, keys.map(function(k){ return map[k] || 0; }).concat([usual])));
+      var today = todayKeyLocal();
+      var cols = keys.map(function(k){
+        var v = map[k] || 0, h = Math.max(v > 0 ? 2 : 0, Math.round(v / top * 100));
+        var worn = window.watchWornOn(k);
+        return '<button class="sh-col' + (k === today ? ' today' : '') + '" data-sh="' + k + '|' + v + '|' +
+          (worn == null ? '' : worn ? 'w' : 'p') + '" aria-label="' + dayLabel(k) + ', ' + commas(v) + ' steps">' +
+          '<i style="height:' + h + '%"></i></button>';
+      }).join('');
+      return '<div class="sh">' +
+        '<div class="sh-read" aria-live="polite"><strong>' + commas(map[today] || 0) + '</strong> steps today</div>' +
+        '<div class="sh-plot">' +
+          '<span class="sh-grid" style="bottom:100%"><em>' + commas(top) + '</em></span>' +
+          '<span class="sh-grid" style="bottom:50%"><em>' + commas(top / 2) + '</em></span>' +
+          (usual ? '<span class="sh-usual" style="bottom:' + (usual / top * 100) + '%"><em>usual ' + commas(usual) + '</em></span>' : '') +
+          '<div class="sh-cols">' + cols + '</div>' +
+        '</div>' +
+        '<div class="sh-axis"><span>' + dayLabel(keys[0]) + '</span><span>Today</span></div>' +
+      '</div>';
+    }
+
+    function wireHistory(){
+      var read = host.querySelector('.sh-read');
+      if (!read) return;
+      host.querySelectorAll('[data-sh]').forEach(function(b){
+        b.addEventListener('click', function(){
+          var parts = b.getAttribute('data-sh').split('|');
+          host.querySelectorAll('.sh-col.on').forEach(function(x){ x.classList.remove('on'); });
+          b.classList.add('on');
+          var dev = parts[2] === 'w' ? ' · Apple Watch worn' : parts[2] === 'p' ? ' · iPhone only' : '';
+          read.innerHTML = '<strong>' + commas(parts[1]) + '</strong> steps · ' + dayLabel(parts[0]) + dev;
+        });
+      });
     }
 
     function showSteps(res){
       var today = res.today;
       var buff = window.stepBuff();
       var bonus = buff ? buff.kcal : 0;
+      var worn = window.watchWornOn(todayKeyLocal());
+      var usual = usualSteps();
       panel.hidden = false;
       host.innerHTML =
+        /* The chart's own headline already reads today's count, so the row
+           beneath only appears where there is no chart to carry it yet. */
+        (historyHtml(res) ||
         '<div class="vital vital-wide">' +
           '<span class="vital-lbl">Steps today</span>' +
           '<span class="vital-edit"><strong id="stepsToday">' + commas(today) + '</strong></span>' +
-        '</div>' +
+        '</div>') +
+        (usual
+          ? '<div class="vital vital-wide">' +
+              '<span class="vital-lbl">Usual day</span>' +
+              '<span class="vital-edit"><strong>' + commas(usual) + '</strong></span>' +
+            '</div>'
+          : '') +
         (bonus > 0
           ? '<div class="vital vital-wide">' +
-              '<span class="vital-lbl">Step buff</span>' +
+              '<span class="vital-lbl">Step bonus</span>' +
               '<span class="vital-edit"><strong class="n-green">+' + bonus + ' kcal</strong></span>' +
             '</div>'
           : '') +
-        (res.average
-          ? '<p class="subtitle" style="font-size:11px; margin:12px 0 0;">' +
-            verdict(today, res.average) +
-            ' Averaged over the last ' + res.days + ' full ' +
-            (res.days === 1 ? 'day' : 'days') + ', today not counted.' +
-            (bonus > 0
-              ? ' The buff lands on your journal, not your prep, and counts only what you did ' +
-                'beyond a usual day — the rest is already in your activity level. ' +
-                (buff.source === 'energy'
-                  ? 'Measured from your activity data.'
-                  : 'Estimated from step count, which cannot see pace or hills.')
-              : '') +
-            '</p>'
-          : '');
+        '<p class="subtitle sh-note">' +
+          /* Today is still being walked, so it is never called "below" —
+             only how far it is from a usual day, or that it is past one. */
+          (usual ? (today >= usual
+              ? 'Past your usual day by ' + commas(today - usual) + '. '
+              : commas(usual - today) + ' to go to a usual day. ') : '') +
+          (worn === true ? 'Measured with your Apple Watch today, against other Watch days.'
+            : worn === false ? 'Measured by your iPhone alone today, against other phone-only days.' : '') +
+          (bonus > 0 ? ' Only what you did beyond a usual day is added to Today.' : '') +
+        '</p>';
+      wireHistory();
     }
 
     function offerConnect(){
@@ -419,6 +511,9 @@
           var before = window.stepBuff();
           var beforeKcal = before ? before.kcal : 0;
           latest = res;
+          /* A diagnostic build kept a copy of this reading in storage; it
+             belongs to Health, so clear any copy left behind. */
+          try { localStorage.removeItem('gfl.debug.health'); } catch (e) {}
           showSteps(res);
           /* The HUD reads the bonus rather than being told it, so it only
              needs redrawing when the figure actually moved. */

@@ -17,8 +17,11 @@
    ============================================================ */
 
   const jfScanCamBtn   = document.getElementById('jfScanCam');
-  const jfBarcodeInput = document.getElementById('jfBarcode');
-  const jfBarcodeClear = document.getElementById('jfBarcodeClear');
+  /* The journal sheet has one search field, shared with the library
+     search in 12-journal.js: both listen to it, so the library answers as
+     you type and packaged foods follow once the typing settles. */
+  const jfBarcodeInput = document.getElementById('jfoodSearch');
+  const jfBarcodeClear = document.getElementById('jfoodClear');
   const jfBarcodePhoto = document.getElementById('jfBarcodePhoto');
   const jfScanResults  = document.getElementById('jfScanResults');
 
@@ -207,6 +210,8 @@
       clearTimeout(jfTypeTimer);
       const v = jfBarcodeInput.value.trim();
       if (!v){ if (jfScanResults) jfScanResults.innerHTML = ''; return; }
+      // a letter or two is the library's to answer; it does not cost a request
+      if (!/^[\d\s-]+$/.test(v) && v.length < 3){ if (jfScanResults) jfScanResults.innerHTML = ''; return; }
       /* Open Food Facts allows ten searches a minute but far more barcode
          lookups, so a name waits longer before it costs a request. */
       const delay = /^[\d\s-]+$/.test(v) ? 300 : 650;

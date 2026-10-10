@@ -11,7 +11,6 @@
   ========================================================= */
   const prefGrids = ['prefEating','prefAllergy','prefExclude'].map(id=>document.getElementById(id));
   const btnConfirmPrefs = document.getElementById('btnConfirmPrefs');
-  const btnSkipPrefs = document.getElementById('btnSkipPrefs');
 
   const prefSummary = document.getElementById('prefSummary');
 
@@ -89,12 +88,6 @@
   });
 
   btnConfirmPrefs.addEventListener('click', ()=>{
-    renderCravings();
-    showScreen('screen-cravings');
-  });
-  btnSkipPrefs.addEventListener('click', ()=>{
-    state.preferences = [];
-    renderPrefs();
     renderCravings();
     showScreen('screen-cravings');
   });

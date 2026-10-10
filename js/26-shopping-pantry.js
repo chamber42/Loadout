@@ -557,19 +557,21 @@
     renderPrepGrid(); renderShoppingList(); showScreen('screen-shop');
   });
 
-  /* The recipe book and the prepped days lost their own tabs when the six
-     destinations became four. Both are part of planning, so they are reached
-     from the planning screens rather than from the bar. */
-  ['btnPrepRecipes', 'btnLoadoutRecipes'].forEach(id=>{
-    const b = document.getElementById(id);
-    if (b) b.addEventListener('click', ()=>{ renderRecipeBook(); showScreen('screen-recipes'); });
+  /* The prep is the Meal Prep tab's home, and everything that acts on a
+     whole prep is reached from it: the recipe book that feeds it, and the
+     meals themselves when they need changing. */
+  document.getElementById('btnPrepRecipes').addEventListener('click', ()=>{
+    renderRecipeBook(); showScreen('screen-recipes');
   });
-  (function(){
-    const b = document.getElementById('btnLoadoutPrepDays');
-    if (b) b.addEventListener('click', ()=>{
-      writeBackActiveDay(); renderPrepDays(); showScreen('screen-prep');
-    });
-  })();
+  document.getElementById('btnPrepEdit').addEventListener('click', ()=>{
+    renderEatenPanel(); renderMealTimeline(); refreshTargets();
+    showScreen('screen-loadout');
+  });
+  /* Editing ends where it began: back on the prep. */
+  document.getElementById('btnLoadoutDone').addEventListener('click', ()=>{
+    writeBackActiveDay(); renderPrepDays(); saveState();
+    showScreen('screen-prep');
+  });
 
   document.getElementById('btnCookPlan').addEventListener('click', ()=>{
     renderCookPlan();

@@ -439,7 +439,7 @@
     for (let i = 0; i < mains; i++){
       out.push({
         key:`meal${i+1}`,
-        label:`MEAL 0${i+1} // ${names[i]}`,
+        label:names[i],
         name:names[i],
         share: factors[i] / totalWeight,
         weight: w[i] || 'normal',

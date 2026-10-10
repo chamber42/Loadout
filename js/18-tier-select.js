@@ -9,7 +9,6 @@
   /* =========================================================
      SCREEN 2: TIER SELECT
   ========================================================= */
-  const btnConfirmTier = document.getElementById('btnConfirmTier');
 
   /* Full nutrition panel, laid out like a label: macros first with their
      sub-components indented, then minerals and vitamins.
@@ -486,7 +485,6 @@
          behind View Full Stats.
        </div>`;
 
-    btnConfirmTier.disabled = false;
   }
 
   /* Re-run the calculation after an edit, without redrawing the inputs the
@@ -636,8 +634,4 @@
   document.getElementById('btnHowWorked').addEventListener('click', ()=> openModal('modalHow'));
   document.getElementById('btnFullStats').addEventListener('click', ()=> openModal('modalStats'));
 
-  btnConfirmTier.addEventListener('click', ()=>{
-    renderPrefs();
-    showScreen('screen-prefs');
-  });
 

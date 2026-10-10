@@ -65,18 +65,6 @@
 
   function characterExists(){ return !!(state.finalKcal && state.assignedTierId); }
 
-  /* Genre words are authored for ALL-CAPS headings, and some run two words
-     long ("SUPPLY RUN"). The tab strip is 9px and one line, so title-case
-     them here — lowercase letters are meaningfully narrower than caps, which
-     is what keeps "Provisions" inside its column. */
-  function tabWord(raw, fallback){
-    const w = String(raw == null ? '' : raw).trim();
-    if (!w) return fallback;
-    return w.split(/\s+/)
-            .map(x => x.charAt(0).toUpperCase() + x.slice(1).toLowerCase())
-            .join(' ');
-  }
-
   function refreshTabs(activeScreen){
     const bar = document.getElementById('tabBar');
     const show = characterExists() && !!SCREEN_TAB[activeScreen];
@@ -89,39 +77,11 @@
       b.classList.toggle('on', on);
       b.setAttribute('aria-current', on ? 'page' : 'false');
     });
-    // the sheet tab takes the genre's own name for it
-    const t = THEMES[state.theme] || THEMES.cyberpunk;
-    const lbl = document.getElementById('tabSheetLbl');
-    /* Through tabWord like the other three. The genre names are authored in
-       caps for headings, and this one used to keep them — which was hard to
-       notice among six tabs and obvious among four, where OPERATOR sat
-       beside Loadout, Intake and Quest Log. */
-    if (lbl) lbl.textContent = tabWord((t.sheet || 'CHARACTER SHEET').split(' ')[0], 'Sheet').slice(0, 9);
-    // and the loadout tab takes the genre's word for a day's food
-    const loLbl = document.getElementById('tabLoadoutLbl');
-    if (loLbl) loLbl.textContent = tabWord(t.words && t.words.loadout, 'Loadout');
-    /* The journal takes the genre's word for a record of what was eaten —
-       Rations in the wasteland, Fuel on the grid, Chronicle in the tavern. */
-    const jLbl = document.getElementById('tabJournalLbl');
-    if (jLbl) jLbl.textContent = tabWord(t.words && t.words.journal, 'Journal');
-    /* Same for the calendar. "Log" reads better than the bare noun, so keep
-       it wherever the pair still fits the column — "Objective Log" does not,
-       and drops the suffix rather than the meaning. */
-    /* The genre's own word for a store of things — Larder, Stash, Armory.
-       Five columns at 9px will not seat a two-word name, and the two genres
-       that have one say for themselves which half to keep: the Root Cellar
-       becomes the Cellar, Item Select becomes Items. Shortening those by rule
-       would have picked "Select", which names the menu rather than the food. */
-    const pLbl = document.getElementById('tabPantryLbl');
-    if (pLbl){
-      const w = t.words || {};
-      pLbl.textContent = tabWord(w.inventoryTab || w.inventory, 'Pantry');
-    }
-    const qLbl = document.getElementById('tabQuestLbl');
-    if (qLbl){
-      const q = tabWord(t.words && t.words.quest, 'Quest');
-      qLbl.textContent = (q.length + 4) <= 10 ? q + ' Log' : q;
-    }
+    /* The tab labels are plain words, the same in every world. The genre
+       names stay in the headings on each screen; down here they made the
+       bar a riddle — Case, Supplies, Satchel, Intake, Night Log said what
+       the world calls things, not what is behind each one. The labels are
+       written in index.html and never re-set. */
   }
 
   function goTab(name){
@@ -129,19 +89,19 @@
     if (!t) return;
     if (name === 'you') renderTiers();
     if (name === 'prep'){
-      /* Pick up wherever the prep was left rather than restarting it. A
-         half-built loadout is the common case, and dropping somebody back
-         at the preferences screen would throw it away. */
+      /* The prep itself is home. Once one exists the tab lands on it — the
+         days, the shopping and the cooking — and editing the meals is a
+         place you go from there, not where you arrive. */
+      if (typeof prepReady === 'function' && prepReady()){
+        writeBackActiveDay(); renderPrepDays();
+        showScreen('screen-prep'); return;
+      }
+      /* A build that was started and never finished is picked up where it
+         was left rather than restarted. */
       if (Object.values(state.selections || {}).some(sel =>
             SLOT_DEFS.some(d => (sel[d.slot]||[]).some(Boolean)))){
         renderEatenPanel(); renderMealTimeline(); refreshTargets();
         showScreen('screen-loadout'); return;
-      }
-      /* A prep that is already cooked lands on the prepped days instead of
-         asking about preferences again. */
-      if (typeof prepReady === 'function' && prepReady()){
-        writeBackActiveDay(); renderPrepDays();
-        showScreen('screen-prep'); return;
       }
       renderPrefs();
     }
@@ -157,10 +117,53 @@
   const PANTRY_FROM = {'screen-shop':'SHOPPING LIST', 'screen-cravings':'CRAVINGS',
                        'screen-journal':'JOURNAL'};
 
+  /* Back links that depend on how you arrived. Each of these screens is
+     reached from more than one place, so a fixed target would send you
+     somewhere you had not been. */
+  const SHOP_FROM = {'screen-prep':'YOUR PREP', 'screen-loadout':'MEALS', 'screen-pantry':'PANTRY'};
+  function setBack(screenId, target, label){
+    const strip = document.querySelector('#' + screenId + ' .top-strip');
+    const back = strip && strip.querySelector('[data-back]');
+    if (!strip) return;
+    strip.hidden = !target;
+    if (back && target){
+      back.setAttribute('data-back', target);
+      back.textContent = label;
+    }
+  }
+
+  /* The build screen ends in one button. With a prep built, Done returns
+     to it and the shopping list is one tap from there; before one exists,
+     the list is the next step. */
+  function syncLoadoutActions(){
+    const ready = typeof prepReady === 'function' && prepReady();
+    const done = document.getElementById('btnLoadoutDone');
+    const shop = document.getElementById('btnShopping');
+    if (done) done.hidden = !ready;
+    if (shop) shop.hidden = ready;
+  }
+
+  /* Set while a tab tap is being served. Arriving from the bar is never
+     the middle of a task, so no back link should claim to return to one. */
+  let viaTab = false;
+
   function swapScreen(id){
+    const ready = typeof prepReady === 'function' && prepReady();
+    if (id === 'screen-shop'){
+      const from = document.querySelector('.screen.active');
+      const label = from && SHOP_FROM[from.id];
+      if (label) setBack('screen-shop', from.id, label);
+    }
+    /* The first step of a plan goes back to the prep there already is, and
+       has nowhere to go back to when there is none. */
+    if (id === 'screen-prefs') setBack('screen-prefs', ready ? 'screen-prep' : null, 'YOUR PREP');
+    if (id === 'screen-loadout'){
+      setBack('screen-loadout', ready ? 'screen-prep' : 'screen-suggest', ready ? 'YOUR PREP' : 'SUGGESTIONS');
+      syncLoadoutActions();
+    }
     if (id === 'screen-pantry'){
       const from = document.querySelector('.screen.active');
-      const label = from && PANTRY_FROM[from.id];
+      const label = !viaTab && from && PANTRY_FROM[from.id];
       const strip = document.querySelector('#screen-pantry .top-strip');
       const back = strip && strip.querySelector('[data-back]');
       /* Reached from a button mid-task, the back link returns you to the task.
@@ -172,6 +175,8 @@
       }
       if (strip) strip.hidden = !label;
       if (typeof renderPantry === 'function') renderPantry();
+      const toShop = document.getElementById('pantryShopBtn');
+      if (toShop) toShop.hidden = !ready || from && from.id === 'screen-shop';
     } else if (typeof scanTarget !== 'undefined' && scanTarget === 'pantry'){
       /* Leaving the pantry hands the scanner back, so a scan started later
          from the loadout tab is not still pointed at a screen you have left.
@@ -192,7 +197,7 @@
        just drags the arriving page under its own fade. */
     window.scrollTo(0, 0);
     /* Last, so the question lands on a screen that is already drawn. */
-    if (onLoadout && typeof maybeOfferNewPrep === 'function') maybeOfferNewPrep();
+    if ((onLoadout || id === 'screen-prep') && typeof maybeOfferNewPrep === 'function') maybeOfferNewPrep();
   }
 
   /* ---------------------------------------------------------
@@ -255,7 +260,8 @@
        rather than inside goTab() on purpose: the calendar opens a chosen day
        by calling goTab('today') directly, and that date has to survive. */
     if (name === 'today' && typeof resetJournalToToday === 'function') resetJournalToToday();
-    goTab(name);
+    viaTab = true;
+    try { goTab(name); } finally { viaTab = false; }
   }
 
   const TAP_SLOP = 12;      // px of drift still counted as a tap, not a drag
@@ -350,6 +356,13 @@
   }, true);
 
   document.querySelectorAll('[data-back]').forEach(btn=>{
-    btn.addEventListener('click', ()=> showScreen(btn.getAttribute('data-back')));
+    btn.addEventListener('click', ()=>{
+      const target = btn.getAttribute('data-back');
+      // the prep is redrawn on the way back, so an edit made since shows
+      if (target === 'screen-prep' && typeof renderPrepDays === 'function'){
+        writeBackActiveDay(); renderPrepDays();
+      }
+      showScreen(target);
+    });
   });
 

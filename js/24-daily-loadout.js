@@ -1581,6 +1581,12 @@
     const host = document.getElementById('eatenList');
     if (!host) return;
     host.innerHTML = eatenRowsHtml();
+    /* What was eaten today is logged on Today now, and a second place to
+       log it here only split the day in two. The panel stays for as long
+       as it still holds something, so an old entry can be seen and
+       removed rather than quietly counting against the build. */
+    const panel = host.closest('.eaten-panel');
+    if (panel) panel.hidden = !(state.eaten || []).length;
 
     host.querySelectorAll('[data-rmeaten]').forEach(btn=>{
       btn.addEventListener('click', ()=>{

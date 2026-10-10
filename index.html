@@ -29,18 +29,18 @@
      and lets the app render fully offline. Licensed under the SIL Open Font
      License / Apache 2.0, both of which permit redistribution. -->
 
-<!-- The two faces the first screen actually paints with, fetched in parallel
-     with the stylesheet instead of after it. Every face is font-display:swap,
-     so without this the title screen paints in the fallback and relayouts when
-     the real font arrives — and Press Start 2P is a pixel font whose metrics
-     are nothing like monospace, so the title screen visibly jumps. Only the latin
-     subsets, 12KB each: the other 64 faces can keep arriving late.
+<!-- The title screen's pixel face and the one face the rest of the app is set
+     in, fetched in parallel with the stylesheet instead of after it. Every
+     face is font-display:swap, so without this the first screen paints in the
+     fallback and relayouts when the real font arrives — and Press Start 2P's
+     metrics are nothing like its fallback's, so the title visibly jumps.
+     Only the latin subsets; latin-ext can arrive late.
      crossorigin is required even same-origin, because fonts are always
      fetched anonymously and a preload without it is simply fetched twice. -->
 <link rel="preload" as="font" type="font/woff2" crossorigin
       href="fonts/pressstart2p_v16_e3t4euO8T-267oIAQAu6jDQyK3nVivM.woff2">
 <link rel="preload" as="font" type="font/woff2" crossorigin
-      href="fonts/sharetechmono_v16_J7aHnp1uDWRBEqV98dVQztYldFcLowEF.woff2">
+      href="fonts/chakrapetch_v13_cIflMapbsEk7TDLdtEz1BwkebIl1R5_F_gUk0w.woff2">
 
 <link rel="stylesheet" href="fonts.css">
 
@@ -172,40 +172,56 @@
   </div>
 </div>
 
+<!-- One meal on Today, opened by tapping it: everything in it, each item
+     editable, and the things you do to a meal as a whole. -->
+<div class="modal-wrap" id="modalJMeal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="jmealTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="jmealTitle">Meal</span>
+      <button class="modal-x" data-close="modalJMeal" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="jmealBody"></div>
+  </div>
+</div>
+
+<!-- The one small sheet the trackers share for their forms: water goal,
+     workouts, measurements, saving a meal, a photo. -->
+<div class="modal-wrap" id="modalSimple" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="simpleTitle">
+    <div class="modal-head">
+      <span class="modal-title" id="simpleTitle"></span>
+      <button class="modal-x" data-close="modalSimple" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+    </div>
+    <div class="modal-body" id="simpleBody"></div>
+  </div>
+</div>
+
 <div class="modal-wrap" id="modalJournalFood" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="jfoodTitle">
     <div class="modal-head">
-      <span class="modal-title" id="jfoodTitle">ADD FOOD</span>
+      <span class="modal-title" id="jfoodTitle">Add food</span>
       <button class="modal-x" data-close="modalJournalFood" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
     </div>
     <div class="modal-body">
-      <!-- Barcode entry for the journal. A packaged item can be logged straight
-           here without detouring through the loadout tab, which matters most for
-           someone who already has a prep built and is just recording what they ate. -->
-      <button class="photo-btn" id="jfScanCam" type="button" hidden>
-        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
-      </button>
-      <label class="photo-btn" for="jfBarcodePhoto">
-        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Use a picture of a barcode
-      </label>
+      <!-- One field for every source, with the scanners beside it. Typing
+           searches the library at once and packaged foods a moment later;
+           a run of digits is looked up as a barcode. -->
+      <div class="pantry-find">
+        <div class="fav-search-wrap">
+          <input type="text" id="jfoodSearch" class="fav-search" placeholder="Search foods or type a barcode"
+                 autocomplete="off" aria-label="Search foods or enter a barcode">
+          <button class="fav-clear" id="jfoodClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+        </div>
+        <button class="icon-btn" id="jfScanCam" type="button" hidden aria-label="Scan a barcode with the camera"><svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg></button>
+        <label class="icon-btn" for="jfBarcodePhoto" aria-label="Use a picture of a barcode"><svg class="px" aria-hidden="true"><use href="#i-image"></use></svg></label>
+      </div>
       <input type="file" id="jfBarcodePhoto" accept="image/*"
              style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
              aria-label="Upload a picture of a barcode">
-      <div class="fav-search-wrap" style="margin-top:8px;">
-        <input type="text" id="jfBarcode" class="fav-search" placeholder="…or search a food, or type a barcode"
-               inputmode="text" autocomplete="off" aria-label="Search packaged foods or enter a barcode">
-        <button class="fav-clear" id="jfBarcodeClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
-      </div>
-      <div id="jfScanResults"></div>
-
-      <div class="fav-search-wrap" style="margin-top:14px;">
-        <input type="text" id="jfoodSearch" class="fav-search" placeholder="Search the food library"
-               autocomplete="off" aria-label="Search the food library">
-        <button class="fav-clear" id="jfoodClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
-      </div>
       <div id="jfoodPanel"></div>
       <div id="jfoodList"></div>
-      <button class="mini-btn add" id="jfoodManual" style="margin-top:12px;"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Not in the library — add a food</button>
+      <div id="jfScanResults"></div>
+      <button class="text-link" id="jfoodManual">Not listed? Add a food</button>
     </div>
   </div>
 </div>
@@ -299,7 +315,7 @@
 <div class="modal-wrap" id="modalSystem" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalSystemTitle">
     <div class="modal-head">
-      <span class="modal-title" id="modalSystemTitle">SYSTEM</span>
+      <span class="modal-title" id="modalSystemTitle">Settings</span>
       <button class="modal-x" data-close="modalSystem" aria-label="Close"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
     </div>
     <div class="modal-body">
@@ -308,7 +324,14 @@
 
       <label class="field-label" style="margin-top:20px;">CHARACTER</label>
       <button class="btn-ghost" id="sysRecreate"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg> Recreate character — change goal, weight or activity</button>
-      <button class="btn-ghost" id="sysReprep"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> Redo the meal prep loadout</button>
+
+      <!-- Reminders are a setting rather than something to look at, so they
+           live here instead of on the character sheet. Native builds only:
+           nothing scheduled in a browser tab ever fires. -->
+      <div id="sheetRemindPanel" hidden>
+        <label class="field-label" style="margin-top:20px;">REMINDERS</label>
+        <div id="sheetRemind"></div>
+      </div>
 
       <label class="field-label" style="margin-top:20px;">ABOUT</label>
       <button class="btn-ghost" id="sysLegal"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> Legal, credits &amp; privacy</button>
@@ -439,7 +462,9 @@
         MIT License, Copyright &copy; 2017&ndash;present Drifty Co.<br><br>
         <strong>ZXing-js</strong> (@zxing/library) &mdash; barcode decoding, used under the
         Apache License 2.0, Copyright &copy; the ZXing-js authors. Included in the app.<br><br>
-        <strong>Typefaces</strong> &mdash; supplied by Google Fonts. Most are used under the
+        <strong>Chakra Petch</strong> &mdash; the typeface throughout, used under the
+        SIL Open Font License 1.1, Copyright &copy; 2018 The Chakra Petch Project Authors.<br><br>
+        <strong>Other typefaces</strong> &mdash; supplied by Google Fonts. Most are used under the
         SIL Open Font License 1.1; Roboto Slab and Special Elite under the Apache License 2.0.
         <br><br>
         Full license texts ship with the app in <strong>licenses/</strong>, and every
@@ -490,15 +515,15 @@
      visible wherever you are in the app. Rendered by js/30-timers.js. -->
 <div id="timerStrip" class="timer-strip" hidden aria-live="polite" aria-label="Running timers"></div>
 
-<!-- Four destinations, in the order of the loop they describe: who you are,
-     what you'll cook, what you're eating, what it did. Each keeps its genre's
-     own name for itself — the labels are filled in by refreshTabs(). -->
+<!-- Today first, as home, then the profile its targets come from, then
+     the prep, the pantry it draws on, and progress. Plain labels in every
+     world — the genre names live in each screen's own heading. -->
 <nav id="tabBar" class="tab-bar" hidden aria-label="Sections">
-  <button class="tab" data-tab="you"      aria-label="Character sheet"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Sheet</span></button>
-  <button class="tab" data-tab="prep"     aria-label="Meal prep loadout"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-map"></use></svg></span><span class="lbl" id="tabLoadoutLbl">Loadout</span></button>
+  <button class="tab" data-tab="today"    aria-label="Today's food"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg></span><span class="lbl" id="tabJournalLbl">Today</span></button>
+  <button class="tab" data-tab="you"      aria-label="Profile"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-idcard"></use></svg></span><span class="lbl" id="tabSheetLbl">Profile</span></button>
+  <button class="tab" data-tab="prep"     aria-label="Meal prep loadout"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-map"></use></svg></span><span class="lbl" id="tabLoadoutLbl">Meal Prep</span></button>
   <button class="tab" data-tab="pantry"   aria-label="Your pantry"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg></span><span class="lbl" id="tabPantryLbl">Pantry</span></button>
-  <button class="tab" data-tab="today"    aria-label="Today's food"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-journal"></use></svg></span><span class="lbl" id="tabJournalLbl">Journal</span></button>
-  <button class="tab" data-tab="progress" aria-label="Quest log calendar"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg></span><span class="lbl" id="tabQuestLbl">Quest Log</span></button>
+  <button class="tab" data-tab="progress" aria-label="Progress"><span class="ico"><svg class="px" aria-hidden="true"><use href="#i-calendar"></use></svg></span><span class="lbl" id="tabQuestLbl">Progress</span></button>
 </nav>
 
 <div id="app">
@@ -696,12 +721,6 @@
 
 
 
-    <!-- Daily reminders. Native builds only: nothing scheduled in a browser
-         tab ever fires, so the panel stays hidden on the web. -->
-    <div class="panel cs-mod" id="sheetRemindPanel" hidden>
-      <label class="field-label mod-head">REMINDERS</label>
-      <div id="sheetRemind"></div>
-    </div>
 
     <div class="panel cs-mod">
       <label class="field-label mod-head">ATTRIBUTES</label>
@@ -718,65 +737,46 @@
       <button class="btn-ghost" id="btnFullStats" style="margin-top:14px;"><svg class="px" aria-hidden="true"><use href="#i-chart"></use></svg> VIEW FULL STATS</button>
     </div>
 
-    <button class="btn-primary" id="btnConfirmTier">CONTINUE TO LOADOUT</button>
-    <button class="btn-ghost" id="btnSystem"><svg class="px" aria-hidden="true"><use href="#i-gear"></use></svg> SYSTEM</button>
+    <button class="btn-ghost" id="btnSystem"><svg class="px" aria-hidden="true"><use href="#i-gear"></use></svg> Settings</button>
     <button class="text-link" id="btnHowWorked">How was this worked out?</button>
   </section>
 
   <!-- QUEST LOG -->
   <!-- PREP DAYS: the prep laid out day by day -->
   <section class="screen" id="screen-prep">
+    <!-- The Meal Prep tab's home. Everything a prep needs once it exists
+         starts here: the days, the shopping, the cooking and the next one.
+         Building and editing are places you go from here and come back to. -->
     <div class="eyebrow">MEAL PREP</div>
-    <h1 class="title">Your Prepped Days</h1>
+    <h1 class="title">Your Prep</h1>
     <p class="subtitle" id="prepDaysIntro"></p>
     <div id="prepDates"></div>
+    <div id="prepActions">
+      <button class="btn-primary" id="btnPrepShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> Shopping list</button>
+      <div class="panel action-list">
+        <button class="action-row" id="btnPrepEdit"><svg class="px" aria-hidden="true"><use href="#i-edit"></use></svg><span>Edit meals</span></button>
+        <button class="action-row" id="btnCookPlan"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg><span>Cook plan</span></button>
+        <button class="action-row" id="btnPrepRecipes"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg><span>Recipe book</span></button>
+        <button class="action-row" id="pantryCookedBtn" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-home"></use></svg><span>I've cooked it — take it out of the pantry</span></button>
+      </div>
+    </div>
     <div id="prepDayList"></div>
     <div id="prepDishSummary"></div>
-    <button class="btn-ghost" id="btnPrepReshuffle"><svg class="px" aria-hidden="true"><use href="#i-dice"></use></svg> RESHUFFLE THE WHOLE PREP</button>
-    <button class="btn-ghost" id="btnCookPlan"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> COOK PLAN — WHAT ORDER TO COOK IN</button>
-    <button class="btn-ghost" id="btnPrepShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> SHOPPING LIST FOR THIS PREP</button>
-    <!-- The recipe book stopped being a tab of its own: it is an input to
-         planning rather than a destination, so it is reached from the two
-         screens where planning actually happens. -->
-    <button class="btn-ghost" id="btnPrepRecipes"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> RECIPE BOOK</button>
-    <!-- The end of a prep comes round every few days, so starting the next
-         one belongs here with the other prep-wide actions rather than in the
-         System sheet behind the character screen. -->
-    <button class="btn-ghost" id="btnPrepNew"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> START A NEW PREP</button>
+    <button class="btn-ghost" id="btnPrepNew"><svg class="px" aria-hidden="true"><use href="#i-plate"></use></svg> Start a new prep</button>
+    <button class="text-link" id="btnPrepReshuffle">Reshuffle the whole prep</button>
   </section>
 
   <section class="screen" id="screen-quest">
     <div class="eyebrow">QUEST LOG</div>
-    <h1 class="title">Your Calendar</h1>
+    <h1 class="title">Progress</h1>
     <div id="questStreak"></div>
+    <div id="checkinPanel"></div>
 
-    <!-- Moved here from the character sheet. These are the things that
-         change on their own and you watch; the sheet keeps the things you
-         set and forget. Eight panels on one screen was the reason the app
-         started feeling heavy. -->
-    <!-- Weight history: the readings, the trend through them, and today's
-         weigh-in. Works everywhere — the series is the app's own, not
-         Health's — so unlike ACTIVITY this panel is never hidden. -->
-    <div class="panel cs-mod" id="sheetWeightPanel">
-      <label class="field-label mod-head">WEIGHT</label>
-      <div id="sheetWeight"></div>
-    </div>
+    <!-- The calendar first — the month is what this tab is for — and the
+         readings that change on their own below it: weight, the measured
+         burn and steps. The sheet keeps the things you set and forget. -->
 
-    <!-- Daily burn: the formula's guess beside the figure measured from
-         this person's own log. Hidden until there are two numbers to
-         compare, so it never stands there explaining itself. -->
-    <div class="panel cs-mod" id="sheetBurnPanel" hidden>
-      <label class="field-label mod-head">DAILY BURN</label>
-      <div id="sheetBurn"></div>
-    </div>
 
-    <!-- Steps read from the Health app. Native builds only: the panel stays
-         hidden on the web, where nothing can fill it. -->
-    <div class="panel cs-mod" id="sheetActivityPanel" hidden>
-      <label class="field-label mod-head">ACTIVITY</label>
-      <div id="sheetSteps"></div>
-      <div id="sheetHealthWrite"></div>
-    </div>
 
     <div class="panel cal-panel">
       <div class="cal-head">
@@ -796,14 +796,44 @@
       <div class="paper-fx" aria-hidden="true"></div><div class="paper-edge" aria-hidden="true"></div>
     </div>
     <div id="calDayPanel"></div>
+    <!-- Weight history: the readings, the trend through them, and today's
+         weigh-in. Works everywhere — the series is the app's own, not
+         Health's — so unlike ACTIVITY this panel is never hidden. -->
+    <div class="panel cs-mod" id="sheetWeightPanel">
+      <label class="field-label mod-head">WEIGHT</label>
+      <div id="sheetWeight"></div>
+    </div>
+    <!-- Measurements and progress photos, beside the weight they explain -->
+    <div class="panel cs-mod">
+      <label class="field-label mod-head">BODY</label>
+      <div id="bodyPanel"></div>
+    </div>
+    <div class="panel cs-mod">
+      <label class="field-label mod-head">WORKOUTS</label>
+      <div id="workoutHistory"></div>
+    </div>
+    <!-- Daily burn: the formula's guess beside the figure measured from
+         this person's own log. Hidden until there are two numbers to
+         compare, so it never stands there explaining itself. -->
+    <div class="panel cs-mod" id="sheetBurnPanel" hidden>
+      <label class="field-label mod-head">DAILY BURN</label>
+      <div id="sheetBurn"></div>
+    </div>
+    <!-- Steps read from the Health app. Native builds only: the panel stays
+         hidden on the web, where nothing can fill it. -->
+    <div class="panel cs-mod" id="sheetActivityPanel" hidden>
+      <label class="field-label mod-head">ACTIVITY</label>
+      <div id="sheetSteps"></div>
+      <div id="sheetHealthWrite"></div>
+    </div>
   </section>
 
   <!-- JOURNAL -->
   <section class="screen" id="screen-journal">
-    <div class="eyebrow">JOURNAL</div>
+    <div class="eyebrow" data-word="journal">JOURNAL</div>
     <!-- Text is set by renderJournal(): "Log Today" on today, the date
          otherwise, so the heading never claims to be today when it isn't. -->
-    <h1 class="title" id="journalTitle">Log Today</h1>
+    <h1 class="title" id="journalTitle">Today</h1>
     <p class="subtitle" id="journalDateLbl"></p>
     <!-- Day picker. Arrows step one day; the strip scrolls to whatever is
          selected. Both routes go through selectJournalDay() so the calendar
@@ -857,8 +887,9 @@
 
   <section class="screen" id="screen-prefs">
     <div class="top-strip">
-      <button class="back-link" data-back="screen-tiers">CHARACTER SHEET</button>
+      <button class="back-link" data-back="screen-prep">YOUR PREP</button>
     </div>
+    <div class="wiz-step">Step 1 of 4</div>
     <div class="eyebrow" data-word="inventory">INVENTORY FILTERS</div>
     <h1 class="title">Food Preferences</h1>
     <p class="subtitle">Select anything that applies. Only matching foods will be offered — leave blank for the full inventory.</p>
@@ -871,8 +902,7 @@
       <label class="field-label" style="margin-top:18px;">PROTEINS TO EXCLUDE</label>
       <div class="choice-grid" id="prefExclude"></div>
       <p class="subtitle" id="prefSummary" style="font-size:var(--fs-body); margin:14px 0 0;"></p>
-      <button class="btn-primary" id="btnConfirmPrefs">CONTINUE</button>
-      <button class="btn-ghost" id="btnSkipPrefs">SKIP — SHOW FULL INVENTORY</button>
+      <button class="btn-primary" id="btnConfirmPrefs">Next</button>
     </div>
   </section>
 
@@ -881,6 +911,7 @@
     <div class="top-strip">
       <button class="back-link" data-back="screen-prefs">PREFERENCES</button>
     </div>
+    <div class="wiz-step">Step 2 of 4</div>
     <div class="eyebrow">FLAVOR PROFILE</div>
     <h1 class="title">Cravings &amp; Kitchen</h1>
     <p class="subtitle">What you already have, what you love, what you can't stand — and how adventurous today should be.</p>
@@ -940,8 +971,7 @@
       <label class="field-label">TODAY'S CRAVINGS (OPTIONAL, SELECT ANY)</label>
       <div class="choice-grid" id="craveGrid"></div>
       <p class="subtitle" id="craveSummary" style="font-size:var(--fs-body); margin:12px 0 0;"></p>
-      <button class="btn-primary" id="btnConfirmCravings">NEXT — PLAN YOUR PREP</button>
-      <button class="btn-ghost" id="btnSkipCravings">SKIP — NO PREFERENCES TODAY</button>
+      <button class="btn-primary" id="btnConfirmCravings">Next</button>
     </div>
   </section>
 
@@ -950,6 +980,7 @@
     <div class="top-strip">
       <button class="back-link" data-back="screen-cravings">CRAVINGS</button>
     </div>
+    <div class="wiz-step">Step 3 of 4</div>
     <div class="eyebrow" data-word="playstyle">PLAYSTYLE</div>
     <h1 class="title">Plan Your Prep</h1>
     <p class="subtitle">How much cooking are you willing to do? Repetition is the point of meal prep — decide how much variety is worth the extra pans.</p>
@@ -1017,7 +1048,7 @@
         <span class="eaten-total" id="styleVerdictTag"></span>
       </div>
       <p class="subtitle" id="styleVerdict" style="font-size:var(--fs-body); margin:0;"></p>
-      <button class="btn-primary" id="btnConfirmStyle">SHOW ME MEALS</button>
+      <button class="btn-primary" id="btnConfirmStyle">Show me meals</button>
     </div>
   </section>
 
@@ -1026,6 +1057,7 @@
     <div class="top-strip">
       <button class="back-link" data-back="screen-style">CHANGE STYLE</button>
     </div>
+    <div class="wiz-step">Step 4 of 4</div>
     <div class="eyebrow" data-word="loadout">RECOMMENDED LOADOUT</div>
     <h1 class="title">Today's Suggested Meals</h1>
     <p class="subtitle" id="suggestIntro"></p>
@@ -1033,9 +1065,9 @@
     <div id="onHandReview" class="panel" style="display:none;"></div>
     <div id="suggestList"></div>
 
-    <button class="btn-primary" id="btnUseSuggestion">USE THIS LOADOUT</button>
-    <button class="btn-ghost" id="btnShuffle"><svg class="px" aria-hidden="true"><use href="#i-dice"></use></svg> SHUFFLE — SUGGEST SOMETHING ELSE</button>
-    <button class="btn-ghost" id="btnBuildOwn">BUILD MY OWN INSTEAD</button>
+    <button class="btn-primary" id="btnUseSuggestion">Use these meals</button>
+    <button class="btn-ghost" id="btnShuffle"><svg class="px" aria-hidden="true"><use href="#i-dice"></use></svg> Shuffle</button>
+    <button class="text-link" id="btnBuildOwn">Build my own instead</button>
   </section>
 
   <!-- SCREEN 4: SHOPPING LIST -->
@@ -1074,40 +1106,31 @@
       <!-- Scanning into the pantry. Stocking up is a stack of packets on the
            counter, and typing each of their names is the slowest way to
            describe a shopping bag you are holding. -->
-      <button class="photo-btn" id="pantryScanCam" type="button" hidden>
-        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
-      </button>
-      <label class="photo-btn" for="pantryBarcodePhoto">
-        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Use a picture of a barcode
-      </label>
+      <!-- One field, the way a search bar with a scanner in it works: a name
+           searches, a run of digits is a barcode. The camera and the photo
+           sit beside it rather than stacked above it. -->
+      <div class="pantry-find">
+        <div class="fav-search-wrap">
+          <input type="text" id="pantrySearch" class="fav-search" aria-label="Search a food or type a barcode" placeholder="Food name or barcode" autocomplete="off">
+          <button class="fav-clear" id="pantryClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+        </div>
+        <button class="icon-btn" id="pantryScanCam" type="button" hidden aria-label="Scan a barcode with the camera"><svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg></button>
+        <label class="icon-btn" for="pantryBarcodePhoto" aria-label="Use a picture of a barcode"><svg class="px" aria-hidden="true"><use href="#i-image"></use></svg></label>
+      </div>
       <input type="file" id="pantryBarcodePhoto" accept="image/*"
              style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
              aria-label="Upload a picture of a barcode">
-      <div class="fav-search-wrap" style="margin-top:8px;">
-        <input type="text" id="pantryBarcode" class="fav-search" placeholder="&hellip;or type a barcode"
-               inputmode="numeric" autocomplete="off" aria-label="Barcode number">
-        <button class="fav-clear" id="pantryBarcodeClear" aria-label="Clear barcode" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
-      </div>
       <div id="pantryScanResults"></div>
-      <div class="fav-search-wrap" style="margin-top:8px;">
-        <input type="text" id="pantrySearch" class="fav-search" aria-label="Search foods to add to your pantry" placeholder="&hellip;or search a food by name" autocomplete="off">
-        <button class="fav-clear" id="pantryClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
-      </div>
       <div id="pantryResults"></div>
     </div>
 
-    <div class="panel">
-      <label class="field-label"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg> USING IT UP</label>
-      <div class="choice-grid" style="grid-template-columns:1fr;">
-        <button class="choice-btn selected" id="pantryPlanToggle" aria-pressed="true"><span><strong>Build Around My Pantry</strong><span class="desc">Work whatever is marked to use up into your meals</span></span><span class="tag"><svg class="px" aria-hidden="true"><use href="#i-ice"></use></svg></span></button>
-      </div>
-      <p class="subtitle" id="pantryPlanNote" style="font-size:var(--fs-body); margin:10px 0 0;"></p>
-    </div>
 
+    <!-- The pantry and the shopping list are two halves of one sum: what
+         the prep needs, less what is already here. -->
+    <button class="btn-ghost" id="pantryShopBtn" hidden><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> Shopping list for your prep</button>
     <div id="pantryList"></div>
     <div id="pantryCupboard"></div>
 
-    <button class="btn-ghost" id="pantryCookedBtn" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-egg"></use></svg> I'VE COOKED THIS PREP — TAKE IT OUT OF THE PANTRY</button>
   </section>
 
   <!-- SCREEN 3: DAILY LOADOUT -->
@@ -1124,25 +1147,23 @@
         <span class="eaten-title"><svg class="px" aria-hidden="true"><use href="#i-burger"></use></svg> ALREADY EATEN TODAY</span>
         <span class="eaten-total" id="eatenTotal">0 kcal</span>
       </div>
-      <div class="fav-search-wrap">
-        <input type="text" id="offSearch" class="fav-search" aria-label="Search packaged foods"
-               placeholder="Search a food, or paste a barcode"
-               inputmode="text" autocomplete="off">
-        <button class="fav-clear" id="offClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+      <div class="pantry-find">
+        <div class="fav-search-wrap">
+          <input type="text" id="offSearch" class="fav-search" aria-label="Search packaged foods"
+                 placeholder="Search foods or paste a barcode"
+                 inputmode="text" autocomplete="off">
+          <button class="fav-clear" id="offClear" aria-label="Clear search" style="display:none;"><svg class="px" aria-hidden="true"><use href="#i-close"></use></svg></button>
+        </div>
+        <button class="icon-btn" id="btnScanCam" type="button" hidden aria-label="Scan a barcode with the camera"><svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg></button>
+        <label class="icon-btn" for="barcodePhoto" aria-label="Use a picture of a barcode"><svg class="px" aria-hidden="true"><use href="#i-image"></use></svg></label>
       </div>
-      <button class="photo-btn" id="btnScanCam" type="button" hidden>
-        <svg class="px" aria-hidden="true"><use href="#i-camera"></use></svg> Scan a barcode with the camera
-      </button>
-      <label class="photo-btn" for="barcodePhoto">
-        <svg class="px" aria-hidden="true"><use href="#i-image"></use></svg> Have a picture of a barcode? Upload it here
-      </label>
       <input type="file" id="barcodePhoto" accept="image/*"
              style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;"
              aria-label="Upload a picture of a barcode">
       <canvas id="barcodeCanvas" hidden></canvas>
       <div id="offResults"></div>
       <div id="eatenList"></div>
-      <button class="mini-btn add" id="btnAddEaten">+ ADD A FOOD</button>
+      <button class="text-link" id="btnAddEaten">Not listed? Add a food</button>
     </div>
     <div id="customBanner" class="custom-banner" style="display:none;"></div>
     <div class="panel" id="loadoutDayPanel" hidden>
@@ -1156,12 +1177,11 @@
       </div>
     </div>
     <div class="timeline" id="mealTimeline"></div>
-    <button class="btn-ghost" id="btnLoadoutPrepDays"><svg class="px" aria-hidden="true"><use href="#i-bento"></use></svg> YOUR PREPPED DAYS</button>
-    <button class="btn-ghost" id="btnLoadoutRecipes"><svg class="px" aria-hidden="true"><use href="#i-book"></use></svg> RECIPE BOOK</button>
-    <button class="btn-primary" id="btnShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> BUILD SHOPPING LIST</button>
-    <p class="subtitle" style="font-size:var(--fs-body); margin-top:14px; opacity:.8;">
-      Nutrition figures are reference values and vary by brand and cut — for anything packaged, the label on the box beats this table.
-    </p>
+    <!-- One way on. With a prep built, Done goes back to it, and the
+         shopping list is one tap from there; before one exists the list is
+         the next step. syncLoadoutActions() shows whichever applies. -->
+    <button class="btn-primary" id="btnLoadoutDone">Done</button>
+    <button class="btn-primary" id="btnShopping"><svg class="px" aria-hidden="true"><use href="#i-receipt"></use></svg> Build shopping list</button>
   </section>
 
 </div>
@@ -1222,6 +1242,13 @@
 <script src="js/52-recipe-import-ui.js"></script>
 <script src="js/53-diet-break.js"></script>
 <script src="js/54-class-progress.js"></script>
+<script src="js/55-water.js"></script>
+<script src="js/56-saved-meals.js"></script>
+<script src="js/57-workouts.js"></script>
+<script src="js/58-checkin.js"></script>
+<script src="js/59-body.js"></script>
+<script src="js/60-watch-log.js"></script>
+<script src="js/61-widget.js"></script>
 
 <!-- ==========================================================================
      SERVICE WORKER REGISTRATION

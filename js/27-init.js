@@ -43,6 +43,49 @@
   }
   dressPanels();
 
+  /* ---- sentence case ----------------------------------------------------
+     Labels across the app were authored in capitals for the old headings,
+     and so were the stored meal names (BREAKFAST, SNACK 02) — which are
+     keys the logs are filed under, so they cannot simply be renamed. The
+     plain material sets them in sentence case instead, at display time:
+     a text node made only of capitals is rewritten once, the way a person
+     would have typed it. Mixed case is left exactly as authored. */
+  const SENTENCE_SEL = '.field-label, .vital-lbl, .jmeal-name, .eaten-title, .slot-label, .qbm-k, .cal-dow, .fp-group, '
+                     + '.btn-primary, .btn-ghost, .mini-btn, .text-link, .back-link, .modal-title, .quest-title, .seg button, .choice-btn strong, .streak-lbl, .hero-rank';
+  const KEEP_CAPS = /^(USDA|AI|BMR|TDEE|AM|PM|GPS|ID|OK|PB|ON|OFF)$/;
+  const UNIT_WORD = /^(LB|LBS|KG|KCAL|CAL|G|CM|IN|OZ|ML|FT|YRS)$/;
+  const MONTH_WORD = /^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|SEPT|OCT|NOV|DEC)([A-Z]*)$/;
+  function sentenceCase(text){
+    let first = true;
+    return text.replace(/[A-Z][A-Z'’\-]*/g, w => {
+      let out;
+      if (KEEP_CAPS.test(w)) out = w;
+      else if (UNIT_WORD.test(w)) out = w.toLowerCase();
+      else if (MONTH_WORD.test(w)) out = w.charAt(0) + w.slice(1).toLowerCase();
+      else out = first ? w.charAt(0) + w.slice(1).toLowerCase() : w.toLowerCase();
+      first = false;
+      return out;
+    });
+  }
+  function sentenceCaseLabels(root){
+    if (document.body.getAttribute('data-material') !== 'plain') return;
+    (root || document).querySelectorAll(SENTENCE_SEL).forEach(el => {
+      for (const n of el.childNodes){
+        if (n.nodeType !== 3) continue;
+        const v = n.nodeValue;
+        if (/[A-Z]{2}/.test(v) && !/[a-z]/.test(v)) n.nodeValue = sentenceCase(v);
+      }
+    });
+  }
+  let __scPending = 0;
+  if (typeof MutationObserver !== 'undefined'){
+    new MutationObserver(function(){
+      cancelAnimationFrame(__scPending);
+      __scPending = requestAnimationFrame(function(){ sentenceCaseLabels(); });
+    }).observe(document.body, { childList:true, subtree:true });
+  }
+  sentenceCaseLabels();
+
   /* init */
   const hadSave = loadState();
   renderLibrary();
@@ -63,9 +106,13 @@
 
      Character creation and game selection still happen once, and are changed
      deliberately through the System menu rather than on the way in. */
+  /* Today is home. It is the screen opened several times a day, so it is
+     the one the app opens on; the character sheet is a tab away. */
   if (hadSave){
     renderTiers();
-    splashThenShow('screen-tiers');
+    if (typeof resetJournalToToday === 'function') resetJournalToToday();
+    renderJournal();
+    splashThenShow('screen-journal');
   } else {
     showScreen('screen-attract');
   }
@@ -96,6 +143,8 @@
       setTimeout(function(){
         document.body.classList.remove('attract-auto', 'attract-out');
         showScreen(id);
+        /* The journal's day strip can only centre once it is on screen */
+        if (id === 'screen-journal' && typeof centreJournalStripSoon === 'function') centreJournalStripSoon();
         /* The health notice used to fire at load for a saved character, on
            the grounds that no START tap was coming to hang it off. One is
            still not coming — so it hangs off the end of the splash instead,
